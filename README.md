@@ -1,4 +1,4 @@
-# BrickExtreme
+# BrickDraft
 
 A MERN (MongoDB, Express.js, React, Node.js) stack application.
 
@@ -61,11 +61,3 @@ Frontend:
 cd frontend
 npm run dev
 ```
-
-## Contributing
-
-[Add contribution guidelines here]
-
-## License
-
-[Add license information here]
