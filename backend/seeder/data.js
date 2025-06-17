@@ -1,47 +1,33 @@
 const legoData = [
   {
-    name: "Blue Slope Brick",
-    item_id: "BL-3023",
-    description: "A blue 2x1 slope brick used in various sets.",
-    item_images: [
-      {
-        public_id: "blue_slope_1",
-        url: "https://cdn.example.com/images/blue_slope_1.jpg",
-      },
-    ],
-    category: "part",
-    color: "60f7c0b2d4a3a72e6c8fcd11",
-  },
-  {
     name: "Red 2x4 Brick",
-    item_id: "RD-3001",
-    description: "Classic red 2x4 LEGO brick.",
+    description: "Classic red LEGO brick, commonly used in beginner builds.",
     item_images: [
       {
-        public_id: "red_2x4_1",
-        url: "https://cdn.example.com/images/red_2x4_1.jpg",
+        public_id: "red_2x4",
+        url: "https://cdn.example.com/images/red_2x4.jpg",
       },
     ],
     category: "part",
-    color: "60f7c0b2d4a3a72e6c8fcd12",
+    color: "60f7c0b2d4a3a72e6c8fcd01",
+    item_collection: "60f8d1c2b9d1c822f4c0fa01",
   },
   {
     name: "Green 1x2 Plate",
-    item_id: "GN-3023",
-    description: "Standard green LEGO plate, 1x2.",
+    description: "A standard green plate used for base detailing.",
     item_images: [
       {
-        public_id: "green_plate_1",
-        url: "https://cdn.example.com/images/green_plate_1.jpg",
+        public_id: "green_plate_1x2",
+        url: "https://cdn.example.com/images/green_plate_1x2.jpg",
       },
     ],
     category: "part",
-    color: "60f7c0b2d4a3a72e6c8fcd13",
+    color: "60f7c0b2d4a3a72e6c8fcd02",
+    item_collection: "60f8d1c2b9d1c822f4c0fa02",
   },
   {
     name: "Stormtrooper Helmet",
-    item_id: "SW-1012",
-    description: "White helmet for Star Wars Stormtrooper minifigs.",
+    description: "Helmet used by Star Wars Stormtrooper minifigures.",
     item_images: [
       {
         public_id: "stormtrooper_helmet",
@@ -49,12 +35,25 @@ const legoData = [
       },
     ],
     category: "minifigure",
-    color: "60f7c0b2d4a3a72e6c8fcd14",
+    color: "60f7c0b2d4a3a72e6c8fcd03",
+    item_collection: "60f8d1c2b9d1c822f4c0fa03",
+  },
+  {
+    name: "Yellow Smiling Head",
+    description: "Minifigure head with a classic LEGO smile.",
+    item_images: [
+      {
+        public_id: "yellow_head_smile",
+        url: "https://cdn.example.com/images/yellow_head_smile.jpg",
+      },
+    ],
+    category: "minifigure",
+    color: "60f7c0b2d4a3a72e6c8fcd04",
+    item_collection: "60f8d1c2b9d1c822f4c0fa04",
   },
   {
     name: "Black Cape",
-    item_id: "BK-2123",
-    description: "Fabric cape for LEGO minifigures.",
+    description: "Black fabric cape for LEGO characters like Batman.",
     item_images: [
       {
         public_id: "black_cape",
@@ -62,38 +61,25 @@ const legoData = [
       },
     ],
     category: "part",
-    color: "60f7c0b2d4a3a72e6c8fcd15",
+    color: "60f7c0b2d4a3a72e6c8fcd05",
+    item_collection: "60f8d1c2b9d1c822f4c0fa05",
   },
   {
-    name: "Yellow Classic Head",
-    item_id: "YL-4032",
-    description: "Yellow minifigure head with a smile.",
+    name: "Pirate Hat with Feather",
+    description: "Hat used in pirate minifigure series, includes red feather.",
     item_images: [
       {
-        public_id: "yellow_head",
-        url: "https://cdn.example.com/images/yellow_head.jpg",
+        public_id: "pirate_hat_feather",
+        url: "https://cdn.example.com/images/pirate_hat_feather.jpg",
       },
     ],
     category: "minifigure",
-    color: "60f7c0b2d4a3a72e6c8fcd16",
+    color: "60f7c0b2d4a3a72e6c8fcd06",
+    item_collection: "60f8d1c2b9d1c822f4c0fa06",
   },
   {
-    name: "Gray Wrench",
-    item_id: "GY-8867",
-    description: "Tool accessory for LEGO minifigs.",
-    item_images: [
-      {
-        public_id: "gray_wrench",
-        url: "https://cdn.example.com/images/gray_wrench.jpg",
-      },
-    ],
-    category: "part",
-    color: "60f7c0b2d4a3a72e6c8fcd17",
-  },
-  {
-    name: "Knight Minifig Torso",
-    item_id: "KT-1290",
-    description: "Armor print torso for knight minifigures.",
+    name: "Knight Torso Armor",
+    description: "Medieval torso armor for knight-themed LEGO minifigs.",
     item_images: [
       {
         public_id: "knight_torso",
@@ -101,12 +87,12 @@ const legoData = [
       },
     ],
     category: "minifigure",
-    color: "60f7c0b2d4a3a72e6c8fcd18",
+    color: "60f7c0b2d4a3a72e6c8fcd07",
+    item_collection: "60f8d1c2b9d1c822f4c0fa07",
   },
   {
     name: "Brown Horse",
-    item_id: "BR-7452",
-    description: "Brown LEGO horse figure for castle sets.",
+    description: "Brown LEGO horse used in castle and wild west themes.",
     item_images: [
       {
         public_id: "brown_horse",
@@ -114,23 +100,35 @@ const legoData = [
       },
     ],
     category: "part",
-    color: "60f7c0b2d4a3a72e6c8fcd19",
+    color: "60f7c0b2d4a3a72e6c8fcd08",
+    item_collection: "60f8d1c2b9d1c822f4c0fa08",
   },
   {
-    name: "Pirate Hat with Feather",
-    item_id: "PH-4432",
-    description: "Minifigure pirate hat with red feather.",
+    name: "Gray Wrench Tool",
+    description: "Accessory used for minifigures or vehicle repairs.",
     item_images: [
       {
-        public_id: "pirate_hat",
-        url: "https://cdn.example.com/images/pirate_hat.jpg",
+        public_id: "gray_wrench",
+        url: "https://cdn.example.com/images/gray_wrench.jpg",
       },
     ],
-    category: "minifigure",
-    color: "60f7c0b2d4a3a72e6c8fcd20",
+    category: "part",
+    color: "60f7c0b2d4a3a72e6c8fcd09",
+    item_collection: "60f8d1c2b9d1c822f4c0fa09",
+  },
+  {
+    name: "Blue Sloped Brick",
+    description: "Sloped 2x1 brick in blue color, used for roofs or vehicles.",
+    item_images: [
+      {
+        public_id: "blue_slope_brick",
+        url: "https://cdn.example.com/images/blue_slope_brick.jpg",
+      },
+    ],
+    category: "part",
+    color: "60f7c0b2d4a3a72e6c8fcd0a",
+    item_collection: "60f8d1c2b9d1c822f4c0fa0a",
   },
 ];
 
 export default legoData;
-
-

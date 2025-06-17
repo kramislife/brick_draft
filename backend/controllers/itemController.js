@@ -1,164 +1,135 @@
-// CREATE NEW ITEMS IN THE DATABASE  => post => /api/v1/admin/newitem
-
+import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
+import customErrorHandler from "../Utills/custom_error_handler.js";
 import LegoItem from "../models/lego_items.model.js";
 
-export const new_item = async (req, res) => {
-  const item = await LegoItem.create(req.body);
+// CREATE NEW ITEM
+export const newItem = catchAsyncErrors(async (req, res, next) => {
+  const { name, description, item_images, category, color, item_collection } =
+    req.body;
+  if (
+    !name ||
+    !description ||
+    !item_images?.length ||
+    !category ||
+    !color ||
+    !item_collection
+  ) {
+    return next(
+      new customErrorHandler("All required fields must be provided.", 400)
+    );
+  }
 
-  res.status(201).json({
-    success: true,
-    item,
+  const normalizedCategory = category.toLowerCase();
+  if (!["part", "minifigure"].includes(normalizedCategory)) {
+    return next(
+      new customErrorHandler(
+        "Invalid category. Use 'part' or 'minifigure'.",
+        400
+      )
+    );
+  }
+
+  // INSERT COMMAND
+  const legoItem = new LegoItem({
+    name,
+    description,
+    item_images,
+    category: normalizedCategory,
+    color,
+    item_collection,
   });
-};
 
-// GET ALL ITEMS FROM THE DATABASE => get => /api/v1/items
+  await legoItem.save();
 
-export const get_all_items = async (req, res) => {
+  return res.status(201).json({
+    message: "Lego item created successfully",
+    item: legoItem,
+  });
+});
+
+// SELECT ALL ITEMS
+export const get_all_items = catchAsyncErrors(async (req, res, next) => {
   const items = await LegoItem.find();
+  // .populate("color", "name hex")
+  // .populate("collection", "name year");
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
+    count: items.length,
     items,
   });
-};
+});
 
-// GET ITEM BY ID FROM THE DATABASE => get => /api/v1/item/:id
-
-export const get_item_by_id = async (req, res) => {
-  const id = req.params.id;
-  console.log("Fetching item with ID:", id);
-  const item = await LegoItem.findById(req.params.id);
-
-  if (!item) {
-    return res.status(404).json({
-      success: false,
-      message: "Item not found",
-    });
-  }
-
-  res.status(200).json({
-    success: true,
-    item,
-  });
-};
-
-// UPDATE ITEM BY ID IN THE DATABASE => put => /api/v1/admin/item/:id
-
-export const update_item_by_id = async (req, res) => {
-  const id = req.params.id;
-  const update_item_by_id = await LegoItem.findByIdAndUpdate(id, req.body, {
-    new: true,
-  });
-  if (!update_item_by_id) {
-    return res.status(404).json({
-      success: false,
-      message: "Item not found",
-    });
-
-    res.status(200).json({
-      success: true,
-      update_item_by_id,
-    });
-  }
-};
-
-// DELETE ITEM BY ID FROM THE DATABASE => delete => /api/v1/admin/item/:id
-
-export const delete_item_by_id = async (req, res) => {
-  const id = req.params.id;
-  const delete_item_by_id = await LegoItem.findByIdAndDelete(id);
-
-  if (!delete_item_by_id) {
-    return res.status(404).json({
-      success: false,
-      message: "Item not found",
-    });
-  }
-
-  res.status(200).json({
-    success: true,
-    message: "Item deleted successfully",
-    delete_item_by_id,
-  });
-};
-
-// DELETE ALL ITEMS FROM THE DATABASE => delete => /api/v1/admin/items
-
-export const delete_all_items = async (req, res) => {
-  await LegoItem.deleteMany();
-
-  res.status(200).json({
-    success: true,
-    message: "All items deleted successfully",
-  });
-};
-
-// UPLOAD ITEM IMAGES => post => /api/v1/admin/item/:id/upload
-
-export const upload_item_images = async (req, res) => {
-  const urls = await Promise.all(
-    req.body.images.map((image) =>
-      uploadImage(image, "brick_draft/item_images")
-    )
-  );
-
-  const item = await LegoItem.findByIdAndUpdate(
-    req.params.id,
-    {
-      $push: { item_images: { $each: urls } },
-    },
-    { new: true }
-  );
-
-  if (!item) {
-    return res.status(404).json({
-      success: false,
-      message: "Item not found",
-    });
-  }
-
-  res.status(200).json({
-    success: true,
-    item,
-  });
-};
-
-// DELETE ITEM IMAGE => delete => /api/v1/admin/item/:id/image/:imageId
-
-const delete_item_image = async (req, res) => {
+// SELECT ITEMS WITH SPECIFIC ID
+export const get_single_item = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const { public_id } = req.body;
-
-  if (!public_id) {
-    return next(new ErrorHandler("Image ID is required", 400));
-  }
-
-  // Check if the item exists
   const item = await LegoItem.findById(id);
+
+  console.log("I AM HERE TOO");
+
   if (!item) {
-    return next(new ErrorHandler("Product not found", 404));
-  }
-
-  // Delete the image from the storage
-  const isDeleted = await deleteImage(public_id);
-
-  if (!isDeleted) {
-    return next(new ErrorHandler("Failed to delete image from storage", 500));
-  }
-
-  const updated_item = await LegoItem.findByIdAndUpdate(
-    id,
-    { $pull: { item_images: { public_id } } }, // Remove the image with matching `public_id`
-    { new: true, runValidators: true }
-  );
-
-  if (!updated_item) {
-    return next(new ErrorHandler("Failed to update item images", 500));
+    return next(new customErrorHandler("Item not found", 404));
   }
 
   return res.status(200).json({
     success: true,
-    message: "Image deleted successfully",
-    product: updated_item,
+    item,
   });
-};
+});
+
+// DELETE AN ITEM
+export const delete_single_item = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  const deleted_item = await LegoItem.findByIdAndDelete(id);
+
+  if (!deleted_item) {
+    return next(new customErrorHandler("Item not found", 404));
+  }
+
+  return res.status(200).json({
+    success: true,
+    deleted_item,
+  });
+});
+
+// UPDATE AN ITEM
+export const update_an_item = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+
+  const existing_item = await LegoItem.findById(id);
+
+  if (!existing_item) {
+    return next(
+      new customErrorHandler(`No Lego items found with ID : ${id}`, 404)
+    );
+  }
+
+  const updated_data = req.body;
+
+  const updated_item = await LegoItem.findByIdAndUpdate(id, updated_data, {
+    new: true,
+    runValidators: true,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Lego item updated successfully",
+    updated_item,
+  });
+});
+
+// DELETE ALL ITEMS
+export const delete_all_items = catchAsyncErrors(async (req, res, next) => {
+  const delete_all_items = await LegoItem.deleteMany();
+
+  if (!delete_all_items) {
+    return next(new customErrorHandler("Items not deleted", 404));
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "All items deleted",
+    delete_all_items,
+  });
+});
