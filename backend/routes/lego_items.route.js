@@ -11,11 +11,16 @@ import express from "express";
 const router = express.Router();
 
 // Route to create a new item
-router.route("/admin/newitem").post(newItem);
-router.route("/allitems").get(get_all_items);
-router.route("/item/:id").get(get_single_item);
-router.route("/item/:id").patch(update_an_item);
-router.route("/item/:id").delete(delete_single_item);
-router.route("/allitems").delete(delete_all_items);
+router.route("/items").get(get_all_items); // Get all
+router.route("/items/:id").get(get_single_item); // Get single
+
+// Admin routes
+router.route("/admin/items").post(newItem); // Create
+router.route("/admin/items").delete(delete_all_items); // Delete all
+
+router
+  .route("/admin/items/:id")
+  .patch(update_an_item)
+  .delete(delete_single_item);
 
 export default router;

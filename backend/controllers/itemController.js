@@ -65,8 +65,6 @@ export const get_single_item = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const item = await LegoItem.findById(id);
 
-  console.log("I AM HERE TOO");
-
   if (!item) {
     return next(new customErrorHandler("Item not found", 404));
   }
@@ -96,21 +94,17 @@ export const delete_single_item = catchAsyncErrors(async (req, res, next) => {
 // UPDATE AN ITEM
 export const update_an_item = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
+  
+  const updated_item = await LegoItem.findByIdAndUpdate(id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
-  const existing_item = await LegoItem.findById(id);
-
-  if (!existing_item) {
+  if (!update_an_item) {
     return next(
       new customErrorHandler(`No Lego items found with ID : ${id}`, 404)
     );
   }
-
-  const updated_data = req.body;
-
-  const updated_item = await LegoItem.findByIdAndUpdate(id, updated_data, {
-    new: true,
-    runValidators: true,
-  });
 
   return res.status(200).json({
     success: true,
@@ -123,13 +117,8 @@ export const update_an_item = catchAsyncErrors(async (req, res, next) => {
 export const delete_all_items = catchAsyncErrors(async (req, res, next) => {
   const delete_all_items = await LegoItem.deleteMany();
 
-  if (!delete_all_items) {
-    return next(new customErrorHandler("Items not deleted", 404));
-  }
-
   return res.status(200).json({
     success: true,
-    message: "All items deleted",
-    delete_all_items,
+    message: `${delete_all_items.deletedCount} items deleted`,
   });
 });

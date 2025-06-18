@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 
 export const connectDatabase = () => {
   let DB_URI = "";
