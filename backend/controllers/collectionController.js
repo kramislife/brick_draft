@@ -1,8 +1,7 @@
-//------------------------------------ GET ALL COLLECTIONS => GET /collections ------------------------------------
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
-import itemCollection from '../models/itemCollection.model.js'
+
+//------------------------------------ GET ALL COLLECTIONS => GET /collections ------------------------------------
 export const getAllCollections = catchAsyncErrors(async (req, res, next) => {
-  
   const collections = await ItemCollection.find().sort({ popularityId: 1 });
 
   if (collections.length === 0) {

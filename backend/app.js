@@ -4,6 +4,7 @@ import { connectDatabase } from "./config/dbConnect.js";
 
 // IMPORT ALL ROUTES
 import lotteryItemRoutes from "./routes/lego_items.route.js";
+import itemCollectionRoutes from "./routes/item_collection.route.js";
 
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
@@ -49,6 +50,7 @@ app.use(
 
 // REGISTER ROUTES
 app.use("/api/v1", lotteryItemRoutes);
+app.use("/api/vi", itemCollectionRoutes);
 
 // REGISTER MIDDLEWARE
 app.use(errorsMiddleware);
