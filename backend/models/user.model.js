@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import ErrorHandler from "../Utills/customErrorHandler.js";
+import ErrorHandler from "../utills/custom_error_handler.js";
 import jwt from "jsonwebtoken";
 
 // Define the User schema
@@ -173,7 +173,6 @@ userSchema.methods.generateResetPasswordToken = function () {
     Date.now() + process.env.PASSWORD_RESET_EXPIRY * 60 * 1000
   ); // 30 minutes from now
 
-
   return resetPasswordToken;
 };
 
@@ -184,4 +183,3 @@ export default User;
 
 userSchema.index({ role: 1, createdAt: 1 });
 userSchema.index({ role: 1, _id: 1 });
-
