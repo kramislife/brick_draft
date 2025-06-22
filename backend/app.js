@@ -9,7 +9,7 @@ import userAuthentication from "./routes/auth.route.js";
 
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
-//import cookieParser from "cookie-parser";
+import cookieParser from "cookie-parser";
 
 /*FRONTEND FILE PATH
 import path from "path";
@@ -47,12 +47,12 @@ app.use(
     },
   })
 );
-//app.use(cookieParser());
+app.use(cookieParser());
 
 // REGISTER ROUTES
 app.use("/api/v1", lotteryItemRoutes);
-app.use("/api/vi", itemCollectionRoutes);
-app.use("/api/vi", userAuthentication);
+app.use("/api/v1", itemCollectionRoutes);
+app.use("/api/v1", userAuthentication);
 
 // REGISTER MIDDLEWARE
 app.use(errorsMiddleware);

@@ -1,19 +1,23 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogClose } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useLoginMutation } from "@/redux/api/authApi";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/redux/features/authSlice";
 
-const Login = () => {
+const Login = ({ onClose }) => {
   const [formData, setFormData] = useState({
-    email: "",
+    email_username: "",
     password: "",
   });
 
   const [login, { isLoading }] = useLoginMutation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -24,21 +28,34 @@ const Login = () => {
     e.preventDefault();
     try {
       const result = await login(formData).unwrap();
-      toast.success(result.message || "Login successful", {
-        description: "Welcome back!",
-      });
+
+      // Store user data in Redux
+      if (result.user) {
+        dispatch(setCredentials({ user: result.user }));
+
+        // Role-based redirection
+        const isAdmin = ["superAdmin", "admin", "employee"].includes(
+          result.user.role
+        );
+        const redirectPath = isAdmin ? "/admin" : "/";
+
+        toast.success(result.message || "Login successful");
+
+        // Close dialog and navigate
+        if (onClose) {
+          onClose();
+        }
+        navigate(redirectPath);
+      }
     } catch (error) {
-      toast.error(error.data?.message || "Login failed", {
-        description:
-          error.data?.message || "Something went wrong. Please try again.",
-      });
+      toast.error(error.data?.message || "Login failed");
     }
   };
 
   // Input field config
   const fields = [
     {
-      id: "email",
+      id: "email_username",
       label: "Email or Username",
       type: "text",
       placeholder: "Enter your email or username",

@@ -5,7 +5,7 @@ import {
   generateCookies,
 } from "../utills/generateTokens.js";
 import catchAsyncErrors from "./catchAsyncErrors.js";
-import customErrorHandler from "../Utills/custom_error_handler.js";
+import customErrorHandler from "../utills/custom_error_handler.js";
 
 // CHECKS IF USER IS AUTHENTICATED OR NOT
 

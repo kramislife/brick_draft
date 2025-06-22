@@ -13,6 +13,8 @@ import {
   Instagram,
   Trophy,
   Tv,
+  Settings,
+  LayoutDashboard,
 } from "lucide-react";
 
 export const publicNavLinks = [
@@ -58,6 +60,36 @@ export const accountLinks = [
     name: "Register",
     path: "/register",
     icon: UserPlus,
+  },
+];
+
+// User menu items configuration for authenticated users
+export const getUserMenuItems = (isAdmin, onAdminClick, onProfileClick) => [
+  ...(isAdmin
+    ? [
+        {
+          id: "admin",
+          label: "Admin Panel",
+          icon: LayoutDashboard,
+          onClick: onAdminClick,
+          path: "/admin",
+          showSeparator: true,
+        },
+      ]
+    : []),
+  {
+    id: "profile",
+    label: "Profile",
+    icon: User,
+    onClick: onProfileClick,
+    path: "/profile",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    onClick: onProfileClick,
+    path: "/profile",
   },
 ];
 

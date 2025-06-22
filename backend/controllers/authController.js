@@ -155,7 +155,10 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
     );
   }
 
-  // 7. GENERATE ACCESS TOKEN
+  // 7. UPDATE LAST LOGIN
+  user.last_login = new Date();
+
+  // 8. GENERATE ACCESS TOKEN
   const payload = { user_id: user._id, role: user.role };
   const accessToken = generateAccessToken(
     payload,
@@ -163,17 +166,17 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
     process.env.JWT_ACCESS_TOKEN_EXPIRY
   );
 
-  // 8. GENERATE REFRESH TOKEN
+  // 9. GENERATE REFRESH TOKEN
   const refreshToken = user.generateRefreshToken();
 
-  // 9. SAVE USER IN DATABASE
+  // 10. SAVE USER IN DATABASE
   await user.save();
 
-  // 10. SAVE ACCESS TOKEN IN COOKIE
+  // 11. SAVE ACCESS TOKEN IN COOKIE
   const maxAge = parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRY) * 60 * 60 * 1000;
   generateCookies(res, "accessToken", accessToken, maxAge);
 
-  // 11. SAVE REFRESH TOKEN IN COOKIE
+  // 12. SAVE REFRESH TOKEN IN COOKIE
   const refreshMaxAge =
     parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRY) * 24 * 60 * 60 * 1000;
   generateCookies(res, "refreshToken", refreshToken, refreshMaxAge);
@@ -181,7 +184,20 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Login Successful",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      contact_number: user.contact_number,
+      profile_picture: user.profile_picture,
+      is_verified: user.is_verified,
+      last_login: user.last_login,
+      createdAt: user.createdAt,
+    },
   });
+  // console.log("User:", user);
 });
 
 // --------------------------------------------------------- LOGOUT USER -----------------------------------------------------------------
