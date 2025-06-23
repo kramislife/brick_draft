@@ -7,7 +7,6 @@ const colorSchema = new mongoose.Schema(
       required: [true, "Color name is required"],
       trim: true,
       unique: true,
-      lowercase: true, // Ensures 'Red' and 'red' are treated the same
     },
     hex_code: {
       type: String,

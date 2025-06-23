@@ -4,6 +4,7 @@ import authReducer from "@/redux/features/authSlice";
 import { authApi } from "@/redux/api/authApi";
 import { collectionApi } from "@/redux/api/admin/collectionApi";
 import { partCategoryApi } from "@/redux/api/admin/partCategoryApi";
+import { colorApi } from "@/redux/api/admin/colorApi";
 
 export const store = configureStore({
   reducer: {
@@ -11,12 +12,14 @@ export const store = configureStore({
     [authApi.reducerPath]: authApi.reducer,
     [collectionApi.reducerPath]: collectionApi.reducer,
     [partCategoryApi.reducerPath]: partCategoryApi.reducer,
+    [colorApi.reducerPath]: colorApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       authApi.middleware,
       collectionApi.middleware,
-      partCategoryApi.middleware
+      partCategoryApi.middleware,
+      colorApi.middleware
     ),
 });
 

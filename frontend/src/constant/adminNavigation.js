@@ -8,6 +8,7 @@ import {
   UsersIcon,
   FolderClosed,
   PuzzleIcon,
+  Palette,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -38,6 +39,11 @@ export const adminNavigation = [
         label: "Collections",
         path: "/admin/collections",
         icon: FolderClosed,
+      },
+      {
+        label: "Colors",
+        path: "/admin/colors",
+        icon: Palette,
       },
       {
         label: "Part Categories",

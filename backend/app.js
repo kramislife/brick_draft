@@ -6,6 +6,7 @@ import { connectDatabase } from "./config/dbConnect.js";
 import lotteryItemRoutes from "./routes/lego_items.route.js";
 import itemCollectionRoutes from "./routes/item_collection.route.js";
 import userAuthentication from "./routes/auth.route.js";
+import colorRoutes from "./routes/color.route.js";
 
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
@@ -53,6 +54,7 @@ app.use(cookieParser());
 app.use("/api/v1", lotteryItemRoutes);
 app.use("/api/v1", itemCollectionRoutes);
 app.use("/api/v1", userAuthentication);
+app.use("/api/v1", colorRoutes);
 
 // REGISTER MIDDLEWARE
 app.use(errorsMiddleware);
