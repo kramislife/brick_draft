@@ -3,14 +3,8 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const collectionApi = createApi({
   reducerPath: "collectionApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "api/v1/",
-    prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth.token;
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
+    baseUrl: "/api/v1/",
+    credentials: "include",
   }),
   tagTypes: ["Collections"],
   endpoints: (builder) => ({
@@ -20,7 +14,7 @@ export const collectionApi = createApi({
     }),
     addCollection: builder.mutation({
       query: (data) => ({
-        url: "collections",
+        url: "admin/newCollection",
         method: "POST",
         body: data,
       }),
@@ -28,7 +22,7 @@ export const collectionApi = createApi({
     }),
     updateCollection: builder.mutation({
       query: ({ id, ...data }) => ({
-        url: `collections/${id}`,
+        url: `admin/collections/${id}`,
         method: "PUT",
         body: data,
       }),
@@ -36,7 +30,7 @@ export const collectionApi = createApi({
     }),
     deleteCollection: builder.mutation({
       query: ({ id }) => ({
-        url: `collections/${id}`,
+        url: `admin/collection/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Collections"],
