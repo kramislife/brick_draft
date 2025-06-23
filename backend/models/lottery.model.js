@@ -14,8 +14,8 @@ const lotterySchema = new mongoose.Schema(
     },
     auction_items: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "LegoItem",
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Part",
       },
     ],
     startDate: {
@@ -38,7 +38,7 @@ const lotterySchema = new mongoose.Schema(
     },
     lotteryRounds: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "LotteryRound",
       },
     ],
@@ -64,4 +64,4 @@ const lotterySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default model("Lottery", lotterySchema);
+export default mongoose.model("Lottery", lotterySchema);

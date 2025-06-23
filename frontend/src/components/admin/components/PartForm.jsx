@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Box, Palette, Scale, UploadCloud } from "lucide-react";
+import { Box, Palette, Scale, UploadCloud, X } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -10,34 +10,56 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useGetColorsQuery } from "@/redux/api/admin/colorApi";
 
-const PartForm = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    partId: "",
-    weight: "",
-    category: "",
-    partType: "",
-    color: "",
-    price: "",
-    quantity: "",
-    image: null,
-    imagePreview: null,
-  });
+const PartForm = ({ formData, onChange }) => {
+  const [imagePreview, setImagePreview] = useState(formData.image?.url || "");
+  const fileInputRef = useRef(null);
+
+  const { data: colorsData, isLoading: isLoadingColors } = useGetColorsQuery();
+  const colors = colorsData?.colors || [];
 
   // Calculate total value
   const totalValue = (
-    Number(formData.price) * Number(formData.quantity)
+    Number(formData.price || 0) * Number(formData.quantity || 0)
   ).toFixed(2);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({
-        ...formData,
-        image: file,
-        imagePreview: URL.createObjectURL(file),
-      });
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Convert to base64 for API
+      const reader2 = new FileReader();
+      reader2.onload = (e) => {
+        const base64String = e.target.result;
+        onChange({
+          target: {
+            name: "image",
+            value: base64String,
+          },
+        });
+      };
+      reader2.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview("");
+    onChange({
+      target: {
+        name: "image",
+        value: "",
+      },
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -48,95 +70,96 @@ const PartForm = () => {
         <Label htmlFor="name">Part Name</Label>
         <Input
           id="name"
+          name="name"
           placeholder="e.g., Tile 2x2"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formData.name || ""}
+          onChange={onChange}
         />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="partId">Part ID</Label>
-          <Input
-            id="partId"
-            placeholder="e.g., 36840"
-            value={formData.partId}
-            onChange={(e) =>
-              setFormData({ ...formData, partId: e.target.value })
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weight">Weight</Label>
-          <Input
-            type="number"
-            id="weight"
-            placeholder="e.g., 0.5g"
-            value={formData.weight}
-            onChange={(e) =>
-              setFormData({ ...formData, weight: e.target.value })
-            }
-          />
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
+          <Label htmlFor="item_id">Part ID</Label>
+          <Input
+            id="item_id"
+            name="item_id"
+            placeholder="e.g., 36840"
+            value={formData.item_id || ""}
+            onChange={onChange}
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <Select
-            value={formData.category}
+            value={formData.category || ""}
             onValueChange={(value) =>
-              setFormData({ ...formData, category: value })
+              onChange({
+                target: {
+                  name: "category",
+                  value: value,
+                },
+              })
             }
           >
             <SelectTrigger id="category" className="w-full">
-              <SelectValue placeholder="Select a category" />
+              <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="tiles">Tiles</SelectItem>
-              <SelectItem value="bricks">Bricks</SelectItem>
-              <SelectItem value="plates">Plates</SelectItem>
+              <SelectItem value="part">Part</SelectItem>
+              <SelectItem value="minifigure">Minifigure</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="category_name">Category Name</Label>
+        <Input
+          id="category_name"
+          name="category_name"
+          placeholder="e.g., Smooth Plates, Frames, Tiles"
+          value={formData.category_name || ""}
+          onChange={onChange}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="weight">Weight (g)</Label>
+          <Input
+            type="number"
+            id="weight"
+            name="weight"
+            min="0"
+            step="0.01"
+            placeholder="e.g., 0.5"
+            value={formData.weight || ""}
+            onChange={onChange}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="price">Price ($)</Label>
           <Input
             id="price"
+            name="price"
             type="number"
             min="0"
             step="0.01"
             placeholder="e.g., 0.89"
-            value={formData.price}
-            onChange={(e) =>
-              setFormData({ ...formData, price: e.target.value })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="partType">Part Type</Label>
-          <Input
-            id="partType"
-            placeholder="e.g., Smooth Plates"
-            value={formData.partType}
-            onChange={(e) =>
-              setFormData({ ...formData, partType: e.target.value })
-            }
+            value={formData.price || ""}
+            onChange={onChange}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="quantity">Quantity</Label>
           <Input
             id="quantity"
+            name="quantity"
             type="number"
             min="0"
             placeholder="e.g., 100"
-            value={formData.quantity}
-            onChange={(e) =>
-              setFormData({ ...formData, quantity: e.target.value })
-            }
+            value={formData.quantity || ""}
+            onChange={onChange}
           />
         </div>
       </div>
@@ -144,14 +167,40 @@ const PartForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="color">Color</Label>
-          <Input
-            id="color"
-            placeholder="e.g., Light Yellow"
-            value={formData.color}
-            onChange={(e) =>
-              setFormData({ ...formData, color: e.target.value })
+          <Select
+            value={formData.color || ""}
+            onValueChange={(value) =>
+              onChange({
+                target: {
+                  name: "color",
+                  value: value,
+                },
+              })
             }
-          />
+          >
+            <SelectTrigger id="color" className="w-full">
+              <SelectValue placeholder="Select a color" />
+            </SelectTrigger>
+            <SelectContent>
+              {isLoadingColors ? (
+                <SelectItem value="loading" disabled>
+                  Loading colors...
+                </SelectItem>
+              ) : (
+                colors.map((color) => (
+                  <SelectItem key={color._id} value={color._id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-4 h-4 rounded border"
+                        style={{ backgroundColor: color.hex_code }}
+                      />
+                      {color.color_name}
+                    </div>
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label>Total Value ($)</Label>
@@ -165,28 +214,50 @@ const PartForm = () => {
       {/* Part Image Upload */}
       <div className="space-y-2">
         <Label>Part Image</Label>
-        <div className="border-2 border-dashed rounded-lg p-6">
-          <label htmlFor="image-upload" className="cursor-pointer">
-            <div className="flex flex-col items-center gap-2">
-              <UploadCloud className="h-10 w-10 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Upload an image
-              </span>
-              <span className="text-xs text-muted-foreground">
-                or drag and drop
-              </span>
-              <span className="text-xs text-muted-foreground">
-                PNG, JPG, GIF up to 5MB
-              </span>
+        <div className="space-y-3">
+          {imagePreview ? (
+            <div className="relative">
+              <img
+                src={imagePreview}
+                alt="Part preview"
+                className="w-full h-48 object-cover rounded-md border"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={removeImage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <Input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-            />
-          </label>
+          ) : (
+            <div className="border-2 border-dashed rounded-lg p-6 text-center">
+              <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+              <div className="mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Choose Image
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                PNG, JPG, GIF up to 10MB
+              </p>
+            </div>
+          )}
+          <Input
+            ref={fileInputRef}
+            id="image"
+            name="image"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
         </div>
       </div>
 
@@ -196,9 +267,9 @@ const PartForm = () => {
         <Card className="p-4">
           <div className="flex items-start gap-3">
             <div className="w-20 h-20 bg-muted rounded flex items-center justify-center overflow-hidden">
-              {formData.imagePreview ? (
+              {imagePreview ? (
                 <img
-                  src={formData.imagePreview}
+                  src={imagePreview}
                   alt="Preview"
                   className="w-full h-full object-cover"
                 />
@@ -209,7 +280,7 @@ const PartForm = () => {
 
             <div className="flex-1 space-y-1">
               <p className="font-semibold text-base">
-                Part ID: {formData.partId || "ID"} •{" "}
+                Part ID: {formData.item_id || "ID"} •{" "}
                 {formData.name || "Part Name"}
               </p>
               <p>
@@ -224,15 +295,18 @@ const PartForm = () => {
               <div className="flex flex-wrap gap-2 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Palette className="w-4 h-4" />
-                  <span>{formData.color || "Color"}</span>
+                  <span>
+                    {colors.find((c) => c._id === formData.color)?.color_name ||
+                      "Color"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Box className="w-4 h-4" />
-                  <span>{formData.partType || "Part Type"}</span>
+                  <span>{formData.category_name || "Category"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Scale className="w-4 h-4" />
-                  <span>{formData.weight || "Weight"}g</span>
+                  <span>{formData.weight || "0"}g</span>
                 </div>
               </div>
             </div>

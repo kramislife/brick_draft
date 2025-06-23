@@ -20,7 +20,7 @@ const lotteryRoundsSchema = new mongoose.Schema(
     },
     won_item: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "LegoItem",
+      ref: "Part",
       default: null,
     },
     createdBy: {
