@@ -6,6 +6,7 @@ import { collectionApi } from "@/redux/api/admin/collectionApi";
 import { partCategoryApi } from "@/redux/api/admin/partCategoryApi";
 import { colorApi } from "@/redux/api/admin/colorApi";
 import { partApi } from "@/redux/api/admin/partItemApi";
+import { lotteryApi } from "@/redux/api/admin/lotteryApi";
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     [partCategoryApi.reducerPath]: partCategoryApi.reducer,
     [colorApi.reducerPath]: colorApi.reducer,
     [partApi.reducerPath]: partApi.reducer,
+    [lotteryApi.reducerPath]: lotteryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -22,7 +24,8 @@ export const store = configureStore({
       collectionApi.middleware,
       partCategoryApi.middleware,
       colorApi.middleware,
-      partApi.middleware
+      partApi.middleware,
+      lotteryApi.middleware
     ),
 });
 

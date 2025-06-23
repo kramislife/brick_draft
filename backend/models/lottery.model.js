@@ -12,30 +12,63 @@ const lotterySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    auction_items: [
+    whyCollect: {
+      type: [String],
+      validate: [(arr) => arr.length <= 3, "Maximum 3 reasons allowed"],
+      required: true,
+    },
+    ticketPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    marketPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    drawDate: {
+      type: String,
+      required: true,
+      // Format: YYYY-MM-DD
+    },
+    drawTime: {
+      type: String,
+      required: true,
+      // Format: HH:mm (24-hour)
+    },
+    totalSlots: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    pieces: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    collection: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ItemCollection",
+      required: true,
+    },
+    tag: {
+      type: String,
+      enum: ["featured", "best_seller", "new_arrival", "limited_edition"],
+      required: true,
+      lowercase: true,
+    },
+    image: {
+      public_id: { type: String },
+      url: { type: String },
+    },
+    parts: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Part",
+        required: true,
       },
     ],
-    startDate: {
-      type: Date,
-      required: true,
-      default: Date.now,
-      index: true,
-    },
-    endDate: {
-      type: Date,
-      required: true,
-      default: Date.now,
-      index: true,
-      validate: {
-        validator: function (value) {
-          return !this.startDate || value > this.startDate;
-        },
-        message: "End date must be after start date.",
-      },
-    },
     lotteryRounds: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -56,7 +89,7 @@ const lotterySchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
-    modifiedBy: {
+    updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
