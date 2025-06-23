@@ -3,7 +3,6 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import authReducer from "@/redux/features/authSlice";
 import { authApi } from "@/redux/api/authApi";
 import { collectionApi } from "@/redux/api/admin/collectionApi";
-import { partCategoryApi } from "@/redux/api/admin/partCategoryApi";
 import { colorApi } from "@/redux/api/admin/colorApi";
 import { partApi } from "@/redux/api/admin/partItemApi";
 import { lotteryApi } from "@/redux/api/admin/lotteryApi";
@@ -13,7 +12,6 @@ export const store = configureStore({
     auth: authReducer,
     [authApi.reducerPath]: authApi.reducer,
     [collectionApi.reducerPath]: collectionApi.reducer,
-    [partCategoryApi.reducerPath]: partCategoryApi.reducer,
     [colorApi.reducerPath]: colorApi.reducer,
     [partApi.reducerPath]: partApi.reducer,
     [lotteryApi.reducerPath]: lotteryApi.reducer,
@@ -22,7 +20,6 @@ export const store = configureStore({
     getDefaultMiddleware().concat(
       authApi.middleware,
       collectionApi.middleware,
-      partCategoryApi.middleware,
       colorApi.middleware,
       partApi.middleware,
       lotteryApi.middleware
