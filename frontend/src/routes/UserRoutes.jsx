@@ -29,7 +29,7 @@ const UserRoutes = () => {
     <Routes>
       <Route element={<RootLayout />}>
         {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route index element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact-us" element={<Contact />} />
         <Route path="/results" element={<Results />} />

@@ -13,14 +13,12 @@ import lotteryRoutes from "./routes/lottery.route.js";
 import errorsMiddleware from "./middleware/errors.middleware.js";
 import cookieParser from "cookie-parser";
 
-/*FRONTEND FILE PATH
+//FRONTEND FILE PATH
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-*/
 
 // INITIALIZE EXPRESS APP
 const app = express();
@@ -62,6 +60,26 @@ app.use("/api/v1", lotteryRoutes);
 app.use(errorsMiddleware);
 
 // START THE SERVER
+import fs from "fs";
+if (process.env.NODE_ENV === "PRODUCTION") {
+  const distDir = path.join(__dirname, "../frontend/dist");
+  //console.log(distDir);
+
+  const indexFile = path.resolve(distDir, "index.html");
+  //console.log(indexFile);
+
+  app.use(express.static(distDir));
+
+  app.get("*", (req, res) => {
+    if (fs.existsSync(indexFile)) {
+      res.sendFile(indexFile);
+    } else {
+      console.error("❌ index.html not found at:", indexFile);
+      res.status(500).send("Frontend build not found.");
+    }
+  });
+}
+
 const server = app.listen(process.env.PORT, () => {
   console.log(
     `Server started on PORT: ${process.env.PORT} in ${process.env.NODE_ENV} mode`
