@@ -12,6 +12,7 @@ import lotteryRoutes from "./routes/lottery.route.js";
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
 import cookieParser from "cookie-parser";
+import fs from "fs";
 
 //FRONTEND FILE PATH
 import path from "path";
