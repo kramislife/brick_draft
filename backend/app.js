@@ -59,25 +59,44 @@ app.use("/api/v1", lotteryRoutes);
 // REGISTER MIDDLEWARE
 app.use(errorsMiddleware);
 
-// START THE SERVER
-import fs from "fs";
+// PRODUCTION STATIC FILE SERVING
 if (process.env.NODE_ENV === "PRODUCTION") {
-  const distDir = path.join(__dirname, "../frontend/dist");
-  //console.log(distDir);
+  try {
+    const distDir = path.join(__dirname, "../frontend/dist");
+    const indexFile = path.resolve(distDir, "index.html");
 
-  const indexFile = path.resolve(distDir, "index.html");
-  //console.log(indexFile);
+    console.log("Production mode - serving static files from:", distDir);
+    console.log("Index file path:", indexFile);
 
-  app.use(express.static(distDir));
-
-  app.get("*", (req, res) => {
-    if (fs.existsSync(indexFile)) {
-      res.sendFile(indexFile);
+    // Check if dist directory exists
+    if (!fs.existsSync(distDir)) {
+      console.error("❌ Frontend dist directory not found at:", distDir);
+      console.log(
+        "Make sure to run 'npm run build' before starting production"
+      );
     } else {
-      console.error("❌ index.html not found at:", indexFile);
-      res.status(500).send("Frontend build not found.");
+      app.use(express.static(distDir));
+
+      // Serve index.html for all non-API routes
+      app.get("*", (req, res) => {
+        // Skip API routes
+        if (req.path.startsWith("/api/")) {
+          return res.status(404).json({ message: "API endpoint not found" });
+        }
+
+        if (fs.existsSync(indexFile)) {
+          res.sendFile(indexFile);
+        } else {
+          console.error("❌ index.html not found at:", indexFile);
+          res
+            .status(500)
+            .send("Frontend build not found. Please run 'npm run build'.");
+        }
+      });
     }
-  });
+  } catch (error) {
+    console.error("Error setting up production static file serving:", error);
+  }
 }
 
 const server = app.listen(process.env.PORT, () => {
