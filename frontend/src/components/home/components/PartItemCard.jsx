@@ -6,11 +6,14 @@ const PartItemCard = ({ part }) => {
   return (
     <Card className="p-0">
       <CardContent className="flex flex-col sm:flex-row items-start gap-3 p-3">
-        <div className="w-full sm:w-20 h-auto sm:h-20 flex-shrink-0 bg-white border rounded-md p-0.5">
+        <div className="w-full sm:w-20 h-auto sm:h-20 flex-shrink-0 bg-white border rounded-md">
           <img
-            src={part.image}
+            src={part.image || "/placeholder-part.jpg"}
             alt={part.name}
-            className="w-full h-full object-contain aspect-square"
+            className="w-full h-full object-cover aspect-square rounded-md"
+            onError={(e) => {
+              e.target.src = "/placeholder-part.jpg";
+            }}
           />
         </div>
 
@@ -29,7 +32,7 @@ const PartItemCard = ({ part }) => {
             <span className="flex items-center gap-1">
               <span>Total Value:</span>
               <span className="text-emerald-500 font-semibold">
-                ${part.price}
+                ${Number(part.totalValue).toFixed(2)}
               </span>
             </span>
           </div>

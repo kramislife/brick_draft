@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import LotteryDialogParts from "@/pages/LotteryDialogParts";
 
-const LotteryCard = ({ set, PARTS }) => {
+const LotteryCard = ({ set }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
@@ -21,9 +21,12 @@ const LotteryCard = ({ set, PARTS }) => {
     >
       <div className="relative aspect-square border-b overflow-hidden">
         <img
-          src={set.image}
+          src={set.image || "/placeholder-image.jpg"}
           alt={set.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          onError={(e) => {
+            e.target.src = "/placeholder-image.jpg";
+          }}
         />
         <div className="absolute top-4 left-4">
           <Badge>{set.theme}</Badge>
@@ -46,7 +49,7 @@ const LotteryCard = ({ set, PARTS }) => {
             <span>{set.pieces} pieces</span>
           </div>
           <span className="text-emerald-500 font-bold text-xl">
-            ${set.price.toFixed(2)}
+            ${Number(set.price).toFixed(2)}
           </span>
         </div>
 
@@ -70,11 +73,7 @@ const LotteryCard = ({ set, PARTS }) => {
           <DialogTrigger asChild>
             <Button onClick={(e) => e.stopPropagation()}>View Parts</Button>
           </DialogTrigger>
-          <LotteryDialogParts
-            parts={set.parts}
-            setName={set.name}
-            PARTS={PARTS}
-          />
+          <LotteryDialogParts parts={set.parts} setName={set.name} />
         </Dialog>
         <Button
           variant="accent"

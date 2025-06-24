@@ -7,7 +7,15 @@ import { uploadImage, deleteImage } from "../utills/cloudinary.js";
 export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
   const lotteries = await Lottery.find()
     .populate("collection", "name")
-    .populate("parts", "name item_id color item_images")
+    .populate({
+      path: "parts",
+      select:
+        "name item_id color item_images category category_name weight price quantity total_value",
+      populate: {
+        path: "color",
+        select: "color_name hex_code",
+      },
+    })
     .sort({ createdAt: -1 });
   res.status(200).json({
     success: true,
@@ -21,7 +29,15 @@ export const getLotteryById = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const lottery = await Lottery.findById(id)
     .populate("collection", "name")
-    .populate("parts", "name item_id color item_images");
+    .populate({
+      path: "parts",
+      select:
+        "name item_id color item_images category category_name weight price quantity total_value",
+      populate: {
+        path: "color",
+        select: "color_name hex_code",
+      },
+    });
   if (!lottery) {
     return next(new customErrorHandler("Lottery not found", 404));
   }
