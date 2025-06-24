@@ -16,7 +16,7 @@ const priorityListSchema = new mongoose.Schema(
       {
         item: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "LegoItem",
+          ref: "Part",
           required: true,
         },
         priority: {

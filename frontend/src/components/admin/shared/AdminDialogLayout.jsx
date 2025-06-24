@@ -15,6 +15,7 @@ const AdminDialogLayout = ({
   children,
   onSubmit,
   isEdit = false,
+  isLoading = false,
   size = "xl",
 }) => {
   const sizeClasses = {
@@ -41,11 +42,22 @@ const AdminDialogLayout = ({
           {children}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit">
-              {isEdit ? "Save Changes" : `Create ${title}`}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading
+                ? isEdit
+                  ? "Saving..."
+                  : `Creating ${title}...`
+                : isEdit
+                ? "Save Changes"
+                : `Create ${title}`}
             </Button>
           </div>
         </form>

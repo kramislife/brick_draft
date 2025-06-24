@@ -6,7 +6,7 @@ import UserRoutes from "@/routes/UserRoutes";
 const App = () => {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
+      <Toaster position="bottom-right" />
       <UserRoutes />
     </BrowserRouter>
   );

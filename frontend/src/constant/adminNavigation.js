@@ -7,7 +7,7 @@ import {
   TicketIcon,
   UsersIcon,
   FolderClosed,
-  PuzzleIcon,
+  Palette,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -40,9 +40,9 @@ export const adminNavigation = [
         icon: FolderClosed,
       },
       {
-        label: "Part Categories",
-        path: "/admin/part-categories",
-        icon: PuzzleIcon,
+        label: "Colors",
+        path: "/admin/colors",
+        icon: Palette,
       },
     ],
   },

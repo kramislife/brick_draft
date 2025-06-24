@@ -15,17 +15,17 @@ const authTabs = [
     value: "login",
     label: "Login",
     icon: <LogIn />,
-    component: <Login />,
+    component: "Login",
   },
   {
     value: "register",
     label: "Register",
     icon: <UserPlus />,
-    component: <Register />,
+    component: "Register",
   },
 ];
 
-const AuthDialog = ({ defaultTab = "login" }) => {
+const AuthDialog = ({ defaultTab = "login", onClose }) => {
   return (
     <DialogContent>
       <DialogHeader>
@@ -51,7 +51,11 @@ const AuthDialog = ({ defaultTab = "login" }) => {
 
         {authTabs.map(({ value, component }) => (
           <TabsContent key={value} value={value}>
-            {component}
+            {component === "Login" ? (
+              <Login onClose={onClose} />
+            ) : (
+              <Register onClose={onClose} />
+            )}
           </TabsContent>
         ))}
       </Tabs>

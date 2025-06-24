@@ -6,7 +6,14 @@ import ShowEntries from "@/components/admin/shared/ShowEntries";
 import TableLayout from "@/components/admin/shared/TableLayout";
 import Pagination from "@/components/admin/shared/Pagination";
 
-const ViewLayout = ({ title, description, onAdd, columns, data }) => {
+const ViewLayout = ({
+  title,
+  description,
+  onAdd,
+  columns,
+  data,
+  isLoading = false,
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(() => {
     return localStorage.getItem(`${title.toLowerCase()}_entries`) || "10";
@@ -17,8 +24,11 @@ const ViewLayout = ({ title, description, onAdd, columns, data }) => {
     localStorage.setItem(`${title.toLowerCase()}_entries`, entriesPerPage);
   }, [entriesPerPage, title]);
 
+  // Ensure data is always an array
+  const safeData = Array.isArray(data) ? data : [];
+
   // Filter data based on search query
-  const filteredData = data.filter((item) =>
+  const filteredData = safeData.filter((item) =>
     Object.values(item).some(
       (value) =>
         value &&
@@ -84,7 +94,11 @@ const ViewLayout = ({ title, description, onAdd, columns, data }) => {
           />
         </div>
 
-        <TableLayout columns={columns} data={paginatedData} />
+        <TableLayout
+          columns={columns}
+          data={paginatedData}
+          isLoading={isLoading}
+        />
 
         <Pagination
           currentPage={currentPage}

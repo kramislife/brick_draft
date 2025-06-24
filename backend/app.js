@@ -3,13 +3,15 @@ import dotenv from "dotenv";
 import { connectDatabase } from "./config/dbConnect.js";
 
 // IMPORT ALL ROUTES
-import lotteryItemRoutes from "./routes/lego_items.route.js";
+import partRoutes from "./routes/part.route.js";
 import itemCollectionRoutes from "./routes/item_collection.route.js";
 import userAuthentication from "./routes/auth.route.js";
+import colorRoutes from "./routes/color.route.js";
+import lotteryRoutes from "./routes/lottery.route.js";
 
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
-//import cookieParser from "cookie-parser";
+import cookieParser from "cookie-parser";
 
 /*FRONTEND FILE PATH
 import path from "path";
@@ -47,12 +49,14 @@ app.use(
     },
   })
 );
-//app.use(cookieParser());
+app.use(cookieParser());
 
 // REGISTER ROUTES
-app.use("/api/v1", lotteryItemRoutes);
-app.use("/api/vi", itemCollectionRoutes);
-app.use("/api/vi", userAuthentication);
+app.use("/api/v1", partRoutes);
+app.use("/api/v1", itemCollectionRoutes);
+app.use("/api/v1", userAuthentication);
+app.use("/api/v1", colorRoutes);
+app.use("/api/v1", lotteryRoutes);
 
 // REGISTER MIDDLEWARE
 app.use(errorsMiddleware);

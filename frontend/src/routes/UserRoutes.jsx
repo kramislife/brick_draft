@@ -22,7 +22,8 @@ import Tickets from "@/pages/admin/Tickets";
 import Users from "@/pages/admin/Users";
 import LiveDraw from "@/pages/LiveDraw";
 import Collections from "@/pages/admin/Collections";
-import PartCategories from "@/pages/admin/PartCategories";
+import Colors from "@/pages/admin/Colors";
+
 const UserRoutes = () => {
   return (
     <Routes>
@@ -50,7 +51,7 @@ const UserRoutes = () => {
           <Route path="/admin/announcements" element={<Announcement />} />
           <Route path="/admin/banners" element={<Banner />} />
           <Route path="/admin/collections" element={<Collections />} />
-          <Route path="/admin/part-categories" element={<PartCategories />} />
+          <Route path="/admin/colors" element={<Colors />} />
           <Route path="/admin/lotteries" element={<Lottery />} />
           <Route path="/admin/parts" element={<Parts />} />
           <Route path="/admin/tickets" element={<Tickets />} />

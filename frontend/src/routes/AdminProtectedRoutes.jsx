@@ -1,11 +1,14 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
+import {
+  selectIsAuthenticated,
+  selectIsAdmin,
+} from "@/redux/features/authSlice";
 
-// This will be replaced with actual auth logic once you integrate with backend
 const AdminProtectedRoutes = () => {
-  // Mock authentication status - replace with real auth check
-  const isAuthenticated = true;
-  const isAdmin = true;
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
 
   // If user is not authenticated or not an admin, redirect to home
   if (!isAuthenticated || !isAdmin) {
