@@ -25,6 +25,7 @@ const Parts = () => {
   const [selectedPart, setSelectedPart] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
+    part_id: "",
     item_id: "",
     category: "",
     category_name: "",
@@ -46,6 +47,7 @@ const Parts = () => {
   const handleAdd = () => {
     setFormData({
       name: "",
+      part_id: "",
       item_id: "",
       category: "",
       category_name: "",
@@ -62,6 +64,7 @@ const Parts = () => {
     setFormData({
       id: data._id,
       name: data.name,
+      part_id: data.part_id,
       item_id: data.item_id,
       category: data.category,
       category_name: data.category_name,
@@ -104,6 +107,7 @@ const Parts = () => {
         const result = await updatePart({
           id: formData.id,
           name: formData.name,
+          part_id: formData.part_id,
           item_id: formData.item_id,
           category: formData.category,
           category_name: formData.category_name,
@@ -120,6 +124,7 @@ const Parts = () => {
       } else {
         const result = await addPart({
           name: formData.name,
+          part_id: formData.part_id,
           item_id: formData.item_id,
           category: formData.category,
           category_name: formData.category_name,
@@ -164,8 +169,12 @@ const Parts = () => {
       },
     },
     {
-      accessorKey: "item_id",
+      accessorKey: "part_id",
       header: "Part ID",
+    },
+    {
+      accessorKey: "item_id",
+      header: "Item ID",
     },
     {
       accessorKey: "name",
@@ -192,6 +201,11 @@ const Parts = () => {
           "N/A"
         );
       },
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => `$${Number(row.original.price).toFixed(2)}`,
     },
     {
       accessorKey: "quantity",

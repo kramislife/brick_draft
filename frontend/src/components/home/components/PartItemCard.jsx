@@ -3,14 +3,20 @@ import { Scale, Box, Palette } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PartItemCard = ({ part }) => {
+  // Determine which ID to display
+  const displayId =
+    part.partId && part.itemId
+      ? `Part ID: ${part.partId} • Item ID: ${part.itemId}`
+      : `ID: ${part.id}`;
+
   return (
     <Card className="p-0">
       <CardContent className="flex flex-col sm:flex-row items-start gap-3 p-3">
-        <div className="w-full sm:w-20 h-auto sm:h-20 flex-shrink-0 bg-white border rounded-md">
+        <div className="w-full sm:w-20 h-auto sm:h-20 flex-shrink-0">
           <img
             src={part.image || "/placeholder-part.jpg"}
             alt={part.name}
-            className="w-full h-full object-cover aspect-square rounded-md"
+            className="w-full h-full object-cover aspect-square rounded border"
             onError={(e) => {
               e.target.src = "/placeholder-part.jpg";
             }}
@@ -19,7 +25,7 @@ const PartItemCard = ({ part }) => {
 
         <div className="flex flex-col gap-3 sm:gap-1">
           <h4 className="text-lg font-semibold line-clamp-1">
-            <span>Part ID: {part.id}</span>
+            <span>{displayId}</span>
             <span className="mx-1">•</span>
             {part.name}
           </h4>

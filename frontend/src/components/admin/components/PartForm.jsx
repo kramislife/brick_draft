@@ -79,15 +79,28 @@ const PartForm = ({ formData, onChange }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="item_id">Part ID</Label>
+          <Label htmlFor="part_id">Part ID</Label>
+          <Input
+            id="part_id"
+            name="part_id"
+            placeholder="e.g., 3001"
+            value={formData.part_id || ""}
+            onChange={onChange}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="item_id">Item ID</Label>
           <Input
             id="item_id"
             name="item_id"
-            placeholder="e.g., 36840"
+            placeholder="e.g., 3684012"
             value={formData.item_id || ""}
             onChange={onChange}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <Select
@@ -110,17 +123,16 @@ const PartForm = ({ formData, onChange }) => {
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="category_name">Category Name</Label>
-        <Input
-          id="category_name"
-          name="category_name"
-          placeholder="e.g., Smooth Plates, Frames, Tiles"
-          value={formData.category_name || ""}
-          onChange={onChange}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="category_name">Category Name</Label>
+          <Input
+            id="category_name"
+            name="category_name"
+            placeholder="e.g., Smooth Plates, Frames, Tiles"
+            value={formData.category_name || ""}
+            onChange={onChange}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -220,7 +232,7 @@ const PartForm = ({ formData, onChange }) => {
               <img
                 src={imagePreview}
                 alt="Part preview"
-                className="w-full h-48 object-cover rounded-md border"
+                className="w-full h-32 object-contain rounded-md border"
               />
               <Button
                 type="button"
@@ -266,12 +278,12 @@ const PartForm = ({ formData, onChange }) => {
         <Label>Preview</Label>
         <Card className="p-4">
           <div className="flex items-start gap-3">
-            <div className="w-20 h-20 bg-muted rounded flex items-center justify-center overflow-hidden">
+            <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
               {imagePreview ? (
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover border rounded"
                 />
               ) : (
                 <Box className="h-10 w-10 text-muted-foreground" />
@@ -280,8 +292,8 @@ const PartForm = ({ formData, onChange }) => {
 
             <div className="flex-1 space-y-1">
               <p className="font-semibold text-base">
-                Part ID: {formData.item_id || "ID"} •{" "}
-                {formData.name || "Part Name"}
+                Part ID: {formData.part_id || "ID"} • Item ID:{" "}
+                {formData.item_id || "ID"} • {formData.name || "Part Name"}
               </p>
               <p>
                 Quantity:{" "}
