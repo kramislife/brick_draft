@@ -37,6 +37,7 @@ export const getPartById = catchAsyncErrors(async (req, res, next) => {
 export const createPart = catchAsyncErrors(async (req, res, next) => {
   const {
     name,
+    part_id,
     item_id,
     category,
     category_name,
@@ -50,6 +51,7 @@ export const createPart = catchAsyncErrors(async (req, res, next) => {
   // Validate required fields
   if (
     !name ||
+    !part_id ||
     !item_id ||
     !category ||
     !category_name ||
@@ -91,6 +93,7 @@ export const createPart = catchAsyncErrors(async (req, res, next) => {
 
   const partData = {
     name,
+    part_id,
     item_id,
     category: category.toLowerCase(),
     category_name,
@@ -121,6 +124,7 @@ export const updatePart = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const {
     name,
+    part_id,
     item_id,
     category,
     category_name,

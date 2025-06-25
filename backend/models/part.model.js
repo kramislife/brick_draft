@@ -9,6 +9,11 @@ const PartSchema = new mongoose.Schema(
       minlength: 2,
       maxlength: 100,
     },
+    part_id: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     item_id: {
       type: String,
       required: true,
