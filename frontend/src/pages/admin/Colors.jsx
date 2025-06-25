@@ -98,7 +98,7 @@ const Colors = () => {
       cell: ({ row }) => (
         <div className="flex items-center justify-center gap-2">
           <div
-            className="h-6 w-6 rounded-full border"
+            className="h-6 w-6 rounded border"
             style={{ backgroundColor: row.original.hex_code }}
           />
           <span>{row.original.hex_code.toUpperCase()}</span>

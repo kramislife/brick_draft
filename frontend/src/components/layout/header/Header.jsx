@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Moon, Sun, Menu } from "lucide-react";
+import { Moon, Sun, Menu, Search } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
@@ -127,6 +127,7 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center md:gap-1">
+          <IconButton icon={<Search />} />
           {/* Theme Toggle */}
           <IconButton
             icon={darkMode ? <Sun /> : <Moon />}

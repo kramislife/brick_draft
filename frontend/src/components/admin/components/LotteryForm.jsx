@@ -157,11 +157,27 @@ const LotteryForm = ({ formData, onChange }) => {
   // Helper for part display
   const getPartDisplay = (part) => (
     <span className="flex items-center gap-2">
-      <span
-        className="w-4 h-4 rounded-full border"
-        style={{ backgroundColor: part.color?.hex_code || "#eee" }}
-      />
-      <span className="font-medium">{part.name}</span>
+      <div className="flex items-center gap-2">
+        <img
+          src={
+            part.item_images?.[0]?.url ||
+            part.item_images?.[0] ||
+            part.image ||
+            "/placeholder-part.jpg"
+          }
+          alt={part.name}
+          className="w-6 h-6 object-cover"
+          onError={(e) => {
+            e.target.src = "/placeholder-part.jpg";
+          }}
+        />
+      </div>
+      <span className="font-medium">
+        {part.name}{" "}
+        <span className="text-muted-foreground text-xs font-light">
+          • {part.color?.color_name}
+        </span>
+      </span>
     </span>
   );
 
@@ -315,47 +331,47 @@ const LotteryForm = ({ formData, onChange }) => {
         </div>
         {/* Collection Dropdown */}
         <div className="grid grid-cols-2 gap-5">
-        <div className="space-y-2">
-          <Label htmlFor="collection">Collection</Label>
-          <Select
-            value={formData.collection || ""}
-            onValueChange={(value) =>
-              onChange({ target: { name: "collection", value } })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select collection" />
-            </SelectTrigger>
-            <SelectContent>
-              {collections.map((col) => (
-                <SelectItem key={col._id} value={col._id}>
-                  {col.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {/* Tag Dropdown */}
-        <div className="space-y-2">
-          <Label htmlFor="tag">Set Tag</Label>
-          <Select
-            value={formData.tag || ""}
-            onValueChange={(value) =>
-              onChange({ target: { name: "tag", value } })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select tag" />
-            </SelectTrigger>
-            <SelectContent>
-              {TAG_OPTIONS.map((tag) => (
-                <SelectItem key={tag.value} value={tag.value}>
-                  {tag.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="collection">Collection</Label>
+            <Select
+              value={formData.collection || ""}
+              onValueChange={(value) =>
+                onChange({ target: { name: "collection", value } })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select collection" />
+              </SelectTrigger>
+              <SelectContent>
+                {collections.map((col) => (
+                  <SelectItem key={col._id} value={col._id}>
+                    {col.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Tag Dropdown */}
+          <div className="space-y-2">
+            <Label htmlFor="tag">Set Tag</Label>
+            <Select
+              value={formData.tag || ""}
+              onValueChange={(value) =>
+                onChange({ target: { name: "tag", value } })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select tag" />
+              </SelectTrigger>
+              <SelectContent>
+                {TAG_OPTIONS.map((tag) => (
+                  <SelectItem key={tag.value} value={tag.value}>
+                    {tag.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {/* Parts Multi-Select */}
         <div className="space-y-2">

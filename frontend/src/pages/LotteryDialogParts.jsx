@@ -23,28 +23,13 @@ const LotteryDialogParts = ({ parts, setName }) => {
     );
   }
 
-  // Transform part data to match the expected format
-  const transformPartData = (part) => ({
-    id: part.part_id || part.item_id || part._id || part.id || "Unknown",
-    partId: part.part_id || "Unknown",
-    itemId: part.item_id || "Unknown",
-    name: part.name || "Unknown Part",
-    image: part.item_images?.[0]?.url || part.image || "",
-    quantity: part.quantity || 1,
-    price: part.price || 0,
-    totalValue: part.total_value || part.price * part.quantity || 0,
-    color: part.color?.color_name || part.color || "Unknown",
-    partType: part.category_name || part.category || "Unknown",
-    weight: part.weight ? `${part.weight}g` : "Unknown",
-  });
-
   // Separate parts by category
   const partsByCategory = parts.reduce((acc, part) => {
-    const category = part.category || "part";
+    const category = part.category_name || part.category || "part";
     if (!acc[category]) {
       acc[category] = [];
     }
-    acc[category].push(transformPartData(part));
+    acc[category].push(part);
     return acc;
   }, {});
 
@@ -56,7 +41,7 @@ const LotteryDialogParts = ({ parts, setName }) => {
       case "minifigure":
         return "Minifigures";
       default:
-        return "Parts";
+        return category.charAt(0).toUpperCase() + category.slice(1);
     }
   };
 
@@ -76,7 +61,7 @@ const LotteryDialogParts = ({ parts, setName }) => {
             </h3>
             <div className="space-y-3">
               {categoryParts.map((part) => (
-                <PartItemCard key={part.id} part={part} />
+                <PartItemCard key={part._id} part={part} />
               ))}
             </div>
           </div>
