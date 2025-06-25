@@ -10,7 +10,7 @@ export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
     .populate({
       path: "parts",
       select:
-        "name item_id color item_images category category_name weight price quantity total_value",
+        "name part_id item_id color item_images category category_name weight price quantity total_value",
       populate: {
         path: "color",
         select: "color_name hex_code",
@@ -32,7 +32,7 @@ export const getLotteryById = catchAsyncErrors(async (req, res, next) => {
     .populate({
       path: "parts",
       select:
-        "name item_id color item_images category category_name weight price quantity total_value",
+        "name part_id item_id color item_images category category_name weight price quantity total_value",
       populate: {
         path: "color",
         select: "color_name hex_code",

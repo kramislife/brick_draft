@@ -25,7 +25,9 @@ const LotteryDialogParts = ({ parts, setName }) => {
 
   // Transform part data to match the expected format
   const transformPartData = (part) => ({
-    id: part.item_id || part._id || part.id || "Unknown",
+    id: part.part_id || part.item_id || part._id || part.id || "Unknown",
+    partId: part.part_id || "Unknown",
+    itemId: part.item_id || "Unknown",
     name: part.name || "Unknown Part",
     image: part.item_images?.[0]?.url || part.image || "",
     quantity: part.quantity || 1,

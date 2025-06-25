@@ -16,7 +16,7 @@ const Toaster = ({ ...props }) => {
         "--normal-border": "var(--border)",
       }}
       richColors
-      closeButton
+      // closeButton
       visibleToasts={1}
       {...props}
     />
