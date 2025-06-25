@@ -283,7 +283,7 @@ const PartForm = ({ formData, onChange }) => {
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="w-full h-full object-cover border rounded"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <Box className="h-10 w-10 text-muted-foreground" />

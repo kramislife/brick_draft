@@ -3,20 +3,37 @@ import { Scale, Box, Palette } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PartItemCard = ({ part }) => {
-  // Determine which ID to display
+  // Determine which ID to display based on API data structure
   const displayId =
-    part.partId && part.itemId
-      ? `Part ID: ${part.partId} • Item ID: ${part.itemId}`
-      : `ID: ${part.id}`;
+    part.part_id && part.item_id
+      ? `Part ID: ${part.part_id} • Item ID: ${part.item_id}`
+      : part.part_id
+      ? `Part ID: ${part.part_id}`
+      : part.item_id
+      ? `Item ID: ${part.item_id}`
+      : `ID: ${part._id}`;
+
+  // Get color name from the color object or use direct color string
+  const colorName = part.color?.color_name || part.color || "Unknown";
+
+  // Get image from item_images array or use direct image
+  const partImage =
+    part.item_images?.[0]?.url ||
+    part.item_images?.[0] ||
+    part.image ||
+    "/placeholder-part.jpg";
+
+  // Format weight with "g" unit
+  const formattedWeight = part.weight ? `${part.weight}g` : "N/A";
 
   return (
     <Card className="p-0">
       <CardContent className="flex flex-col sm:flex-row items-start gap-3 p-3">
-        <div className="w-full sm:w-20 h-auto sm:h-20 flex-shrink-0">
+        <div className="w-full sm:w-22 h-auto sm:h-22 flex-shrink-0">
           <img
-            src={part.image || "/placeholder-part.jpg"}
+            src={partImage}
             alt={part.name}
-            className="w-full h-full object-cover aspect-square rounded border"
+            className="w-full h-full object-cover aspect-square"
             onError={(e) => {
               e.target.src = "/placeholder-part.jpg";
             }}
@@ -30,7 +47,7 @@ const PartItemCard = ({ part }) => {
             {part.name}
           </h4>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 font-semibold">
             <span className="flex items-center gap-1">
               <span>Quantity:</span>
               {part.quantity}
@@ -38,7 +55,7 @@ const PartItemCard = ({ part }) => {
             <span className="flex items-center gap-1">
               <span>Total Value:</span>
               <span className="text-emerald-500 font-semibold">
-                ${Number(part.totalValue).toFixed(2)}
+                ${Number(part.total_value || part.totalValue || 0).toFixed(2)}
               </span>
             </span>
           </div>
@@ -46,15 +63,18 @@ const PartItemCard = ({ part }) => {
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
             <span className="flex items-center gap-1">
               <Palette className="w-4 h-4" />
-              {part.color}
+              {colorName}
             </span>
             <span className="flex items-center gap-1">
               <Box className="w-4 h-4" />
-              {part.partType}
+              {part.category_name ||
+                part.category ||
+                part.partType ||
+                "Unknown"}
             </span>
             <span className="flex items-center gap-1">
               <Scale className="w-4 h-4" />
-              {part.weight}
+              {formattedWeight}
             </span>
           </div>
         </div>
