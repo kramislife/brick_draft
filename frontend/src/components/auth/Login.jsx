@@ -29,7 +29,6 @@ const Login = ({ onClose }) => {
     try {
       const result = await login(formData).unwrap();
 
-      // Store user data in Redux
       if (result.user) {
         dispatch(setCredentials({ user: result.user }));
 
@@ -39,7 +38,9 @@ const Login = ({ onClose }) => {
         );
         const redirectPath = isAdmin ? "/admin" : "/";
 
-        toast.success(result.message || "Login successful");
+        toast.success(result.message || "Login successful!", {
+          description: result.description || "Welcome back!",
+        });
 
         // Close dialog and navigate
         if (onClose) {
@@ -48,7 +49,7 @@ const Login = ({ onClose }) => {
         navigate(redirectPath);
       }
     } catch (error) {
-      toast.error(error.data?.message || "Login failed");
+      toast.error(error.data?.message || "Login failed"); 
     }
   };
 

@@ -55,16 +55,19 @@ const Header = () => {
   // Centralized logout handler
   const handleLogout = async () => {
     try {
-      await logoutMutation().unwrap();
+      const result = await logoutMutation().unwrap();
       // Clear Redux state
       dispatch(logout());
       // Clear RTK Query cache
       dispatch(authApi.util.resetApiState());
-      toast.success("Logged out successfully");
+
+      toast.success(result.message || "Logged out successfully");
+
       // Force page refresh to ensure complete logout
       window.location.href = "/";
     } catch (error) {
-      toast.error("Failed to logout");
+      toast.error(error.data?.message || "Failed to logout");
+
       // Still clear local state even if server logout fails
       dispatch(logout());
       // Clear RTK Query cache
