@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Box, Palette, Scale, UploadCloud, X } from "lucide-react";
+import { UploadCloud, X } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useGetColorsQuery } from "@/redux/api/admin/colorApi";
+import PartItemCard from "@/components/home/components/PartItemCard";
 
 const PartForm = ({ formData, onChange }) => {
   const [imagePreview, setImagePreview] = useState(formData.image?.url || "");
@@ -276,55 +276,24 @@ const PartForm = ({ formData, onChange }) => {
       {/* Preview */}
       <div className="space-y-2">
         <Label>Preview</Label>
-        <Card className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Box className="h-10 w-10 text-muted-foreground" />
-              )}
-            </div>
-
-            <div className="flex-1 space-y-1">
-              <p className="font-semibold text-base">
-                Part ID: {formData.part_id || "ID"} • Item ID:{" "}
-                {formData.item_id || "ID"} • {formData.name || "Part Name"}
-              </p>
-              <p>
-                Quantity:{" "}
-                <span className="font-medium">{formData.quantity || "0"}</span>{" "}
-                Total Value:{" "}
-                <span className="font-bold text-emerald-500">
-                  ${totalValue}
-                </span>
-              </p>
-
-              <div className="flex flex-wrap gap-2 text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Palette className="w-4 h-4" />
-                  <span>
-                    {colors.find((c) => c._id === formData.color)?.color_name ||
-                      "Color"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Box className="w-4 h-4" />
-                  <span>{formData.category_name || "Category"}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Scale className="w-4 h-4" />
-                  <span>{formData.weight || "0"}g</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
+        <PartItemCard
+          part={{
+            part_id: formData.part_id || "ID",
+            name: formData.name || "Part Name",
+            quantity: formData.quantity || 0,
+            total_value: (
+              Number(formData.price || 0) * Number(formData.quantity || 0)
+            ).toFixed(2),
+            color:
+              colors.find((c) => c._id === formData.color) ||
+              formData.color ||
+              "Color",
+            category_name:
+              formData.category_name || formData.category || "Category",
+            item_images: formData.image ? [imagePreview] : [],
+            image: imagePreview,
+          }}
+        />
         <p className="text-xs text-muted-foreground mt-2">
           This is how the part will appear in the lottery details.
         </p>

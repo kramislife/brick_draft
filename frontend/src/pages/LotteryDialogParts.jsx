@@ -53,13 +53,13 @@ const LotteryDialogParts = ({ parts, setName }) => {
         </DialogTitle>
       </DialogHeader>
 
-      <div className="space-y-5">
+      <div className="space-y-3">
         {Object.entries(partsByCategory).map(([category, categoryParts]) => (
           <div key={category} className="space-y-2">
             <h3 className="text-lg font-semibold">
               {getCategoryDisplayName(category)}
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {categoryParts.map((part) => (
                 <PartItemCard key={part._id} part={part} />
               ))}

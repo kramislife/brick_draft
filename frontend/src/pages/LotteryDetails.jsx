@@ -158,10 +158,10 @@ const LotteryDetails = () => {
       </div>
 
       {/* Parts Section */}
-      <div className="mt-10 pt-5 border-t">
+      <div className="mt-10">
         <h2 className="text-2xl font-bold mb-5">{set.name} Parts</h2>
         {set.parts && set.parts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-1">
             {set.parts.map((part) => (
               <PartItemCard key={part._id} part={part} />
             ))}
