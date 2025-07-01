@@ -34,22 +34,15 @@ const EmailVerification = () => {
         });
 
         toast.success(result.message || "Email verification successful!", {
-          description: result.description,
+          description: result.description || "Your email has been verified.",
         });
       } catch (error) {
         setVerificationStatus("error");
         setVerificationData({
           message: error.data?.message || "Email verification failed",
-          description:
-            error.data?.description ||
-            "The verification link is invalid or has expired.",
         });
 
-        toast.error(error.data?.message || "Email verification failed", {
-          description:
-            error.data?.description ||
-            "The verification link is invalid or has expired.",
-        });
+        toast.error(error.data?.message || "Email verification failed");
       }
     };
 
@@ -118,16 +111,13 @@ const EmailVerification = () => {
     return (
       <>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="max-w-lg w-full">
+          <div className="max-w-xl w-full">
             <div className="text-center">
               <XCircle className="mx-auto h-12 w-12 text-red-500" />
               <h2 className="mt-5 text-3xl font-bold">
                 {verificationData?.message || "Verification Failed"}
               </h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {verificationData?.description ||
-                  "The verification link is invalid or has expired. Please try registering again or contact support."}
-              </p>
+            
               <div className="mt-5">
                 <Button
                   onClick={handleLoginRedirect}

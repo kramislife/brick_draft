@@ -118,7 +118,7 @@ export const verifyUser = catchAsyncErrors(async (req, res, next) => {
     if (userWithToken.verification_token_expiry < Date.now()) {
       return next(
         new customErrorHandler(
-          "Verification link has expired. Please request a new verification link from the login page.",
+          "Verification link has expired. Please request a new verification link.",
           400
         )
       );
