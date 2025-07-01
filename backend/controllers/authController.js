@@ -77,7 +77,7 @@ export const registerUser = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({
     status: "success",
     message:
-      "Registration successful! Please check your email for verification.",  
+      "Registration successful! Please check your email for verification.",
     new_user,
   });
 });
@@ -161,10 +161,7 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   // 4. IF PASSWORD DOES NOT MATCH
   if (!(await user.comparePassword(password))) {
     return next(
-      new customErrorHandler(
-        "Invalid credentials. Please try again.",
-        401
-      )
+      new customErrorHandler("Invalid credentials. Please try again.", 401)
     );
   }
 
@@ -347,7 +344,7 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   }
 
   // Generate reset password token
-  const reset_password_token = User.generateResetPasswordToken();
+  const reset_password_token = user.generateResetPasswordToken();
   await user.save();
 
   // Create reset password URL
@@ -363,7 +360,7 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Password reset email sent successfully!",
-      description: `A password reset link has been sent to ${user.email}. Please check your inbox and follow the instructions to reset your password.`,
+      description: `A password reset link has been sent to ${user.email}.`,
     });
   } catch (err) {
     user.reset_password_token = undefined;

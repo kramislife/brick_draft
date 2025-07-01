@@ -11,6 +11,7 @@ import TermsofUse from "@/components/layout/footer/TermsofUse";
 import PrivacyPolicy from "@/components/layout/footer/PrivacyPolicy";
 import Profile from "@/pages/auth/Profile";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/ResetPassword";
 import LotteryAll from "@/pages/LotteryAll";
 import LotteryDetails from "@/pages/LotteryDetails";
 import Dashboard from "@/pages/admin/Dashboard";
@@ -40,6 +41,10 @@ const UserRoutes = () => {
         <Route path="/terms-of-use" element={<TermsofUse />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route
+          path="/password/reset-password/:token"
+          element={<ResetPassword />}
+        />
         <Route path="/lottery/all" element={<LotteryAll />} />
         <Route path="/lottery/:id" element={<LotteryDetails />} />
         <Route path="/collections" element={<CollectionsPage />} />
