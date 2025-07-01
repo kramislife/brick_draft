@@ -23,7 +23,7 @@ const LotteryCard = ({ set }) => {
         <img
           src={set.image || "/placeholder-image.jpg"}
           alt={set.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 p-1"
           onError={(e) => {
             e.target.src = "/placeholder-image.jpg";
           }}

@@ -181,8 +181,8 @@ const Parts = () => {
       header: "Part Name",
     },
     {
-      accessorKey: "category_name",
-      header: "Category Name",
+      accessorKey: "category",
+      header: "Category",
     },
     {
       accessorKey: "color",
@@ -201,6 +201,11 @@ const Parts = () => {
           "N/A"
         );
       },
+    },
+    {
+      accessorKey: "weight",
+      header: "Weight",
+      cell: ({ row }) => `${row.original.weight} g`,
     },
     {
       accessorKey: "price",

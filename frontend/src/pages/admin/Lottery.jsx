@@ -123,10 +123,14 @@ const Lottery = () => {
     {
       accessorKey: "title",
       header: "Set Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
+      cell: ({ row }) => (
+        <div>
+          <div className="font-semibold text-base">{row.original.title}</div>
+          <div className="text-xs text-muted-foreground">
+            {row.original.pieces} pieces
+          </div>
+        </div>
+      ),
     },
     {
       accessorKey: "collection",
@@ -134,19 +138,77 @@ const Lottery = () => {
       cell: ({ row }) => row.original.collection?.name || "-",
     },
     {
-      accessorKey: "ticketPrice",
-      header: "Ticket Price",
-      cell: ({ row }) => `$${Number(row.original.ticketPrice).toFixed(2)}`,
+      id: "price",
+      header: "Price",
+      cell: ({ row }) => (
+        <div>
+          <div className="font-semibold">
+            ${Number(row.original.ticketPrice).toFixed(2)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Market: ${Number(row.original.marketPrice).toLocaleString()}
+          </div>
+        </div>
+      ),
     },
     {
-      accessorKey: "drawDate",
+      id: "drawDate",
       header: "Draw Date",
-      cell: ({ row }) =>
-        row.original.drawDate
-          ? new Date(row.original.drawDate).toLocaleDateString()
-          : "-",
+      cell: ({ row }) => {
+        const date = row.original.drawDate
+          ? new Date(row.original.drawDate)
+          : null;
+        const time = row.original.drawTime || "";
+        let formattedDate = "-";
+        let formattedTime = "";
+        if (date) {
+          formattedDate = date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+        }
+        if (time) {
+          // Format time as h:mm AM/PM
+          const [h, m] = time.split(":");
+          const d = new Date();
+          d.setHours(h, m);
+          formattedTime =
+            d.toLocaleTimeString(undefined, {
+              hour: "numeric",
+              minute: "2-digit",
+            }) + " EST";
+        }
+        return (
+          <div>
+            <div className="font-semibold">{formattedDate}</div>
+            <div className="text-xs text-muted-foreground">{formattedTime}</div>
+          </div>
+        );
+      },
     },
-
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        // For now, always show Active. You can update this logic if you have status in data.
+        const status = row.original.lottery_status || "Active";
+        const totalSlots = row.original.totalSlots || 0;
+        // You may want to use a real slotsLeft value if available
+        // For now, just show all slots left as in the image
+        const slotsLeft = row.original.slotsLeft || totalSlots; // fallback
+        return (
+          <div>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-1">
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+            <div className="text-xs text-muted-foreground">
+              {slotsLeft} of {totalSlots} slots left
+            </div>
+          </div>
+        );
+      },
+    },
     {
       id: "actions",
       header: "Actions",
