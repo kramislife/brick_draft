@@ -16,8 +16,23 @@ export const publicApi = createApi({
       query: (id) => `lotteries/${id}`,
       providesTags: ["PublicLotteries"],
     }),
+    getPublicCollections: builder.query({
+      query: () => "collections",
+      providesTags: ["PublicCollections"],
+    }),
+    getLotteryPartsById: builder.query({
+      query: ({ id, params }) => ({
+        url: `lotteries/${id}/parts`,
+        params,
+      }),
+      providesTags: ["PublicLotteries"],
+    }),
   }),
 });
 
-export const { useGetPublicLotteriesQuery, useGetPublicLotteryByIdQuery } =
-  publicApi;
+export const {
+  useGetPublicLotteriesQuery,
+  useGetPublicLotteryByIdQuery,
+  useGetPublicCollectionsQuery,
+  useGetLotteryPartsByIdQuery,
+} = publicApi;

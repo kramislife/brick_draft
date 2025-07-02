@@ -21,7 +21,7 @@
 - text-sidebar-primary-foreground - white */
 
 :root {
-  font-family: Poppins, Inter, Nunito, sans-serif, system-ui;
+  font-family: Inter, Poppins, Nunito, sans-serif, system-ui;
   color-scheme: light dark;
   --radius: 0.625rem;
   --background: oklch(1 0 0);

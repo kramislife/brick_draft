@@ -5,6 +5,7 @@ import {
   createLottery,
   updateLottery,
   deleteLottery,
+  getLotteryPartsWithQuery,
 } from "../controllers/lotteryController.js";
 import {
   isAuthenticatedUser,
@@ -16,6 +17,7 @@ const router = express.Router();
 // Public routes
 router.route("/lotteries").get(getAllLotteries);
 router.route("/lotteries/:id").get(getLotteryById);
+router.route("/lotteries/:id/parts").get(getLotteryPartsWithQuery);
 
 // Admin routes
 router
