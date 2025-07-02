@@ -221,3 +221,115 @@ export const deleteLottery = catchAsyncErrors(async (req, res, next) => {
     message: "Lottery deleted successfully",
   });
 });
+
+export const getLotteryPartsWithQuery = catchAsyncErrors(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const { search, sort, color, category, page = 1, limit } = req.query;
+
+    // Find the lottery and populate parts
+    const lottery = await Lottery.findById(id).populate({
+      path: "parts",
+      populate: { path: "color", select: "color_name hex_code" },
+    });
+
+    if (!lottery) {
+      return next(new customErrorHandler("Lottery not found", 404));
+    }
+
+    let parts = lottery.parts;
+
+    // Filter: search
+    if (search) {
+      const searchLower = search.toLowerCase();
+      parts = parts.filter(
+        (part) =>
+          part.name.toLowerCase().includes(searchLower) ||
+          (part.part_id && part.part_id.toLowerCase().includes(searchLower)) ||
+          (part.item_id && part.item_id.toLowerCase().includes(searchLower)) ||
+          (part.category_name &&
+            part.category_name.toLowerCase().includes(searchLower)) ||
+          (part.color &&
+            part.color.color_name.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Filter: color
+    if (color) {
+      parts = parts.filter(
+        (part) => part.color && part.color._id.toString() === color
+      );
+    }
+
+    // Filter: category
+    if (category) {
+      parts = parts.filter(
+        (part) => part.category_name && part.category_name === category
+      );
+    }
+
+    // Sort
+    if (sort) {
+      if (sort === "name") {
+        parts = parts.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sort === "-name") {
+        parts = parts.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sort === "part_id") {
+        parts = parts.sort((a, b) =>
+          (a.part_id || "").localeCompare(b.part_id || "")
+        );
+      } else if (sort === "-part_id") {
+        parts = parts.sort((a, b) =>
+          (b.part_id || "").localeCompare(a.part_id || "")
+        );
+      } else if (sort === "quantity") {
+        parts = parts.sort((a, b) => (a.quantity || 0) - (b.quantity || 0));
+      } else if (sort === "-quantity") {
+        parts = parts.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+      } else if (sort === "total_value") {
+        parts = parts.sort(
+          (a, b) => (a.total_value || 0) - (b.total_value || 0)
+        );
+      } else if (sort === "-total_value") {
+        parts = parts.sort(
+          (a, b) => (b.total_value || 0) - (a.total_value || 0)
+        );
+      } else if (sort === "date") {
+        parts = parts.sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+      } else if (sort === "-date") {
+        parts = parts.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+      }
+    }
+
+    // Pagination
+    const totalParts = parts.length;
+    const pageNum = parseInt(page, 10) || 1;
+
+    // Handle "all" case (when limit is undefined)
+    let paginatedParts, totalPages;
+    if (limit === undefined || limit === "all") {
+      // Return all parts without pagination
+      paginatedParts = parts;
+      totalPages = 1;
+    } else {
+      // Apply pagination
+      const limitNum = parseInt(limit, 10) || 10;
+      totalPages = Math.ceil(totalParts / limitNum);
+      const startIdx = (pageNum - 1) * limitNum;
+      paginatedParts = parts.slice(startIdx, startIdx + limitNum);
+    }
+
+    res.status(200).json({
+      success: true,
+      count: paginatedParts.length,
+      totalParts,
+      totalPages,
+      page: pageNum,
+      parts: paginatedParts,
+    });
+  }
+);

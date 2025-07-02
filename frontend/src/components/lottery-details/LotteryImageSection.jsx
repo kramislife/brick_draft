@@ -7,7 +7,7 @@ const LotteryImageSection = ({ set }) => {
       <img
         src={set.image}
         alt={set.name}
-        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+        className="w-full h-full object-contain hover:scale-105 transition-transform duration-500 p-1"
       />
       <div className="absolute top-4 left-4">
         <Badge className="text-sm">{set.theme}</Badge>

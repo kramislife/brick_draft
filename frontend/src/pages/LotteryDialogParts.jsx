@@ -48,7 +48,7 @@ const LotteryDialogParts = ({ parts, setName }) => {
   return (
     <DialogContent className="sm:max-w-xl">
       <DialogHeader>
-        <DialogTitle className="text-start text-2xl font-bold">
+        <DialogTitle className="text-start text-xl font-bold ">
           {setName} Parts
         </DialogTitle>
       </DialogHeader>

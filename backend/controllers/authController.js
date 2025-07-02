@@ -21,13 +21,20 @@ export const registerUser = catchAsyncErrors(async (req, res, next) => {
   const { name, username, email, password, contact_number } = req.body;
 
   if (!name || !username || !email || !password || !contact_number) {
-    return next(new customErrorHandler("Please fill in all fields", 400));
+    return next(
+      new customErrorHandler("Please fill in all required fields", 400)
+    );
   }
 
   //2. CHECK IF THE USER WITH SAME EMAIL OR USERNAME ALREADY EXISTS
   const user = await User.findOne({ $or: [{ email }, { username }] });
   if (user) {
-    return next(new customErrorHandler("User already exists", 400));
+    if (user.email === email) {
+      return next(new customErrorHandler("Email already registered", 400));
+    }
+    if (user.username === username) {
+      return next(new customErrorHandler("Username already taken", 400));
+    }
   }
 
   //3. CREATE A NEW USER
@@ -49,17 +56,28 @@ export const registerUser = catchAsyncErrors(async (req, res, next) => {
   const verificationLink = `${process.env.FRONTEND_URL}/verify_user/${token}`;
 
   // 7. SEND THE VERIFICATION LINK TO THE USER'S EMAIL
-  await sendEmail({
-    email: new_user.email,
-    subject: `Verify Your Email | ${process.env.SMTP_FROM_NAME}`,
-    message: getVerificationEmailTemplate(new_user, verificationLink),
-  });
+  try {
+    await sendEmail({
+      email: new_user.email,
+      subject: `Verify Your Email | ${process.env.SMTP_FROM_NAME}`,
+      message: getVerificationEmailTemplate(new_user, verificationLink),
+    });
+  } catch (emailError) {
+    // If email fails, still create the user but inform them
+    console.error("Email sending failed:", emailError);
+    return next(
+      new customErrorHandler(
+        "Account created but verification email failed to send. Please contact support.",
+        500
+      )
+    );
+  }
 
   // 8. SEND RESPONSE TO THE USER
   res.status(201).json({
     status: "success",
     message:
-      "You have successfully registered. A verification email has been sent to your inbox. If you don’t receive it within a few minutes, please check your Spam folder ",
+      "Registration successful! Please check your email for verification.",
     new_user,
   });
 });
@@ -88,14 +106,19 @@ export const verifyUser = catchAsyncErrors(async (req, res, next) => {
     const userWithToken = await User.findOne({ verification_token: token });
 
     if (!userWithToken) {
-      return next(new customErrorHandler("Invalid verification token", 403));
+      return next(
+        new customErrorHandler(
+          "Invalid verification token. Please check your email for the correct verification link.",
+          403
+        )
+      );
     }
 
     // Token expired case - Don't automatically send new email
     if (userWithToken.verification_token_expiry < Date.now()) {
       return next(
         new customErrorHandler(
-          "Verification token has expired. Please request a new verification link from the login page.",
+          "Verification link has expired. Please request a new verification link.",
           400
         )
       );
@@ -104,7 +127,9 @@ export const verifyUser = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Email verification successful",
+    message: "Email verification successful!",
+    description:
+      "Your email has been successfully verified. You can now log in to your account.",
   });
 });
 
@@ -127,7 +152,7 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(
       new customErrorHandler(
-        "This account is not registered yet. Please register first.",
+        "Account not found. Please check your credentials or register a new account.",
         404
       )
     );
@@ -135,7 +160,9 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
 
   // 4. IF PASSWORD DOES NOT MATCH
   if (!(await user.comparePassword(password))) {
-    return next(new customErrorHandler("Invalid Login Credentials", 401));
+    return next(
+      new customErrorHandler("Invalid credentials. Please try again.", 401)
+    );
   }
 
   // 5. CHECK IF USER IS SUSPENDED
@@ -151,7 +178,10 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   // 6. CHECK IF USER IS VERIFIED
   if (!user.is_verified) {
     return next(
-      new customErrorHandler("User not verified, please verify your email", 401)
+      new customErrorHandler(
+        "Please verify your email address before logging in. Check your inbox for the verification link.",
+        401
+      )
     );
   }
 
@@ -183,7 +213,8 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Login Successful",
+    message: "Login successful!",
+    description: `Welcome back, ${user.name}!`,
     user: {
       _id: user._id,
       name: user.name,
@@ -206,7 +237,10 @@ export const logoutUser = catchAsyncErrors(async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return res.status(200).json({ message: "Logout successful" });
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
   }
 
   // 1. FIND USER WITH THE PROVIDED REFRESH TOKEN
@@ -223,7 +257,7 @@ export const logoutUser = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Logout successful",
+    message: "Logged out successfully",
   });
 });
 
@@ -292,19 +326,25 @@ export const updateCurrentUserProfile = catchAsyncErrors(
 export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
 
+  if (!email) {
+    return next(
+      new customErrorHandler("Please provide your email address", 400)
+    );
+  }
+
   const user = await User.findOne({ email });
 
   if (!user) {
     return next(
-      new ErrorHandler(
-        "This email is not registered with us. Please register to continue.",
+      new customErrorHandler(
+        "No account found with this email address. Please check your email or register a new account.",
         404
       )
     );
   }
 
   // Generate reset password token
-  const reset_password_token = User.generateResetPasswordToken();
+  const reset_password_token = user.generateResetPasswordToken();
   await user.save();
 
   // Create reset password URL
@@ -319,14 +359,20 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: `Email sent to ${user.email}`,
+      message: "Password reset email sent successfully!",
+      description: `A password reset link has been sent to ${user.email}.`,
     });
   } catch (err) {
     user.reset_password_token = undefined;
     user.reset_password_token_expiry = undefined;
     await user.save();
 
-    return next(new customErrorHandler(err.message, 500));
+    return next(
+      new customErrorHandler(
+        "Failed to send password reset email. Please try again later.",
+        500
+      )
+    );
   }
 });
 
@@ -354,7 +400,7 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
     // Don't automatically generate new token and send email
     return next(
       new customErrorHandler(
-        "Reset password token is invalid or has expired. Please request a new reset link.",
+        "Reset password link is invalid or has expired. Please request a new reset link.",
         400
       )
     );
@@ -362,7 +408,12 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
 
   // If passwords don't match
   if (req.body.password !== req.body.confirmPassword) {
-    return next(new customErrorHandler("Passwords do not match", 400));
+    return next(
+      new customErrorHandler(
+        "Passwords do not match. Please make sure both passwords are identical.",
+        400
+      )
+    );
   }
 
   // Update the password
@@ -388,7 +439,9 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Password reset successful. Please login with your new password",
+    message: "Password reset successful!",
+    description:
+      "Your password has been successfully updated. You can now log in with your new password.",
   });
 });
 

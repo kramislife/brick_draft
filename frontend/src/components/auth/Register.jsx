@@ -4,20 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { useRegisterMutation } from "@/redux/api/authApi";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     username: "",
-    contactNumber: "",
-    emailAddress: "",
-    newPassword: "",
+    contact_number: "",
+    email: "",
+    password: "",
     confirmPassword: "",
     agreedToTerms: false,
   });
   const [register, { isLoading }] = useRegisterMutation();
+
+  // State to show/hide password requirements
+  const [showPasswordRequirements, setShowPasswordRequirements] =
+    useState(false);
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -27,52 +32,90 @@ const Register = () => {
     }));
   };
 
+  const canRegister = formData.agreedToTerms && !isLoading;
+
+  const passwordValidations = {
+    minLength: formData.password.length >= 6,
+    hasUppercase: /[A-Z]/.test(formData.password),
+    hasLowercase: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSpecialChar: /[!@#$%^&*_]/.test(formData.password),
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast.error("Passwords don't match", {
-        description: "Please make sure your passwords match.",
-      });
-      return;
-    }
-
-    if (!formData.agreedToTerms) {
-      toast.error("Terms agreement required", {
-        description:
-          "You must agree to the Terms of Service and Privacy Policy.",
-      });
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords don't match");
       return;
     }
 
     // Prepare data for API
     const userData = {
-      fullName: formData.fullName,
+      name: formData.name,
       username: formData.username,
-      phone: formData.contactNumber,
-      email: formData.emailAddress,
-      password: formData.newPassword,
+      contact_number: formData.contact_number,
+      email: formData.email,
+      password: formData.password,
     };
-
-    // console.log(userData);
 
     try {
       const result = await register(userData).unwrap();
-      toast.success(result.message || "Registration successful", {
-        description: result.description || "Your account has been created.",
+
+      toast.success(result.message || "Registration successful!");
+
+      // Clear form after successful registration
+      setFormData({
+        name: "",
+        username: "",
+        contact_number: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        agreedToTerms: false,
       });
     } catch (error) {
-      toast.error(error.data?.message || "Registration failed", {
-        description:
-          error.data?.message || "Something went wrong. Please try again.",
-      });
+      toast.error(error.data?.message || "Registration failed");
     }
   };
+
+  // Password requirements display component with real-time validation
+  const PasswordRequirements = () => (
+    <div className="mt-2 p-3 bg-muted rounded-md space-y-2">
+      <p className="text-sm font-medium text-foreground">
+        Password Requirements:
+      </p>
+      <div className="space-y-1">
+        {Object.entries({
+          minLength: "At least 6 characters",
+          hasUppercase: "One uppercase letter (A-Z)",
+          hasLowercase: "One lowercase letter (a-z)",
+          hasNumber: "One number (0-9)",
+          hasSpecialChar: "One special character (!@#$%^&*_)",
+        }).map(([key, requirement]) => (
+          <div key={key} className="flex items-center gap-2 text-sm">
+            {passwordValidations[key] ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <X className="h-4 w-4 text-red-500" />
+            )}
+            <span
+              className={
+                passwordValidations[key] ? "text-green-600" : "text-red-600"
+              }
+            >
+              {requirement}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   // Input field configurations
   const personalInfoFields = [
     {
-      id: "fullName",
+      id: "name",
       label: "Full Name",
       type: "text",
       placeholder: "John Doe",
@@ -84,13 +127,13 @@ const Register = () => {
       placeholder: "johndoe",
     },
     {
-      id: "contactNumber",
+      id: "contact_number",
       label: "Contact Number",
       type: "text",
       placeholder: "+1 (555) 000-0000",
     },
     {
-      id: "emailAddress",
+      id: "email",
       label: "Email Address",
       type: "email",
       placeholder: "john@example.com",
@@ -99,7 +142,7 @@ const Register = () => {
 
   const passwordFields = [
     {
-      id: "newPassword",
+      id: "password",
       label: "Password",
       type: "password",
       placeholder: "Create a password",
@@ -115,12 +158,12 @@ const Register = () => {
   const termsLinks = [
     {
       id: "terms",
-      path: "/terms",
-      label: "Terms of Service",
+      path: "/terms-of-use",
+      label: "Terms of Use",
     },
     {
       id: "privacy",
-      path: "/privacy",
+      path: "/privacy-policy",
       label: "Privacy Policy",
     },
   ];
@@ -152,8 +195,21 @@ const Register = () => {
             placeholder={field.placeholder}
             value={formData[field.id]}
             onChange={handleChange}
+            onFocus={() => {
+              if (field.id === "password") {
+                setShowPasswordRequirements(true);
+              }
+            }}
+            onBlur={() => {
+              if (field.id === "password" && !formData.password) {
+                setShowPasswordRequirements(false);
+              }
+            }}
             required
           />
+          {field.id === "password" && showPasswordRequirements && (
+            <PasswordRequirements />
+          )}
         </div>
       ))}
 
@@ -163,7 +219,10 @@ const Register = () => {
           className="mt-0.5"
           checked={formData.agreedToTerms}
           onCheckedChange={(checked) =>
-            setFormData((prev) => ({ ...prev, agreedToTerms: checked }))
+            setFormData((prev) => ({
+              ...prev,
+              agreedToTerms: checked === true,
+            }))
           }
         />
         <Label htmlFor="agreedToTerms" className="block leading-5">
@@ -184,7 +243,13 @@ const Register = () => {
         </Label>
       </div>
 
-      <Button className="w-full" variant="accent" isLoading={isLoading}>
+      <Button
+        className="w-full"
+        variant="accent"
+        isLoading={isLoading}
+        type="submit"
+        disabled={!canRegister}
+      >
         {isLoading ? "Creating Account..." : "Register"}
       </Button>
     </form>
