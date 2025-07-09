@@ -2,6 +2,7 @@ import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import customErrorHandler from "../utills/custom_error_handler.js";
 import Part from "../models/part.model.js";
 import { deleteImage, uploadImage } from "../utills/cloudinary.js";
+import Lottery from "../models/lottery.model.js";
 
 //------------------------------------ GET ALL PARTS => GET /parts ------------------------------------
 export const getParts = catchAsyncErrors(async (req, res, next) => {
@@ -18,12 +19,15 @@ export const getParts = catchAsyncErrors(async (req, res, next) => {
 
 //------------------------------------ GET PART BY ID => GET /parts/:id ------------------------------------
 export const getPartById = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
+  const part = await Part.findById(req.params.id).populate(
+    "color",
+    "color_name hex_code"
+  );
 
-  const part = await Part.findById(id).populate("color", "color_name hex_code");
   if (!part) {
     return next(new customErrorHandler("Part not found", 404));
   }
+
   res.status(200).json({
     success: true,
     message: "Part retrieved successfully",
@@ -31,9 +35,7 @@ export const getPartById = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// --------------------------------------------------- ADMIN ----------------------------------------------------------
-
-//------------------------------------ CREATE NEW PART => admin/newPart ------------------------------------
+//------------------------------------ CREATE NEW PART => POST /admin/newPart ------------------------------------
 export const createPart = catchAsyncErrors(async (req, res, next) => {
   const {
     name,
@@ -42,84 +44,59 @@ export const createPart = catchAsyncErrors(async (req, res, next) => {
     category,
     category_name,
     weight,
-    price,
-    quantity,
     color,
     image,
   } = req.body;
 
-  // Validate required fields
-  if (
-    !name ||
-    !part_id ||
-    !item_id ||
-    !category ||
-    !category_name ||
-    !weight ||
-    !price ||
-    !quantity ||
-    !color
-  ) {
-    return next(
-      new customErrorHandler("All required fields must be provided", 400)
-    );
+  if (!name || !part_id || !item_id || !category || !category_name || !color) {
+    return next(new customErrorHandler("Required fields missing", 400));
   }
 
-  // Validate category
   if (!["part", "minifigure"].includes(category.toLowerCase())) {
     return next(
-      new customErrorHandler(
-        "Category must be either 'part' or 'minifigure'",
-        400
-      )
+      new customErrorHandler("Category must be 'part' or 'minifigure'", 400)
     );
   }
 
-  // Check if item_id already exists
-  const existingPart = await Part.findOne({ item_id });
-  if (existingPart) {
-    return next(new customErrorHandler("Part ID already exists", 400));
+  const existing = await Part.findOne({ item_id });
+  if (existing) {
+    return next(
+      new customErrorHandler("Part with this item_id already exists", 409)
+    );
   }
 
-  // Handle image upload if provided
   let imageData = null;
   if (image) {
     try {
       imageData = await uploadImage(image, "brick_draft/parts");
-    } catch (error) {
+    } catch (err) {
       return next(new customErrorHandler("Failed to upload image", 500));
     }
   }
 
   const partData = {
-    name,
-    part_id,
-    item_id,
+    name: name.trim(),
+    part_id: part_id.trim(),
+    item_id: item_id.trim(),
     category: category.toLowerCase(),
-    category_name,
-    weight: Number(weight),
-    price: Number(price),
-    quantity: Number(quantity),
-    total_value: Number(price) * Number(quantity),
+    category_name: category_name.trim(),
+    weight: weight ? Number(weight) : 0,
     color,
-    ...(imageData && { item_images: [imageData] }),
+    ...(imageData && { item_image: imageData }),
     created_by: req.user.user_id,
   };
 
   const newPart = await Part.create(partData);
 
-  if (!newPart) {
-    return next(new customErrorHandler("Failed to create new part", 500));
-  }
-
   res.status(201).json({
     success: true,
     message: "Part created successfully",
     newPart,
+    description: `${newPart.name} has been added to parts.`,
   });
 });
 
-//------------------------------------ UPDATE PART => admin/parts/:id ------------------------------------
+//------------------------------------ UPDATE PART => PUT /admin/parts/:id ------------------------------------
 export const updatePart = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const {
@@ -129,62 +106,43 @@ export const updatePart = catchAsyncErrors(async (req, res, next) => {
     category,
     category_name,
     weight,
-    price,
-    quantity,
     color,
     image,
   } = req.body;
 
-  // Get the existing part first
-  const existingPart = await Part.findById(id);
-  if (!existingPart) {
-    return next(new customErrorHandler("Part not found", 404));
-  }
+  const part = await Part.findById(id);
+  if (!part) return next(new customErrorHandler("Part not found", 404));
 
-  // Check if item_id already exists (excluding current part)
-  if (item_id && item_id !== existingPart.item_id) {
-    const duplicatePart = await Part.findOne({ item_id });
-    if (duplicatePart) {
-      return next(new customErrorHandler("Part ID already exists", 400));
+  if (item_id && item_id !== part.item_id) {
+    const duplicate = await Part.findOne({ item_id });
+    if (duplicate) {
+      return next(
+        new customErrorHandler("Part with this item_id already exists", 409)
+      );
     }
   }
 
-  // Validate category if provided
-  if (category && !["part", "minifigure"].includes(category.toLowerCase())) {
-    return next(
-      new customErrorHandler(
-        "Category must be either 'part' or 'minifigure'",
-        400
-      )
-    );
-  }
-
   const updateData = {
-    name,
-    item_id,
-    ...(category && { category: category.toLowerCase() }),
-    category_name,
-    weight: Number(weight),
-    price: Number(price),
-    quantity: Number(quantity),
-    total_value: Number(price) * Number(quantity),
+    name: name?.trim(),
+    part_id: part_id?.trim(),
+    item_id: item_id?.trim(),
+    category: category ? category.toLowerCase() : undefined,
+    category_name: category_name?.trim(),
+    weight: weight !== undefined ? Number(weight) : undefined,
     color,
     updated_by: req.user.user_id,
   };
 
-  // Only process the image if it's a new base64 string
+  // Handle new image
   if (image && typeof image === "string" && image.startsWith("data:image")) {
     try {
-      // Delete old image if it exists
-      if (existingPart.item_images?.[0]?.public_id) {
-        await deleteImage(existingPart.item_images[0].public_id);
+      if (part.item_image?.public_id) {
+        await deleteImage(part.item_image.public_id);
       }
-
-      // Upload new image
       const imageData = await uploadImage(image, "brick_draft/parts");
-      updateData.item_images = [imageData];
-    } catch (error) {
-      return next(new customErrorHandler("Failed to upload image", 500));
+      updateData.item_image = imageData;
+    } catch (err) {
+      return next(new customErrorHandler("Failed to upload new image", 500));
     }
   }
 
@@ -193,41 +151,39 @@ export const updatePart = catchAsyncErrors(async (req, res, next) => {
     runValidators: true,
   });
 
-  if (!updatedPart) {
-    return next(new customErrorHandler("Failed to update part", 500));
-  }
-
   res.status(200).json({
     success: true,
     updatedPart,
     message: "Part updated successfully",
+    description: `${updatedPart.name} has been updated.`,
   });
 });
 
-//------------------------------------ DELETE PART => admin/parts/:id ------------------------------------
+//------------------------------------ DELETE PART => DELETE /admin/parts/:id ------------------------------------
 export const deletePartById = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
 
   const part = await Part.findById(id);
-  // First check if part exists
   if (!part) {
     return next(new customErrorHandler("Part not found", 404));
   }
 
-  // Delete image from Cloudinary if it exists
-  if (part.item_images?.[0]?.public_id) {
+  if (part.item_image?.public_id) {
     try {
-      await deleteImage(part.item_images[0].public_id);
-    } catch (error) {
-      console.error("Failed to delete image from Cloudinary:", error);
+      await deleteImage(part.item_image.public_id);
+    } catch (err) {
+      console.error("Image deletion failed:", err);
     }
   }
 
-  const deletedPart = await Part.findByIdAndDelete(id);
+  await Part.findByIdAndDelete(id);
+
+  // Remove the part from all lotteries' parts arrays
+  await Lottery.updateMany({}, { $pull: { parts: { part: part._id } } });
 
   res.status(200).json({
     success: true,
-    deletedPart,
     message: "Part deleted successfully",
+    description: `${part.name} has been deleted and removed from all lotteries.`,
   });
 });

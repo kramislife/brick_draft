@@ -88,34 +88,37 @@ const LotteryDetails = () => {
           totalParts
         );
 
-  // Get dropdown options from lottery data
+  // Get all parts for the current lottery
   const allParts = useMemo(
     () => lotteryData?.lottery?.parts || [],
     [lotteryData]
   );
 
-  // Category options for dropdown
+  // Filtered parts based on current selection
+  const filteredParts = useMemo(() => {
+    return allParts.filter((p) => {
+      const matchesCategory =
+        category === "all" || p.part?.category_name === category;
+      const matchesColor =
+        color === "all" ||
+        (p.part?.color &&
+          (p.part.color._id === color || p.part.color === color));
+      return matchesCategory && matchesColor;
+    });
+  }, [allParts, category, color]);
+
+  // Category options: only those present in filtered parts
   const categoryOptions = useMemo(() => {
-    let base = allParts;
-    if (color && color !== "all") {
-      base = base.filter(
-        (p) => p.color && (p.color._id === color || p.color === color)
-      );
-    }
     const cats = Array.from(
-      new Set(base.map((p) => p.category_name).filter(Boolean))
+      new Set(filteredParts.map((p) => p.part?.category_name).filter(Boolean))
     );
     return cats;
-  }, [allParts, color]);
+  }, [filteredParts]);
 
-  // Color options for dropdown
+  // Color options: only those present in filtered parts
   const colorOptions = useMemo(() => {
-    let base = allParts;
-    if (category && category !== "all") {
-      base = base.filter((p) => p.category_name === category);
-    }
-    const colors = base
-      .map((p) => p.color)
+    const colors = filteredParts
+      .map((p) => p.part?.color)
       .filter(Boolean)
       .map((c) =>
         typeof c === "object"
@@ -129,7 +132,7 @@ const LotteryDetails = () => {
       if (!unique.some((u) => u.id === c.id)) unique.push(c);
     });
     return unique;
-  }, [allParts, category]);
+  }, [filteredParts]);
 
   // Pagination numbers (show up to 3 around current)
   const getPageNumbers = () => {
@@ -293,7 +296,7 @@ const LotteryDetails = () => {
         <div className="space-y-5 font-[Inter]">
           <div className="space-y-2">
             <h1 className="hidden lg:block text-4xl font-bold">{set.name}</h1>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed text-sm">
               {set.description}
             </p>
           </div>

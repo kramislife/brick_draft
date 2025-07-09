@@ -59,16 +59,23 @@ const lotterySchema = new mongoose.Schema(
       lowercase: true,
     },
     image: {
-      public_id: { type: String },
-      url: { type: String },
+      public_id: { type: String, required: true },
+      url: { type: String, required: true },
     },
     parts: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Part",
-        required: true,
+        _id: false,
+        part: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Part",
+          required: true,
+        },
+        price: { type: Number, min: 0, default: null },
+        quantity: { type: Number, min: 0, default: null },
+        total_value: { type: Number, min: 0, default: null },
       },
     ],
+
     lotteryRounds: [
       {
         type: mongoose.Schema.Types.ObjectId,

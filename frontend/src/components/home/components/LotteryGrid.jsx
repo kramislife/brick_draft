@@ -85,7 +85,12 @@ const LotteryGrid = ({ title, showViewAll = false, limit }) => {
     dateAdded: lottery.createdAt,
     tag: lottery.tag,
     whyCollect: lottery.whyCollect,
-    parts: lottery.parts || [],
+    parts: (lottery.parts || []).map((p) => ({
+      ...p.part,
+      quantity: p.quantity,
+      total_value: p.total_value,
+      price: p.price,
+    })),
   }));
 
   // Sort data based on selected option

@@ -5,6 +5,7 @@ import customErrorHandler from "../utills/custom_error_handler.js";
 //------------------------------------ GET ALL COLORS => GET /api/v1/colors ------------------------------------
 export const getAllColors = catchAsyncErrors(async (req, res, next) => {
   const colors = await Color.find().sort({ createdAt: -1 });
+
   res.status(200).json({
     success: true,
     message: `${colors.length} colors retrieved`,
@@ -14,11 +15,10 @@ export const getAllColors = catchAsyncErrors(async (req, res, next) => {
 
 //------------------------------------ GET COLOR BY ID => GET /api/v1/color/:id ------------------------------------
 export const getColorById = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
-  const color = await Color.findById(id);
-  if (!color) {
-    return next(new customErrorHandler("Color not found", 404));
-  }
+  const color = await Color.findById(req.params.id);
+
+  if (!color) return next(new customErrorHandler("Color not found", 404));
+
   res.status(200).json({
     success: true,
     message: "Color retrieved successfully",
@@ -26,21 +26,29 @@ export const getColorById = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// --------------------------------------------------- ADMIN ----------------------------------------------------------
-
 //------------------------------------ CREATE NEW COLOR => POST /api/v1/admin/newColor ------------------------------------
 export const createColor = catchAsyncErrors(async (req, res, next) => {
-  const { color_name, hex_code } = req.body;
+  const { color_name = "", hex_code = "" } = req.body;
 
-  if (!color_name || !hex_code) {
+  if (!color_name.trim() || !hex_code.trim()) {
     return next(
       new customErrorHandler("Color name and hex code are required", 400)
     );
   }
 
+  const existing = await Color.findOne({
+    color_name: { $regex: `^${color_name.trim()}$`, $options: "i" },
+  });
+
+  if (existing) {
+    return next(
+      new customErrorHandler(`Color "${color_name}" already exists`, 409)
+    );
+  }
+
   const colorData = {
-    color_name,
-    hex_code,
+    color_name: color_name.trim(),
+    hex_code: hex_code.trim().toLowerCase(),
     created_by: req.user.user_id,
   };
 
@@ -58,25 +66,19 @@ export const updateColor = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const { color_name, hex_code } = req.body;
 
-  const updateData = {
-    color_name,
-    hex_code,
-    updated_by: req.user.user_id,
-  };
+  const color = await Color.findById(id);
+  if (!color) return next(new customErrorHandler("Color not found", 404));
 
-  const updatedColor = await Color.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  });
+  if (color_name?.trim()) color.color_name = color_name.trim();
+  if (hex_code?.trim()) color.hex_code = hex_code.trim().toLowerCase();
+  color.updated_by = req.user.user_id;
 
-  if (!updatedColor) {
-    return next(new customErrorHandler("Color not found", 404));
-  }
+  await color.save();
 
   res.status(200).json({
     success: true,
-    updatedColor,
     message: "Color updated successfully",
+    updatedColor: color,
   });
 });
 
@@ -86,9 +88,7 @@ export const deleteColor = catchAsyncErrors(async (req, res, next) => {
 
   const color = await Color.findByIdAndDelete(id);
 
-  if (!color) {
-    return next(new customErrorHandler("Color not found", 404));
-  }
+  if (!color) return next(new customErrorHandler("Color not found", 404));
 
   res.status(200).json({
     success: true,
