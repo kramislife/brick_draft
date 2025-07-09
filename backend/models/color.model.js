@@ -10,10 +10,8 @@ const colorSchema = new mongoose.Schema(
     },
     hex_code: {
       type: String,
-      required: [true, "Color code is required"],
       trim: true,
-      unique: true,
-      lowercase: true, // Ensures '#FFAA00' and '#ffaa00' are stored consistently
+      lowercase: true,
       match: [
         /^#(?:[0-9a-f]{3}){1,2}$/,
         "Please provide a valid hex color code",

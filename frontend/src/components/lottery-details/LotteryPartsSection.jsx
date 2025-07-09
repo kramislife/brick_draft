@@ -45,7 +45,9 @@ const LotteryPartsSection = ({
       {/* Filter Bar */}
       <div className="flex flex-wrap gap-1 items-end mb-6">
         <div className="flex flex-col">
-          <Label className="text-sm mb-1 font-semibold">Search Parts</Label>
+          <Label className="text-sm mb-1 font-semibold">
+            {totalParts} Unique Parts
+          </Label>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
@@ -99,7 +101,7 @@ const LotteryPartsSection = ({
                 <SelectItem key={col.id} value={col.id}>
                   <span className="flex items-center gap-2">
                     <span
-                      className="w-4 h-4 rounded border"
+                      className="w-4 h-4 rounded"
                       style={{ backgroundColor: col.hex }}
                     />
                     {col.name}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Edit, Trash2, MoreHorizontal, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,8 +30,6 @@ const Parts = () => {
     category: "",
     category_name: "",
     weight: "",
-    price: "",
-    quantity: "",
     color: "",
     image: null,
   });
@@ -52,8 +50,6 @@ const Parts = () => {
       category: "",
       category_name: "",
       weight: "",
-      price: "",
-      quantity: "",
       color: "",
       image: null,
     });
@@ -69,10 +65,8 @@ const Parts = () => {
       category: data.category,
       category_name: data.category_name,
       weight: data.weight,
-      price: data.price,
-      quantity: data.quantity,
       color: data.color._id || data.color,
-      image: data.item_images?.[0],
+      image: data.item_image?.url,
     });
     setIsDialogOpen(true);
   };
@@ -84,8 +78,10 @@ const Parts = () => {
 
   const confirmDelete = async () => {
     try {
-      await deletePart({ id: selectedPart._id }).unwrap();
-      toast.success("Part deleted successfully");
+      const result = await deletePart({ id: selectedPart._id }).unwrap();
+      toast.success(result.message || "Part deleted successfully", {
+        description: result.description || undefined,
+      });
       setIsDeleteDialogOpen(false);
       setSelectedPart(null);
     } catch (error) {
@@ -112,8 +108,6 @@ const Parts = () => {
           category: formData.category,
           category_name: formData.category_name,
           weight: formData.weight,
-          price: formData.price,
-          quantity: formData.quantity,
           color: formData.color,
           ...(formData.image && { image: formData.image }),
         }).unwrap();
@@ -129,8 +123,6 @@ const Parts = () => {
           category: formData.category,
           category_name: formData.category_name,
           weight: formData.weight,
-          price: formData.price,
-          quantity: formData.quantity,
           color: formData.color,
           ...(formData.image && { image: formData.image }),
         }).unwrap();
@@ -151,10 +143,10 @@ const Parts = () => {
 
   const columns = [
     {
-      accessorKey: "item_images",
+      accessorKey: "item_image",
       header: "Image",
       cell: ({ row }) => {
-        const image = row.original.item_images?.[0];
+        const image = row.original.item_image;
         return image?.url ? (
           <img
             src={image.url}
@@ -162,8 +154,8 @@ const Parts = () => {
             className="w-12 h-12 object-cover rounded-md mx-auto"
           />
         ) : (
-          <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-            <span className="text-xs text-gray-500">No image</span>
+          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center mx-auto">
+            <ImageIcon className="w-4 h-4 text-muted-foreground" />
           </div>
         );
       },
@@ -181,8 +173,8 @@ const Parts = () => {
       header: "Part Name",
     },
     {
-      accessorKey: "category",
-      header: "Category",
+      accessorKey: "category_name",
+      header: "Category Name",
     },
     {
       accessorKey: "color",
@@ -206,20 +198,6 @@ const Parts = () => {
       accessorKey: "weight",
       header: "Weight",
       cell: ({ row }) => `${row.original.weight} g`,
-    },
-    {
-      accessorKey: "price",
-      header: "Price",
-      cell: ({ row }) => `$${Number(row.original.price).toFixed(2)}`,
-    },
-    {
-      accessorKey: "quantity",
-      header: "Quantity",
-    },
-    {
-      accessorKey: "total_value",
-      header: "Total Value",
-      cell: ({ row }) => `$${Number(row.original.total_value).toFixed(2)}`,
     },
     {
       id: "actions",
@@ -280,7 +258,7 @@ const Parts = () => {
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
-        itemName={selectedPart?.name}
+        itemName={`${selectedPart?.name} - ${selectedPart?.color?.color_name}`}
         itemType="Part"
         isLoading={isDeleting}
       />

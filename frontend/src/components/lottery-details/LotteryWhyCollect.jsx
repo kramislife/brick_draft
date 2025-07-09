@@ -16,7 +16,7 @@ const LotteryWhyCollect = ({ set }) => {
           {set.whyCollect.map((reason, index) => (
             <li
               key={index}
-              className="flex items-start gap-2 text-muted-foreground text-sm md:text-base"
+              className="flex items-start gap-2 text-muted-foreground text-sm"
             >
               <CheckCircle className="w-5 h-5 text-emerald-500 mt-1" />
               <span>{reason}</span>

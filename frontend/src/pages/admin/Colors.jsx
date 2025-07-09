@@ -90,7 +90,7 @@ const Colors = () => {
   const columns = [
     {
       accessorKey: "color_name",
-      header: "Color Name",
+      header: "Color",
     },
     {
       accessorKey: "hex_code",

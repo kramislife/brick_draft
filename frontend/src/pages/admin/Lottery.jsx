@@ -49,7 +49,22 @@ const Lottery = () => {
           ? data.collection._id
           : data.collection,
       parts: Array.isArray(data.parts)
-        ? data.parts.map((p) => (typeof p === "object" ? p._id : p))
+        ? data.parts.map((p) => {
+            if (typeof p === "object" && p.part) {
+              // Flatten for CSV preview/edit
+              return {
+                item_id: p.part.item_id,
+                part_id: p.part.part_id,
+                name: p.part.name,
+                color: p.part.color?.color_name || p.part.color,             
+                weight: p.part.weight,
+                // quantity: p.quantity,
+                // price: p.price,
+                // total_value: p.total_value,
+              };
+            }
+            return p;
+          })
         : [],
       image: data.image,
     });
@@ -80,24 +95,18 @@ const Lottery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let result;
       if (formData.id) {
-        const result = await updateLottery({
-          id: formData.id,
-          ...formData,
-        }).unwrap();
-        toast.success(result.message || "Lottery updated successfully");
+        result = await updateLottery({ id: formData.id, ...formData }).unwrap();
       } else {
-        const result = await addLottery({
-          ...formData,
-        }).unwrap();
-        toast.success(result.message || "Lottery created successfully");
+        result = await addLottery({ ...formData }).unwrap();
       }
+      toast.success(result.message || "Lottery created successfully", {
+        description: result.description || undefined,
+      });
       setIsDialogOpen(false);
     } catch (error) {
-      toast.error(error.data?.message || "Operation failed", {
-        description:
-          error.data?.description || "Something went wrong. Please try again.",
-      });
+      toast.error(error.data?.message || "Operation failed");
     }
   };
 
@@ -123,19 +132,19 @@ const Lottery = () => {
     {
       accessorKey: "title",
       header: "Set Name",
+      cell: ({ row }) => row.original.title,
+    },
+    {
+      accessorKey: "collection",
+      header: "Collection",
       cell: ({ row }) => (
         <div>
-          <div className="font-semibold text-base">{row.original.title}</div>
+          <div className="font-semibold">{row.original.collection?.name || "-"}</div>
           <div className="text-xs text-muted-foreground">
             {row.original.pieces} pieces
           </div>
         </div>
       ),
-    },
-    {
-      accessorKey: "collection",
-      header: "Collection",
-      cell: ({ row }) => row.original.collection?.name || "-",
     },
     {
       id: "price",
@@ -259,7 +268,7 @@ const Lottery = () => {
         onSubmit={handleSubmit}
         isEdit={!!formData.id}
         isLoading={isFormLoading}
-        size="5xl"
+        size="6xl"
       >
         <LotteryForm formData={formData} onChange={handleChange} />
       </AdminDialogLayout>

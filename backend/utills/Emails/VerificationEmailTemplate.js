@@ -2,7 +2,7 @@ export const getVerificationEmailTemplate = (user, verificationUrl) => {
   const email = user.email;
   const appName = process.env.SMTP_FROM_NAME;
   const supportEmail = process.env.SMTP_FROM_EMAIL;
-  const expiryTime = process.env.EMAIL_VERIFICATION_EXPIRY; 
+  const expiryTime = process.env.JWT_ACCESS_TOKEN_EXPIRY; 
 
   return `
     <!DOCTYPE html>

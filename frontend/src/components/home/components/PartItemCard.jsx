@@ -10,8 +10,8 @@ const PartItemCard = ({ part }) => {
 
   // Get image from item_images array or use direct image
   const partImage =
-    part.item_images?.[0]?.url ||
-    part.item_images?.[0] ||
+    part.item_image?.url ||
+    part.item_image?.[0] ||
     part.image ||
     "/placeholder-part.jpg";
 
@@ -35,15 +35,15 @@ const PartItemCard = ({ part }) => {
 
         <div className="flex flex-col pt-1 pb-1">
           <h4 className="text-lg font-semibold line-clamp-1">
-            <span>{displayId}</span>
+            <span>{displayId || "Part ID"}</span>
             <span className="mx-1">•</span>
-            {part.name}
+            {part.name || "Part Name"}
           </h4>
 
           <div className="flex flex-wrap gap-2 font-semibold text-lg">
             <span className="flex items-center gap-1">
               <span>Quantity:</span>
-              {part.quantity}
+              {part.quantity || "0"}
             </span>
             <span className="flex items-center gap-1">
               <span>Total Value:</span>

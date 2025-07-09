@@ -23,6 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { useGetCollectionsQuery } from "@/redux/api/admin/collectionApi";
 import { useGetPartsQuery } from "@/redux/api/admin/partItemApi";
 import { format } from "date-fns";
+import Papa from "papaparse";
+import TableLayout from "@/components/admin/shared/TableLayout";
 
 const TAG_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -42,6 +44,11 @@ const LotteryForm = ({ formData, onChange }) => {
   // Ensure parts is always an array
   const selectedParts = Array.isArray(formData.parts) ? formData.parts : [];
 
+  // CSV upload state
+  const [csvParts, setCsvParts] = useState([]);
+  const [csvError, setCsvError] = useState("");
+  const [csvFileName, setCsvFileName] = useState("");
+
   useEffect(() => {
     if (!formData.image) {
       setImagePreview("");
@@ -51,6 +58,14 @@ const LotteryForm = ({ formData, onChange }) => {
       setImagePreview(formData.image.url);
     }
   }, [formData.image]);
+
+  useEffect(() => {
+    // If editing and parts are present, initialize CSV preview
+    if (formData.parts && formData.parts.length > 0 && csvParts.length === 0) {
+      setCsvParts(formData.parts);
+    }
+    // eslint-disable-next-line
+  }, [formData.parts]);
 
   // Helper to format draw date and time
   const getFormattedDrawDateTime = () => {
@@ -134,57 +149,54 @@ const LotteryForm = ({ formData, onChange }) => {
     });
   };
 
-  // Parts multi-select logic
-  const handleAddPart = (partId) => {
-    if (!selectedParts.includes(partId)) {
-      onChange({
-        target: {
-          name: "parts",
-          value: [...selectedParts, partId],
+  // CSV file handler
+  const handleCsvChange = (e) => {
+    const file = e.target.files[0];
+    setCsvError("");
+    setCsvFileName(file ? file.name : "");
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (results.errors.length > 0) {
+            setCsvError("CSV parsing error: " + results.errors[0].message);
+            setCsvParts([]);
+          } else {
+            // Filter out empty rows and ensure required fields exist
+            const filtered = results.data.filter(
+              (row) => row.item_id && row.part_id && row.name && row.color
+            );
+            setCsvParts(filtered);
+            // Update formData.parts for submission
+            onChange({ target: { name: "parts", value: filtered } });
+          }
+        },
+        error: (err) => {
+          setCsvError("CSV parsing failed: " + err.message);
+          setCsvParts([]);
         },
       });
+    } else {
+      setCsvParts([]);
+      onChange({ target: { name: "parts", value: [] } });
     }
   };
-  const handleRemovePart = (partId) => {
-    onChange({
-      target: {
-        name: "parts",
-        value: selectedParts.filter((id) => id !== partId),
-      },
-    });
-  };
 
-  // Helper for part display
-  const getPartDisplay = (part) => (
-    <span className="flex items-center gap-2">
-      <div className="flex items-center gap-2">
-        <img
-          src={
-            part.item_images?.[0]?.url ||
-            part.item_images?.[0] ||
-            part.image ||
-            "/placeholder-part.jpg"
-          }
-          alt={part.name}
-          className="w-6 h-6 object-cover"
-          onError={(e) => {
-            e.target.src = "/placeholder-part.jpg";
-          }}
-        />
-      </div>
-      <span className="font-medium">
-        {part.name}{" "}
-        <span className="text-muted-foreground text-xs font-light">
-          • {part.color?.color_name}
-        </span>
-      </span>
-    </span>
-  );
+  // Dynamically generate columns from CSV headers
+  const csvColumns =
+    csvParts.length > 0
+      ? Object.keys(csvParts[0]).map((col) => ({
+          accessorKey: col,
+          header: col.charAt(0).toUpperCase() + col.slice(1),
+          cell: ({ row }) => row.original[col],
+        }))
+      : [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
       {/* Form Column */}
-      <div className="space-y-5">
+      <div className="space-y-5 col-span-2">
         {/* Name */}
         <div className="space-y-2">
           <Label htmlFor="title">Set Name</Label>
@@ -212,7 +224,7 @@ const LotteryForm = ({ formData, onChange }) => {
         <div className="space-y-2">
           <Label className="flex items-center justify-between">
             Why Collect
-            {(formData.whyCollect || []).length < 3 && (
+            {(formData.whyCollect?.length ?? 0) < 3 && (
               <Button
                 type="button"
                 variant="ghost"
@@ -225,7 +237,11 @@ const LotteryForm = ({ formData, onChange }) => {
             )}
           </Label>
           <div className="space-y-2">
-            {(formData.whyCollect || []).map((point, idx) => (
+            {/* Always show at least one textarea */}
+            {(formData.whyCollect && formData.whyCollect.length > 0
+              ? formData.whyCollect
+              : [""]
+            ).map((point, idx) => (
               <div key={idx} className="flex gap-2 items-center">
                 <Textarea
                   value={point}
@@ -238,7 +254,9 @@ const LotteryForm = ({ formData, onChange }) => {
                   variant="ghost"
                   size="icon"
                   onClick={() => removeWhyCollectPoint(idx)}
-                  disabled={(formData.whyCollect || []).length === 1}
+                  disabled={
+                    (formData.whyCollect?.length ?? 0) === 1 || idx === 0
+                  }
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -373,43 +391,72 @@ const LotteryForm = ({ formData, onChange }) => {
             </Select>
           </div>
         </div>
-        {/* Parts Multi-Select */}
+        {/* Parts CSV Upload */}
         <div className="space-y-2">
-          <Label htmlFor="parts">Parts</Label>
-          <Select value="" onValueChange={handleAddPart}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Add part to lottery" />
-            </SelectTrigger>
-            <SelectContent>
-              {parts.map((part) => (
-                <SelectItem key={part._id} value={part._id}>
-                  {getPartDisplay(part)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {/* Selected Parts as badges */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {selectedParts.map((partId) => {
-              const part = parts.find((p) => p._id === partId);
-              if (!part) return null;
-              return (
-                <Badge
-                  variant="secondary"
-                  key={partId}
-                  className="flex items-center gap-2 p-2"
-                >
-                  {getPartDisplay(part)}
-                  <button
+          <Label htmlFor="partsCsv">Parts (CSV Upload)</Label>
+          <div className="space-y-3">
+            {csvParts.length > 0 ? (
+              <div className="relative  rounded-md p-3 bg-muted">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-semibold text-xs">
+                    CSV Preview (first 10 rows):
+                  </span>
+                  <Button
                     type="button"
-                    className="ml-1 text-red-500 hover:text-red-700 cursor-pointer"
-                    onClick={() => handleRemovePart(partId)}
+                    variant="destructive"
+                    size="icon"
+                    className="ml-2"
+                    onClick={() => {
+                      setCsvParts([]);
+                      setCsvFileName("");
+                      setCsvError("");
+                      onChange({ target: { name: "parts", value: [] } });
+                    }}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              );
-            })}
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="overflow-x-auto">
+                  <TableLayout
+                    columns={csvColumns}
+                    data={csvParts.slice(0, 10)}
+                  />
+                  {csvParts.length > 10 && (
+                    <div className="text-xs text-muted-foreground mt-2 text-right">
+                      ... {csvParts.length - 10} more rows
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed rounded-md p-5 text-center">
+                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById("partsCsv").click()}
+                  >
+                    Choose CSV File
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Upload a CSV file with columns: item_id, part_id, name, color,
+                  etc.
+                </p>
+                {csvError && (
+                  <div className="text-xs text-red-500 mt-1">{csvError}</div>
+                )}
+              </div>
+            )}
+            <Input
+              id="partsCsv"
+              name="partsCsv"
+              type="file"
+              accept=".csv"
+              onChange={handleCsvChange}
+              className="hidden"
+            />
           </div>
         </div>
         {/* Image Upload */}
@@ -463,7 +510,7 @@ const LotteryForm = ({ formData, onChange }) => {
         </div>
       </div>
       {/* Preview Column */}
-      <div className="sticky top-0 h-fit space-y-4">
+      <div className="sticky top-0 h-fit space-y-4 col-span-1">
         <Card className="overflow-hidden rounded-xl border dark:border-none p-0 gap-0">
           {/* Image Section */}
           <div className="relative aspect-square border-b">

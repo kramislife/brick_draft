@@ -14,7 +14,9 @@ import { useGetColorsQuery } from "@/redux/api/admin/colorApi";
 import PartItemCard from "@/components/home/components/PartItemCard";
 
 const PartForm = ({ formData, onChange }) => {
-  const [imagePreview, setImagePreview] = useState(formData.image?.url || "");
+  const [imagePreview, setImagePreview] = useState(
+    formData.image?.url || formData.image || ""
+  );
   const fileInputRef = useRef(null);
 
   const { data: colorsData, isLoading: isLoadingColors } = useGetColorsQuery();
@@ -135,7 +137,7 @@ const PartForm = ({ formData, onChange }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="weight">Weight (g)</Label>
           <Input
@@ -149,34 +151,6 @@ const PartForm = ({ formData, onChange }) => {
             onChange={onChange}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="price">Price ($)</Label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="e.g., 0.89"
-            value={formData.price || ""}
-            onChange={onChange}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="quantity">Quantity</Label>
-          <Input
-            id="quantity"
-            name="quantity"
-            type="number"
-            min="0"
-            placeholder="e.g., 100"
-            value={formData.quantity || ""}
-            onChange={onChange}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="color">Color</Label>
           <Select
@@ -213,13 +187,6 @@ const PartForm = ({ formData, onChange }) => {
               )}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Total Value ($)</Label>
-          <Input value={totalValue} disabled className="bg-muted" />
-          <p className="text-xs text-muted-foreground">
-            Automatically calculated (Price × Quantity)
-          </p>
         </div>
       </div>
 
@@ -271,32 +238,6 @@ const PartForm = ({ formData, onChange }) => {
             className="hidden"
           />
         </div>
-      </div>
-
-      {/* Preview */}
-      <div className="space-y-2">
-        <Label>Preview</Label>
-        <PartItemCard
-          part={{
-            part_id: formData.part_id || "ID",
-            name: formData.name || "Part Name",
-            quantity: formData.quantity || 0,
-            total_value: (
-              Number(formData.price || 0) * Number(formData.quantity || 0)
-            ).toFixed(2),
-            color:
-              colors.find((c) => c._id === formData.color) ||
-              formData.color ||
-              "Color",
-            category_name:
-              formData.category_name || formData.category || "Category",
-            item_images: formData.image ? [imagePreview] : [],
-            image: imagePreview,
-          }}
-        />
-        <p className="text-xs text-muted-foreground mt-2">
-          This is how the part will appear in the lottery details.
-        </p>
       </div>
     </div>
   );
