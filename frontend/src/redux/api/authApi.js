@@ -6,6 +6,7 @@ export const authApi = createApi({
     baseUrl: "/api/v1",
     credentials: "include", // Include cookies
   }),
+
   tagTypes: ["User"],
   endpoints: (builder) => ({
     // Login user
@@ -112,6 +113,12 @@ export const authApi = createApi({
         body: contactData,
       }),
     }),
+
+    // Get addresses
+    getAddresses: builder.query({
+      query: () => "/profile/addresses",
+      providesTags: ["UserAddresses"],
+    }),
   }),
 });
 
@@ -128,4 +135,5 @@ export const {
   useResetPasswordMutation,
   useVerifyUserMutation,
   useContactUsMutation,
+  useGetAddressesQuery,
 } = authApi;
