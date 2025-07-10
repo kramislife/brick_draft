@@ -427,7 +427,7 @@ export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
   // Apply sorting
   lotteries = sortLotteries(lotteries, sortBy);
 
-  // Format lottery data for frontend
+  // Format lottery data
   const formattedLotteries = lotteries.map((lottery) => {
     const flatParts = (lottery.parts || []).map((p) => ({
       ...p.part,
@@ -614,7 +614,12 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
     }
 
     // Extract part objects from the parts array
-    let parts = (lottery.parts || []).map((p) => p.part);
+    let parts = (lottery.parts || []).map((p) => ({
+      ...(p.part.toObject ? p.part.toObject() : p.part),
+      quantity: p.quantity,
+      total_value: p.total_value,
+      price: p.price,
+    }));
 
     // Apply filters
     parts = filterPartsBySearch(parts, search);

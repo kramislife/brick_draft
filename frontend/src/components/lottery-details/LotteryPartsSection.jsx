@@ -38,13 +38,14 @@ const LotteryPartsSection = ({
   getPageNumbers,
   partsTitle,
   isLoading = false,
+  drawDate,
 }) => {
   return (
     <div className="mt-10">
       <h2 className="text-2xl font-bold mb-5">{partsTitle}</h2>
-      {/* Filter Bar */}
-      <div className="flex flex-wrap gap-1 items-end mb-6">
-        <div className="flex flex-col">
+      <div className="flex flex-wrap gap-1 items-end mb-5">
+        {/* Search */}
+        <div className="flex flex-col w-full md:w-auto mb-2 md:mb-0">
           <Label className="text-sm mb-1 font-semibold">
             {totalParts} Unique Parts
           </Label>
@@ -54,14 +55,16 @@ const LotteryPartsSection = ({
               placeholder="Search by Name, Category, Color, Part ID, Item ID..."
               value={search}
               onChange={onSearchChange}
-              className="pl-10 min-w-[450px]"
+              className="pl-10 w-full md:min-w-[450px]"
             />
           </div>
         </div>
-        <div className="flex flex-col">
+
+        {/* Sort By Filter  */}
+        <div className="flex flex-col w-[250px] md:w-auto">
           <Label className="text-sm mb-1 font-semibold">Sort By</Label>
           <Select value={sort} onValueChange={onSortChange}>
-            <SelectTrigger className="min-w-[300px]">
+            <SelectTrigger className="min-w-full md:min-w-[300px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -73,10 +76,11 @@ const LotteryPartsSection = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col">
+
+        <div className="flex flex-col w-[250px] md:w-auto">
           <Label className="text-sm mb-1 font-semibold">Category</Label>
           <Select value={category} onValueChange={onCategoryChange}>
-            <SelectTrigger className="min-w-[300px]">
+            <SelectTrigger className="min-w-full md:min-w-[300px]">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -89,10 +93,12 @@ const LotteryPartsSection = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col">
+
+        {/* Color Filter */}
+        <div className="flex flex-col w-[250px] md:w-auto">
           <Label className="text-sm mb-1 font-semibold">Color</Label>
           <Select value={color} onValueChange={onColorChange}>
-            <SelectTrigger className="min-w-[300px]">
+            <SelectTrigger className="min-w-full md:min-w-[300px]">
               <SelectValue placeholder="All Colors" />
             </SelectTrigger>
             <SelectContent>
@@ -111,10 +117,12 @@ const LotteryPartsSection = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-col">
+
+        {/* Per Page Filter */}
+        <div className="flex flex-col w-[250px] md:w-auto">
           <Label className="text-sm mb-1 font-semibold">Per Page</Label>
           <Select value={perPage.toString()} onValueChange={onPerPageChange}>
-            <SelectTrigger className="min-w-[120px]">
+            <SelectTrigger className="min-w-full md:min-w-[120px]">
               <SelectValue placeholder="10" />
             </SelectTrigger>
             <SelectContent>
@@ -140,7 +148,7 @@ const LotteryPartsSection = ({
       ) : paginatedParts && paginatedParts.length > 0 ? (
         <div className="grid grid-cols-1 gap-1">
           {paginatedParts.map((part) => (
-            <PartItemCard key={part._id} part={part} />
+            <PartItemCard key={part._id} part={part} drawDate={drawDate} />
           ))}
         </div>
       ) : (

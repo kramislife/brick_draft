@@ -251,6 +251,7 @@ const LotteryDetails = () => {
         currentPage={currentPage}
         getPageNumbers={getPageNumbers}
         isLoading={isPartsLoading}
+        drawDate={set.drawDate}
       />
     </div>
   );
