@@ -17,7 +17,7 @@ import {
   useAddColorMutation,
   useUpdateColorMutation,
   useDeleteColorMutation,
-} from "@/redux/api/admin/colorApi";
+} from "@/redux/api/colorApi";
 
 const Colors = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -161,7 +161,7 @@ const Colors = () => {
       >
         <ColorForm formData={formData} onChange={handleChange} />
       </AdminDialogLayout>
-      
+
       <DeleteDialogLayout
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}

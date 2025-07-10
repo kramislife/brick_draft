@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SORT_OPTIONS } from "@/components/home/components/LotteryGrid";
+import { SORT_OPTIONS } from "@/constant/sortOption";
 
 const LotterySort = ({ sortBy, onSortChange }) => {
   return (
