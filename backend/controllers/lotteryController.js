@@ -105,6 +105,13 @@ const cleanWeightValue = (weight) => {
   return match ? Number(match) : 0;
 };
 
+// clean price value
+const cleanPriceValue = (price) => {
+  if (!price) return 0;
+  const match = String(price).replace(/[^0-9.-]+/g, "");
+  return match ? Number(match) : 0;
+};
+
 // find or create part
 const findOrCreatePart = async (csvPart, colorDoc, userId) => {
   const cleanWeight = cleanWeightValue(csvPart.weight);
@@ -157,7 +164,15 @@ const processPartsFromCSV = async (parts, userId) => {
     } = await findOrCreatePart(csvPart, colorDoc, userId);
 
     if (partDoc) {
-      partRefs.push({ part: partDoc._id });
+      const price = cleanPriceValue(csvPart.price || csvPart.part?.price);
+      const quantity = Number(csvPart.quantity || csvPart.part?.quantity) || 0;
+      const total_value = price * quantity;
+      partRefs.push({
+        part: partDoc._id,
+        price,
+        quantity,
+        total_value,
+      });
       if (created) createdCount++;
       if (skipped) skippedCount++;
     } else {
@@ -443,7 +458,7 @@ export const getLotteryById = catchAsyncErrors(async (req, res, next) => {
     return next(new customErrorHandler("Lottery not found", 404));
   }
 
-  // Format lottery data 
+  // Format lottery data
   const formattedLottery = formatLotteryForFrontend(lottery);
 
   res.status(200).json({
