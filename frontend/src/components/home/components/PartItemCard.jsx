@@ -40,7 +40,7 @@ const PartItemCard = ({ part }) => {
             {part.name || "Part Name"}
           </h4>
 
-          <div className="flex flex-wrap gap-2 font-semibold text-lg">
+          {/* <div className="flex flex-wrap gap-2 font-semibold text-lg">
             <span className="flex items-center gap-1">
               <span>Quantity:</span>
               {part.quantity || "0"}
@@ -51,7 +51,7 @@ const PartItemCard = ({ part }) => {
                 ${Number(part.total_value || part.totalValue || 0).toFixed(2)}
               </span>
             </span>
-          </div>
+          </div> */}
 
           <div className="flex flex-wrap items-center gap-2 font-semibold text-lg">
             <span className="flex items-center gap-1">

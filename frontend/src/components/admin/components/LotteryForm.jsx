@@ -41,13 +41,9 @@ const LotteryForm = ({ formData, onChange }) => {
   const collections = collectionsData?.collections || [];
   const parts = partsData?.parts || [];
 
-  // Ensure parts is always an array
-  const selectedParts = Array.isArray(formData.parts) ? formData.parts : [];
-
   // CSV upload state
   const [csvParts, setCsvParts] = useState([]);
   const [csvError, setCsvError] = useState("");
-  const [csvFileName, setCsvFileName] = useState("");
 
   useEffect(() => {
     if (!formData.image) {
@@ -59,10 +55,81 @@ const LotteryForm = ({ formData, onChange }) => {
     }
   }, [formData.image]);
 
+  // Only display these fields in the CSV preview, in this order
+  const CSV_DISPLAY_FIELDS = [
+    "item_id",
+    "part_id",
+    "name",
+    "color",
+    "weight",
+    "price",
+    "quantity",
+  ];
+  const csvColumns = CSV_DISPLAY_FIELDS.map((col) => ({
+    accessorKey: col,
+    header: col.charAt(0).toUpperCase() + col.slice(1),
+    cell: ({ row }) => {
+      const value = row.original[col];
+      if (typeof value === "object" && value !== null) {
+        if (col === "color" && value.color_name) {
+          return value.color_name;
+        }
+        return JSON.stringify(value);
+      }
+      return value;
+    },
+  }));
+
+  // CSV file handler
+  const handleCsvChange = (e) => {
+    const file = e.target.files[0];
+    setCsvError("");
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (results.errors.length > 0) {
+            setCsvError("CSV parsing error: " + results.errors[0].message);
+            setCsvParts([]);
+          } else {
+            // Filter out empty rows and ensure required fields exist
+            const filtered = results.data.filter(
+              (row) => row.item_id && row.part_id && row.name && row.color
+            );
+            setCsvParts(filtered);
+            // Update formData.parts for submission
+            onChange({ target: { name: "parts", value: filtered } });
+          }
+        },
+        error: (err) => {
+          setCsvError("CSV parsing failed: " + err.message);
+          setCsvParts([]);
+        },
+      });
+    } else {
+      setCsvParts([]);
+      onChange({ target: { name: "parts", value: [] } });
+    }
+  };
+
   useEffect(() => {
     // If editing and parts are present, initialize CSV preview
     if (formData.parts && formData.parts.length > 0 && csvParts.length === 0) {
-      setCsvParts(formData.parts);
+      // Flatten parts data for CSV preview (handle both object and string formats)
+      const flattenedParts = formData.parts.map((part) => ({
+        item_id: part.item_id || part.part?.item_id || "",
+        part_id: part.part_id || part.part?.part_id || "",
+        name: part.name || part.part?.name || "",
+        color:
+          typeof part.color === "object"
+            ? part.color.color_name
+            : part.color || "",
+        weight: part.weight || part.part?.weight || "",
+        price: part.price || part.part?.price || "",
+        quantity: part.quantity || part.part?.quantity || "",
+      }));
+      setCsvParts(flattenedParts);
     }
     // eslint-disable-next-line
   }, [formData.parts]);
@@ -148,50 +215,6 @@ const LotteryForm = ({ formData, onChange }) => {
       },
     });
   };
-
-  // CSV file handler
-  const handleCsvChange = (e) => {
-    const file = e.target.files[0];
-    setCsvError("");
-    setCsvFileName(file ? file.name : "");
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          if (results.errors.length > 0) {
-            setCsvError("CSV parsing error: " + results.errors[0].message);
-            setCsvParts([]);
-          } else {
-            // Filter out empty rows and ensure required fields exist
-            const filtered = results.data.filter(
-              (row) => row.item_id && row.part_id && row.name && row.color
-            );
-            setCsvParts(filtered);
-            // Update formData.parts for submission
-            onChange({ target: { name: "parts", value: filtered } });
-          }
-        },
-        error: (err) => {
-          setCsvError("CSV parsing failed: " + err.message);
-          setCsvParts([]);
-        },
-      });
-    } else {
-      setCsvParts([]);
-      onChange({ target: { name: "parts", value: [] } });
-    }
-  };
-
-  // Dynamically generate columns from CSV headers
-  const csvColumns =
-    csvParts.length > 0
-      ? Object.keys(csvParts[0]).map((col) => ({
-          accessorKey: col,
-          header: col.charAt(0).toUpperCase() + col.slice(1),
-          cell: ({ row }) => row.original[col],
-        }))
-      : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -408,7 +431,6 @@ const LotteryForm = ({ formData, onChange }) => {
                     className="ml-2"
                     onClick={() => {
                       setCsvParts([]);
-                      setCsvFileName("");
                       setCsvError("");
                       onChange({ target: { name: "parts", value: [] } });
                     }}
