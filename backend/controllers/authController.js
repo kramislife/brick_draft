@@ -1,21 +1,59 @@
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
-import User from "../models/user.model.js";
 import customErrorHandler from "../utills/custom_error_handler.js";
-import crypto from "crypto";
+import { uploadImage, deleteImage } from "../utills/cloudinary.js";
+import User from "../models/user.model.js";
+import Address from "../models/user_address.model.js";
 import {
   clearCookies,
   generateAccessToken,
   generateCookies,
 } from "../utills/generateTokens.js";
-
-import Address from "../models/user_address.model.js";
+import crypto from "crypto";
 import sendEmail from "../utills/sendEmail.js";
 import { getResetPasswordTemplate } from "../utills/Emails/ResetPasswordTemplate.js";
 import { getVerificationEmailTemplate } from "../utills/Emails/VerificationEmailTemplate.js";
-import { deleteImage, uploadImage } from "../utills/cloudinary.js";
 import { ContactFormTemplate } from "../utills/Emails/ContactFormTemplate.js";
 
-// --------------------------------------- REGISTER USER --------------------------------------- //
+// ==================== VALIDATION HELPERS ====================
+const validateUserProfile = (data) => {
+  const { name, contact_number } = data;
+  if (!name || !contact_number) {
+    throw new customErrorHandler("Name and contact number are required", 400);
+  }
+};
+
+const validateAddress = (data) => {
+  const { name, contact_number, address_line1, city, country } = data;
+  if (!name || !contact_number || !address_line1 || !city || !country) {
+    throw new customErrorHandler(
+      "All required address fields must be provided",
+      400
+    );
+  }
+};
+
+// ==================== IMAGE PROCESSING HELPERS ====================
+const processUserImageUpload = async (image, existingImage = null) => {
+  if (image && typeof image === "string" && image.startsWith("data:image")) {
+    if (existingImage?.public_id) {
+      await deleteImage(existingImage.public_id);
+    }
+    return await uploadImage(image, "brick_draft/avatars");
+  }
+  return image || existingImage;
+};
+
+// ==================== ERROR HANDLING HELPERS ====================
+const handleControllerError = (error, next) => {
+  if (error instanceof customErrorHandler) {
+    return next(error);
+  }
+  return next(new customErrorHandler(error.message, 500));
+};
+
+// ==================== CONTROLLER FUNCTIONS ====================
+
+// ========================= REGISTER USER ========================= //
 export const registerUser = catchAsyncErrors(async (req, res, next) => {
   //1. TAKE USER DATA FROM REQUEST BODY
   const { name, username, email, password, contact_number } = req.body;
@@ -82,7 +120,7 @@ export const registerUser = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ----------------------------------------------- VERIFY USER ----------------------------------------------- //
+// ========================= VERIFY USER ========================= //
 export const verifyUser = catchAsyncErrors(async (req, res, next) => {
   const token = req.params.token;
 
@@ -133,7 +171,7 @@ export const verifyUser = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// --------------------------------------- LOGIN USER --------------------------------------- //
+// ========================= LOGIN USER ========================= //
 
 export const loginUser = catchAsyncErrors(async (req, res, next) => {
   const { email_username, password } = req.body;
@@ -214,7 +252,7 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Login successful!",
-    description: `Welcome back, ${user.name}!`,
+    description: `Welcome back, ${user.username}!`,
     user: {
       _id: user._id,
       name: user.name,
@@ -231,7 +269,7 @@ export const loginUser = catchAsyncErrors(async (req, res, next) => {
   // console.log("User:", user);
 });
 
-// --------------------------------------------------------- LOGOUT USER -----------------------------------------------------------------
+// ========================= LOGOUT USER ========================= //
 
 export const logoutUser = catchAsyncErrors(async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
@@ -261,7 +299,7 @@ export const logoutUser = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// -------------------------------- GET CURRENT USER PROFILE ---------------------------------//
+// ========================= GET CURRENT USER PROFILE ========================= //
 
 export const getCurrentUserProfile = catchAsyncErrors(
   async (req, res, next) => {
@@ -278,51 +316,38 @@ export const getCurrentUserProfile = catchAsyncErrors(
   }
 );
 
-// -------------------------------------- UPDATE CURRENT USER DATA ------------------------------------------------- //
+// ========================= UPDATE CURRENT USER DATA ========================= //
 export const updateCurrentUserProfile = catchAsyncErrors(
   async (req, res, next) => {
-    const user_id = req.user.user_id;
-    const { contact_number, name } = req.body;
-
-    const updateFields = {};
-
-    // Validate phone number if provided
-    if (contact_number) {
-      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-      if (!phoneRegex.test(contact_number)) {
-        return next(new customErrorHandler("Invalid phone number format", 400));
+    try {
+      const user_id = req.user.user_id;
+      const { contact_number, name, image } = req.body;
+      validateUserProfile({ name, contact_number });
+      const user = await User.findById(user_id);
+      if (!user) {
+        return next(new customErrorHandler("User not found", 404));
       }
-      updateFields.contact_number = contact_number;
-    }
-
-    // Validate name if provided
-    if (name) {
-      if (name.trim().length < 3) {
-        return next(
-          new customErrorHandler("Name must be at least 3 characters long", 400)
-        );
+      // Handle image upload if provided
+      let imageData = user.profile_picture;
+      if (image) {
+        imageData = await processUserImageUpload(image, user.profile_picture);
       }
-      updateFields.name = name.trim();
+      user.name = name;
+      user.contact_number = contact_number;
+      user.profile_picture = imageData;
+      await user.save();
+      res.status(200).json({
+        success: true,
+        message: "Profile updated successfully",
+        user,
+      });
+    } catch (error) {
+      handleControllerError(error, next);
     }
-
-    const user = await User.findByIdAndUpdate(user_id, updateFields, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!user) {
-      return next(new customErrorHandler("User not found", 404));
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      user,
-    });
   }
 );
 
-// -------------------------------------------------- FORGOT PASSWORD --------------------------------------------------
+// ========================= FORGOT PASSWORD ========================= //
 export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const { email } = req.body;
 
@@ -376,7 +401,7 @@ export const forgotPassword = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// -------------------------------------- RESET PASSWORD -----------------------------------//
+// ========================= RESET PASSWORD ========================= //
 export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const resetPasswordToken = req.params.token;
 
@@ -445,7 +470,7 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// -------------------------- UPDATE CURRENT USER PASSWORD -----------------------------//
+// ========================= UPDATE CURRENT USER PASSWORD ========================= //
 
 export const updateCurrentUserPassword = catchAsyncErrors(
   async (req, res, next) => {
@@ -501,182 +526,127 @@ export const updateCurrentUserPassword = catchAsyncErrors(
   }
 );
 
-// ------------------------------------ CREATE USER ADDRESS ------------------------------------------------- //
-
+// ========================= CREATE USER ADDRESS ========================= //
 export const createAddress = catchAsyncErrors(async (req, res, next) => {
-  const user_id = req.user.user_id;
-  //console.log("User ID:", user_id);
+  try {
+    const user_id = req.user.user_id;
 
-  if (!user_id) {
-    return next(new customErrorHandler("User not found", 404));
+    if (!user_id) {
+      return next(new customErrorHandler("User not found", 404));
+    }
+
+    const user = await User.findById(user_id);
+    if (!user) {
+      return next(new customErrorHandler("User not found", 404));
+    }
+
+    if (!user.is_verified) {
+      return next(
+        new customErrorHandler(
+          "Your account is not verified. User must be verified to add an address",
+          401
+        )
+      );
+    }
+
+    // Validate address data using helper
+    validateAddress(req.body);
+
+    const { is_default } = req.body;
+
+    if (is_default) {
+      await Address.updateMany(
+        { user: user_id, is_default: true },
+        { is_default: false }
+      );
+    }
+
+    const address = await Address.create({
+      user: user_id,
+      ...req.body,
+      created_by: user_id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Address created successfully",
+      address,
+    });
+  } catch (error) {
+    handleControllerError(error, next);
   }
-
-  const user = await User.findById(user_id);
-  if (!user) {
-    return next(new customErrorHandler("User not found", 404));
-  }
-
-  if (!user.is_verified) {
-    return next(
-      new customErrorHandler(
-        "Your account is not verified. User must be verified to add an address",
-        401
-      )
-    );
-  }
-
-  const {
-    name,
-    contact_number,
-    address_line1,
-    address_line2,
-    city,
-    state,
-    postal_code,
-    country,
-    country_code,
-    is_default,
-  } = req.body;
-
-  // ENSURE REQUIRED FIELDS ARE PRESENT
-  if (
-    name === "" ||
-    contact_number === "" ||
-    address_line1 === "" ||
-    city === "" ||
-    postal_code === "" ||
-    country === ""
-  ) {
-    return next(
-      new customErrorHandler("Please fill in all the required fields", 400)
-    );
-  }
-
-  if (is_default) {
-    await Address.updateMany(
-      { user_id, is_default: true },
-      { is_default: false }
-    );
-  }
-
-  const address = await Address.create({
-    user: user_id,
-    name,
-    contact_number,
-    address_line1,
-    address_line2,
-    city,
-    state,
-    postal_code,
-    country,
-    country_code,
-    is_default,
-  });
-
-  // RETURN THE CREATED ADDRESS TO THE CLIENT
-  res.status(201).json({
-    success: true,
-    message: "Address created successfully",
-    address,
-  });
 });
 
-// ------------------------ UPDATE A USER ADDRESS FOR A SINGLE USER ----------------------------------------
-
+// ========================= UPDATE A USER ADDRESS ========================= //
 export const updateAddress = catchAsyncErrors(async (req, res, next) => {
-  const user_id = req.user.user_id;
+  try {
+    const user_id = req.user.user_id;
+    const address_id = req.params.id;
 
-  const address_id = req.params.id;
+    if (!user_id) {
+      return next(
+        new customErrorHandler(
+          "User must be logged in to update an address",
+          401
+        )
+      );
+    }
 
-  if (!user_id) {
-    return next(
-      new customErrorHandler(
-        " User must be logged in to update an address",
-        401
-      )
-    );
+    const address = await Address.findById(address_id);
+
+    if (!address || address.is_deleted) {
+      return next(
+        new customErrorHandler("Address not found or has been deleted", 404)
+      );
+    }
+
+    if (address.user.toString() !== user_id.toString()) {
+      return next(
+        new customErrorHandler(
+          "You are not authorized to update this address",
+          403
+        )
+      );
+    }
+
+    // Validate address data using helper
+    validateAddress(req.body);
+
+    const { name, is_default } = req.body;
+
+    // Check for duplicate address names
+    const existingAddress = await Address.findOne({ user: user_id, name });
+    if (
+      existingAddress &&
+      existingAddress._id.toString() !== address_id.toString()
+    ) {
+      return next(
+        new customErrorHandler("Address with this name already exists", 400)
+      );
+    }
+
+    if (is_default) {
+      await Address.updateMany(
+        { user: user_id, is_default: true },
+        { is_default: false }
+      );
+    }
+
+    // Update address
+    Object.assign(address, req.body, { updated_by: user_id });
+    await address.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Address updated successfully",
+      address,
+    });
+  } catch (error) {
+    handleControllerError(error, next);
   }
-
-  // console.log("ADDRESS ID:", address_id);
-  const address = await Address.findById(address_id);
-
-  if (!address || address.is_deleted) {
-    return next(
-      new customErrorHandler("Address not found or has been deleted", 404)
-    );
-  }
-
-  if (address.user.toString() !== user_id.toString()) {
-    return next(
-      new customErrorHandler(
-        "You are not authorized to update this address",
-        403
-      )
-    );
-  }
-
-  const {
-    name,
-    contact_number,
-    address_line1,
-    address_line2,
-    city,
-    state,
-    postal_code,
-    country,
-    country_code,
-    is_default,
-  } = req.body;
-
-  if (!name || !contact_number || !address_line1 || !city || !country) {
-    return next(
-      new customErrorHandler("Please provide all required fields", 400)
-    );
-  }
-
-  const existingAddress = await Address.findOne({ user: user_id, name });
-
-  if (
-    existingAddress &&
-    existingAddress._id.toString() !== address_id.toString()
-  ) {
-    return next(
-      new customErrorHandler("Address with this name already exists", 400)
-    );
-  }
-
-  if (is_default) {
-    await Address.updateMany(
-      {
-        user: user_id,
-        is_default: true,
-      },
-      { is_default: false }
-    );
-  }
-
-  address.name = name;
-  address.contact_number = contact_number;
-  address.address_line1 = address_line1;
-  address.address_line2 = address_line2;
-  address.city = city;
-  address.state = state;
-  address.postal_code = postal_code;
-  address.country = country;
-  address.country_code = country_code;
-  address.is_default = is_default || false;
-  address.updated_by = user_id;
-
-  await address.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Address updated successfully",
-    address,
-  });
 });
 
-// --------------------------------------- GET ALL ADDRESSES FOR A USER  -----------------------------------
+// ========================= GET ALL ADDRESSES ========================= //
 export const getAllAddresses = catchAsyncErrors(async (req, res, next) => {
   const user_id = req.user.user_id;
 
@@ -696,7 +666,7 @@ export const getAllAddresses = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ---------- GET AN ADDRESS FOR A SINGLE USER  ---------------------------------------------
+// ========================= GET AN ADDRESS ========================= //
 
 export const getSingleAddress = catchAsyncErrors(async (req, res, next) => {
   const user_id = req.user.user_id;
@@ -721,7 +691,7 @@ export const getSingleAddress = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ---------- DELETE AN ADDRESS FOR A SINGLE USER  ---------------------------------------------
+// ========================= DELETE AN ADDRESS ========================= //
 
 export const deleteAddress = catchAsyncErrors(async (req, res, next) => {
   const user_id = req.user.user_id;
@@ -788,7 +758,7 @@ export const updateProfilePicture = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ------------------------------------ CONTACT US ------------------------------------
+// ========================= CONTACT US ========================= //
 export const contactUs = catchAsyncErrors(async (req, res, next) => {
   const { name, email, message, subject } = req.body;
 

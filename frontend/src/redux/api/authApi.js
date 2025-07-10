@@ -7,7 +7,7 @@ export const authApi = createApi({
     credentials: "include", // Include cookies
   }),
 
-  tagTypes: ["User"],
+  tagTypes: ["User", "UserAddresses"],
   endpoints: (builder) => ({
     // Login user
     login: builder.mutation({
@@ -119,6 +119,32 @@ export const authApi = createApi({
       query: () => "/profile/addresses",
       providesTags: ["UserAddresses"],
     }),
+    // Add address
+    addAddress: builder.mutation({
+      query: (data) => ({
+        url: "/profile/addresses",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["UserAddresses"],
+    }),
+    // Update address
+    updateAddress: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/profile/addresses/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["UserAddresses"],
+    }),
+    // Delete address
+    deleteAddress: builder.mutation({
+      query: (id) => ({
+        url: `/profile/addresses/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["UserAddresses"],
+    }),
   }),
 });
 
@@ -136,4 +162,7 @@ export const {
   useVerifyUserMutation,
   useContactUsMutation,
   useGetAddressesQuery,
+  useAddAddressMutation,
+  useUpdateAddressMutation,
+  useDeleteAddressMutation,
 } = authApi;

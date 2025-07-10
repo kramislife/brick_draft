@@ -11,6 +11,11 @@ import {
   updateCurrentUserProfile,
   updateProfilePicture,
   verifyUser,
+  createAddress,
+  updateAddress,
+  getAllAddresses,
+  getSingleAddress,
+  deleteAddress,
 } from "../controllers/authController.js";
 
 import { isAuthenticatedUser } from "../middleware/auth.middleware.js";
@@ -34,5 +39,14 @@ router
   .route("/me/profile/updateAvatar")
   .put(isAuthenticatedUser, updateProfilePicture);
 router.route("/contact").post(contactUs);
+router
+  .route("/profile/addresses")
+  .get(isAuthenticatedUser, getAllAddresses)
+  .post(isAuthenticatedUser, createAddress);
+router
+  .route("/profile/addresses/:id")
+  .get(isAuthenticatedUser, getSingleAddress)
+  .put(isAuthenticatedUser, updateAddress)
+  .delete(isAuthenticatedUser, deleteAddress);
 
 export default router;
