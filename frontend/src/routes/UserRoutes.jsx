@@ -24,7 +24,6 @@ import Users from "@/pages/admin/Users";
 import LiveDraw from "@/pages/LiveDraw";
 import Collections from "@/pages/admin/Collections";
 import Colors from "@/pages/admin/Colors";
-import CollectionsPage from "@/pages/Collections";
 import CollectionDetails from "@/pages/CollectionDetails";
 import EmailVerification from "@/pages/EmailVerification";
 
@@ -47,7 +46,6 @@ const UserRoutes = () => {
         />
         <Route path="/lottery/all" element={<LotteryAll />} />
         <Route path="/lottery/:id" element={<LotteryDetails />} />
-        <Route path="/collections" element={<CollectionsPage />} />
         <Route path="/collections/:id" element={<CollectionDetails />} />
         <Route path="/verify_user/:token" element={<EmailVerification />} />
 
