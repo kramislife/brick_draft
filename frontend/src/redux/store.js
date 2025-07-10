@@ -2,11 +2,10 @@ import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import authReducer from "@/redux/features/authSlice";
 import { authApi } from "@/redux/api/authApi";
-import { collectionApi } from "@/redux/api/admin/collectionApi";
-import { colorApi } from "@/redux/api/admin/colorApi";
-import { partApi } from "@/redux/api/admin/partItemApi";
-import { lotteryApi } from "@/redux/api/admin/lotteryApi";
-import { publicApi } from "@/redux/api/publicApi";
+import { collectionApi } from "@/redux/api/collectionApi";
+import { colorApi } from "@/redux/api/colorApi";
+import { partApi } from "@/redux/api/partItemApi";
+import { lotteryApi } from "@/redux/api/lotteryApi";
 
 export const store = configureStore({
   reducer: {
@@ -16,7 +15,6 @@ export const store = configureStore({
     [colorApi.reducerPath]: colorApi.reducer,
     [partApi.reducerPath]: partApi.reducer,
     [lotteryApi.reducerPath]: lotteryApi.reducer,
-    [publicApi.reducerPath]: publicApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -25,8 +23,7 @@ export const store = configureStore({
       colorApi.middleware,
       partApi.middleware,
       lotteryApi.middleware,
-      publicApi.middleware
-    ),
+    )
 });
 
 // Setup listeners for refetchOnFocus/refetchOnReconnect behaviors

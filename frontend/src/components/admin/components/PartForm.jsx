@@ -10,8 +10,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useGetColorsQuery } from "@/redux/api/admin/colorApi";
-import PartItemCard from "@/components/home/components/PartItemCard";
+import { useGetColorsQuery } from "@/redux/api/colorApi";
 
 const PartForm = ({ formData, onChange }) => {
   const [imagePreview, setImagePreview] = useState(
@@ -21,11 +20,6 @@ const PartForm = ({ formData, onChange }) => {
 
   const { data: colorsData, isLoading: isLoadingColors } = useGetColorsQuery();
   const colors = colorsData?.colors || [];
-
-  // Calculate total value
-  const totalValue = (
-    Number(formData.price || 0) * Number(formData.quantity || 0)
-  ).toFixed(2);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

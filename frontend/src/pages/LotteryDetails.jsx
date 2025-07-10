@@ -9,23 +9,10 @@ import { paymentMethod } from "@/constant/paymentMethod";
 import FallbackStates from "@/components/layout/fallback/FallbackStates";
 import LotteryPartsSection from "@/components/lottery-details/LotteryPartsSection";
 import {
-  useGetPublicLotteryByIdQuery,
+  useGetLotteryByIdQuery,
   useGetLotteryPartsByIdQuery,
-} from "@/redux/api/publicApi";
-
-const SORT_OPTIONS = [
-  { value: "name", label: "Name: A-Z" },
-  { value: "-name", label: "Name: Z-A" },
-  { value: "part_id", label: "Part ID: Low to High" },
-  { value: "-part_id", label: "Part ID: High to Low" },
-  { value: "quantity", label: "Quantity: Low to High" },
-  { value: "-quantity", label: "Quantity: High to Low" },
-  { value: "total_value", label: "Total Value: Low to High" },
-  { value: "-total_value", label: "Total Value: High to Low" },
-  { value: "date", label: "Date: Oldest to Newest" },
-  { value: "-date", label: "Date: Newest to Oldest" },
-];
-const PER_PAGE_OPTIONS = [10, 25, 50, 100, "all"];
+} from "@/redux/api/lotteryApi";
+import { PART_SORT_OPTIONS, PER_PAGE_OPTIONS } from "@/constant/sortOption";
 
 const LotteryDetails = () => {
   const { id } = useParams();
@@ -44,7 +31,7 @@ const LotteryDetails = () => {
     data: lotteryData,
     isLoading: isLotteryLoading,
     error: lotteryError,
-  } = useGetPublicLotteryByIdQuery(id);
+  } = useGetLotteryByIdQuery(id);
 
   // Fetch parts data from backend with all logic handled server-side
   const {
@@ -88,54 +75,15 @@ const LotteryDetails = () => {
           totalParts
         );
 
-  // Get all parts for the current lottery
-  const allParts = useMemo(
-    () => lotteryData?.lottery?.parts || [],
-    [lotteryData]
-  );
-
-  // Filtered parts based on current selection
-  const filteredParts = useMemo(() => {
-    return allParts.filter((p) => {
-      const matchesCategory =
-        category === "all" || p.part?.category_name === category;
-      const matchesColor =
-        color === "all" ||
-        (p.part?.color &&
-          (p.part.color._id === color || p.part.color === color));
-      return matchesCategory && matchesColor;
-    });
-  }, [allParts, category, color]);
-
-  // Category options: only those present in filtered parts
-  const categoryOptions = useMemo(() => {
-    const cats = Array.from(
-      new Set(filteredParts.map((p) => p.part?.category_name).filter(Boolean))
-    );
-    return cats;
-  }, [filteredParts]);
-
-  // Color options: only those present in filtered parts
-  const colorOptions = useMemo(() => {
-    const colors = filteredParts
-      .map((p) => p.part?.color)
-      .filter(Boolean)
-      .map((c) =>
-        typeof c === "object"
-          ? { id: c._id, name: c.color_name, hex: c.hex_code }
-          : null
-      )
-      .filter(Boolean);
-    // Remove duplicates
-    const unique = [];
-    colors.forEach((c) => {
-      if (!unique.some((u) => u.id === c.id)) unique.push(c);
-    });
-    return unique;
-  }, [filteredParts]);
+  //  context-aware filter options
+  const categoryOptions = partsData?.availableCategories || [];
+  const colorOptions = partsData?.availableColors || [];
 
   // Pagination numbers (show up to 3 around current)
   const getPageNumbers = () => {
+    if (totalPages <= 1) {
+      return [];
+    }
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
@@ -150,7 +98,9 @@ const LotteryDetails = () => {
       pages.push(i);
     }
     if (currentPage < totalPages - 3) pages.push("...");
-    pages.push(totalPages);
+    if (totalPages > 1) {
+      pages.push(totalPages);
+    }
     return pages;
   };
 
@@ -179,38 +129,6 @@ const LotteryDetails = () => {
     if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
   };
 
-  // Format draw date/time
-  const formatDrawDate = (dateString) => {
-    if (!dateString) return "TBD";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return "TBD";
-    }
-  };
-  const formatDrawTime = (timeString) => {
-    if (!timeString) return "";
-    try {
-      const [hours, minutes] = timeString.split(":");
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      return (
-        date.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        }) + " EST"
-      );
-    } catch {
-      return "";
-    }
-  };
-
   // Transform lottery data
   const set = useMemo(() => {
     if (!lotteryData?.lottery) return null;
@@ -221,20 +139,14 @@ const LotteryDetails = () => {
       description: lottery.description,
       image: lottery.image?.url || "",
       theme: lottery.collection?.name || "Unknown",
-      features: lottery.tag
-        ? [
-            lottery.tag
-              .replace(/_/g, " ")
-              .replace(/\b\w/g, (l) => l.toUpperCase()),
-          ]
-        : [],
+      features: lottery.formattedTag || [],
       price: lottery.ticketPrice,
       marketPrice: lottery.marketPrice,
       pieces: lottery.pieces,
-      drawDate: formatDrawDate(lottery.drawDate),
-      drawTime: formatDrawTime(lottery.drawTime),
+      drawDate: lottery.formattedDrawDate || "TBD",
+      drawTime: lottery.formattedDrawTime || "",
       totalSlots: lottery.totalSlots,
-      slotsAvailable: lottery.totalSlots, // Assuming all slots are available initially
+      slotsAvailable: lottery.totalSlots,
       whyCollect: lottery.whyCollect || [],
       parts: lottery.parts || [],
     };
@@ -329,7 +241,7 @@ const LotteryDetails = () => {
         onPageChange={handlePageChange}
         categoryOptions={categoryOptions}
         colorOptions={colorOptions}
-        sortOptions={SORT_OPTIONS}
+        sortOptions={PART_SORT_OPTIONS}
         perPageOptions={PER_PAGE_OPTIONS}
         paginatedParts={parts}
         totalParts={totalParts}

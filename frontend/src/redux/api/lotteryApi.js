@@ -12,6 +12,17 @@ export const lotteryApi = createApi({
       query: () => "lotteries",
       providesTags: ["Lotteries"],
     }),
+    getLotteryById: builder.query({
+      query: (id) => `lotteries/${id}`,
+      providesTags: ["Lotteries"],
+    }),
+    getLotteryPartsById: builder.query({
+      query: ({ id, params }) => ({
+        url: `lotteries/${id}/parts`,
+        params,
+      }),
+      providesTags: ["Lotteries"],
+    }),
     addLottery: builder.mutation({
       query: (data) => ({
         url: "admin/lotteries",
@@ -40,6 +51,8 @@ export const lotteryApi = createApi({
 
 export const {
   useGetLotteriesQuery,
+  useGetLotteryByIdQuery,
+  useGetLotteryPartsByIdQuery,
   useAddLotteryMutation,
   useUpdateLotteryMutation,
   useDeleteLotteryMutation,

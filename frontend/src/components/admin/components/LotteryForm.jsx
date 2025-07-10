@@ -20,8 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useGetCollectionsQuery } from "@/redux/api/admin/collectionApi";
-import { useGetPartsQuery } from "@/redux/api/admin/partItemApi";
+import { useGetCollectionsQuery } from "@/redux/api/collectionApi";
+import { useGetPartsQuery } from "@/redux/api/partItemApi";
 import { format } from "date-fns";
 import Papa from "papaparse";
 import TableLayout from "@/components/admin/shared/TableLayout";

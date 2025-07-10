@@ -17,7 +17,7 @@ import {
   useAddCollectionMutation,
   useUpdateCollectionMutation,
   useDeleteCollectionMutation,
-} from "@/redux/api/admin/collectionApi";
+} from "@/redux/api/collectionApi";
 
 const Collections = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

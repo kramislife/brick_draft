@@ -151,7 +151,7 @@ const LotteryPartsSection = ({
       )}
 
       {/* Pagination and Results Count */}
-      {perPage !== "all" && totalPages > 1 && (
+      {perPage !== "all" && totalPages > 1 && getPageNumbers().length > 0 && (
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-6 gap-3">
           <div className="text-sm text-muted-foreground">
             Showing {startEntry} to {endEntry} of {totalParts} parts
@@ -168,12 +168,15 @@ const LotteryPartsSection = ({
             </Button>
             {getPageNumbers().map((num, idx) =>
               num === "..." ? (
-                <span key={idx} className="px-2 text-lg text-muted-foreground">
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="px-2 text-lg text-muted-foreground"
+                >
                   ...
                 </span>
               ) : (
                 <Button
-                  key={num}
+                  key={`page-${num}`}
                   variant={num === currentPage ? "accent" : "outline"}
                   size="icon"
                   onClick={() => onPageChange(num)}

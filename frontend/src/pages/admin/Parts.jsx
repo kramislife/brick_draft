@@ -17,7 +17,7 @@ import {
   useAddPartMutation,
   useUpdatePartMutation,
   useDeletePartMutation,
-} from "@/redux/api/admin/partItemApi";
+} from "@/redux/api/partItemApi";
 
 const Parts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

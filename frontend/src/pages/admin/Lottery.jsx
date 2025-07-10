@@ -17,7 +17,7 @@ import {
   useAddLotteryMutation,
   useUpdateLotteryMutation,
   useDeleteLotteryMutation,
-} from "@/redux/api/admin/lotteryApi";
+} from "@/redux/api/lotteryApi";
 
 const Lottery = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,7 +56,7 @@ const Lottery = () => {
                 item_id: p.part.item_id,
                 part_id: p.part.part_id,
                 name: p.part.name,
-                color: p.part.color?.color_name || p.part.color,             
+                color: p.part.color?.color_name || p.part.color,
                 weight: p.part.weight,
                 // quantity: p.quantity,
                 // price: p.price,
@@ -139,7 +139,9 @@ const Lottery = () => {
       header: "Collection",
       cell: ({ row }) => (
         <div>
-          <div className="font-semibold">{row.original.collection?.name || "-"}</div>
+          <div className="font-semibold">
+            {row.original.collection?.name || "-"}
+          </div>
           <div className="text-xs text-muted-foreground">
             {row.original.pieces} pieces
           </div>

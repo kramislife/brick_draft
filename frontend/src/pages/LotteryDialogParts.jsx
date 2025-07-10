@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import PartItemCard from "@/components/home/components/PartItemCard";
 
@@ -51,6 +52,9 @@ const LotteryDialogParts = ({ parts, setName }) => {
         <DialogTitle className="text-start text-xl font-bold ">
           {setName} Parts
         </DialogTitle>
+        <DialogDescription className="sr-only">
+          This is a list of all the parts that are included in the lottery set.
+        </DialogDescription>
       </DialogHeader>
 
       <div className="space-y-3">
