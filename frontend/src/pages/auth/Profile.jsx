@@ -3,9 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectCurrentUser, updateUser } from "@/redux/features/authSlice";
 import {
   useUpdateProfileMutation,
-  useUpdateAvatarMutation,
   useGetAddressesQuery,
-  // You should implement useAddAddressMutation, useUpdateAddressMutation, useDeleteAddressMutation for full CRUD
+  useAddAddressMutation,
+  useUpdateAddressMutation,
+  useDeleteAddressMutation,
 } from "@/redux/api/authApi";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -14,37 +15,17 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Mail,
-  Phone,
   Calendar,
   CheckCircle,
   XCircle,
   MapPin,
   Edit2,
-  UploadCloud,
   Image as ImageIcon,
   Trash2,
   Star,
 } from "lucide-react";
-
-// Cloudinary upload logic (frontend, using unsigned preset)
-const uploadToCloudinary = async (file) => {
-  const data = new FormData();
-  data.append("file", file);
-  data.append("upload_preset", "brick_draft/avatars");
-  data.append("folder", "brick_draft/avatars");
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${
-      import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-    }/image/upload`,
-    {
-      method: "POST",
-      body: data,
-    }
-  );
-  const result = await res.json();
-  if (!result.secure_url) throw new Error("Upload failed");
-  return { public_id: result.public_id, url: result.secure_url };
-};
+import DeleteDialogLayout from "@/components/admin/shared/DeleteDialogLayout";
+import AddressDialog from "@/components/auth/AddressDialog";
 
 const Profile = () => {
   const user = useSelector(selectCurrentUser);
@@ -56,20 +37,21 @@ const Profile = () => {
   } = useGetAddressesQuery();
   const addresses = addressesData?.addresses || [];
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
-  const [updateAvatar] = useUpdateAvatarMutation();
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     username: user?.username || "",
     contact_number: user?.contact_number || "",
+    image: user?.profile_picture?.url || "",
   });
   const [avatarPreview, setAvatarPreview] = useState(
     user?.profile_picture?.url || ""
   );
   const fileInputRef = useRef(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Address form state
+  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [addressForm, setAddressForm] = useState({
     name: "",
     contact_number: "",
@@ -79,10 +61,102 @@ const Profile = () => {
     state: "",
     postal_code: "",
     country: "",
-    country_code: "",
     is_default: false,
   });
-  const [showAddressForm, setShowAddressForm] = useState(false);
+
+  // Delete dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState(null);
+
+  const openAddAddressDialog = () => {
+    setEditingAddress(null);
+    setAddressForm({
+      name: "",
+      contact_number: user?.contact_number || "",
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      state: "",
+      postal_code: "",
+      country: "",
+      is_default: false,
+    });
+    setIsAddressDialogOpen(true);
+  };
+  const openEditAddressDialog = (address) => {
+    setEditingAddress(address);
+    setAddressForm({ ...address });
+    setIsAddressDialogOpen(true);
+  };
+  const handleAddressFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setAddressForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+  const handleAddressFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingAddress) {
+        const result = await updateAddress({
+          id: editingAddress._id,
+          ...addressForm,
+        }).unwrap();
+        toast.success(result.message || "Address updated!", {
+          description: result.description || undefined,
+        });
+      } else {
+        const result = await addAddress(addressForm).unwrap();
+        toast.success(result.message || "Address added!", {
+          description: result.description || undefined,
+        });
+      }
+      setIsAddressDialogOpen(false);
+      setEditingAddress(null);
+      setAddressForm({
+        name: "",
+        contact_number: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        state: "",
+        postal_code: "",
+        country: "",
+        is_default: false,
+      });
+      refetch();
+    } catch (err) {
+      toast.error(err.data?.message || "Failed to save address", {
+        description: err.data?.description || undefined,
+      });
+    }
+  };
+  const handleDeleteAddress = (address) => {
+    setAddressToDelete(address);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAddress = async () => {
+    try {
+      const result = await deleteAddress(addressToDelete._id).unwrap();
+      toast.success(result.message || "Address deleted!", {
+        description: result.description || undefined,
+      });
+      refetch();
+      setIsDeleteDialogOpen(false);
+      setAddressToDelete(null);
+    } catch (err) {
+      toast.error(err.data?.message || "Failed to delete address", {
+        description: err.data?.description || undefined,
+      });
+    }
+  };
+
+  const [addAddress, { isLoading: isAdding }] = useAddAddressMutation();
+  const [updateAddress, { isLoading: isUpdatingAddress }] =
+    useUpdateAddressMutation();
+  const [deleteAddress, { isLoading: isDeleting }] = useDeleteAddressMutation();
 
   if (!user) {
     return (
@@ -109,23 +183,16 @@ const Profile = () => {
       .slice(0, 2);
   };
 
-  // Handle avatar upload
-  const handleAvatarChange = async (e) => {
+  // Image upload logic (base64)
+  const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    setAvatarUploading(true);
-    try {
-      // Upload to Cloudinary
-      const imageData = await uploadToCloudinary(file);
-      setAvatarPreview(imageData.url);
-      // Update backend
-      await updateAvatar({ avatar: imageData.url }).unwrap();
-      toast.success("Profile picture updated!");
-      dispatch(updateUser({ profile_picture: imageData }));
-    } catch (err) {
-      toast.error("Failed to upload avatar");
-    } finally {
-      setAvatarUploading(false);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+        setFormData((prev) => ({ ...prev, image: e.target.result }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -137,6 +204,7 @@ const Profile = () => {
       name: user.name,
       username: user.username,
       contact_number: user.contact_number,
+      image: user.profile_picture?.url || "",
     });
   };
   const handleProfileChange = (e) => {
@@ -145,45 +213,21 @@ const Profile = () => {
   };
   const handleProfileSave = async () => {
     try {
-      await updateProfile(formData).unwrap();
-      toast.success("Profile updated!");
-      setEditMode(false);
-      dispatch(updateUser(formData));
-    } catch (err) {
-      toast.error("Failed to update profile");
-    }
-  };
-
-  // Address form handlers (add only, for now)
-  const handleAddressChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setAddressForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-  const handleAddAddress = async (e) => {
-    e.preventDefault();
-    try {
-      // Call backend to add address (implement mutation if needed)
-      // await addAddress(addressForm).unwrap();
-      toast.success("Address added!");
-      setShowAddressForm(false);
-      setAddressForm({
-        name: "",
-        contact_number: "",
-        address_line1: "",
-        address_line2: "",
-        city: "",
-        state: "",
-        postal_code: "",
-        country: "",
-        country_code: "",
-        is_default: false,
+      const updatePayload = {
+        name: formData.name,
+        contact_number: formData.contact_number,
+        image: formData.image,
+      };
+      const result = await updateProfile(updatePayload).unwrap();
+      toast.success(result.message || "Profile updated!", {
+        description: result.description || undefined,
       });
-      refetch();
+      setEditMode(false);
+      dispatch(updateUser(result.user));
     } catch (err) {
-      toast.error("Failed to add address");
+      toast.error(err.data?.message || "Failed to update profile", {
+        description: err.data?.description || undefined,
+      });
     }
   };
 
@@ -215,21 +259,18 @@ const Profile = () => {
               ref={fileInputRef}
               className="hidden"
               onChange={handleAvatarChange}
-              disabled={avatarUploading}
+              disabled={!editMode}
             />
-            <Button
-              size="icon"
-              variant="secondary"
-              className="absolute bottom-2 right-2 rounded-full shadow group-hover:opacity-100 opacity-80"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={avatarUploading}
-            >
-              {avatarUploading ? (
-                <UploadCloud className="animate-spin h-5 w-5" />
-              ) : (
+            {editMode && (
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute bottom-2 right-2 rounded-full shadow group-hover:opacity-100 opacity-80"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <ImageIcon className="h-5 w-5" />
-              )}
-            </Button>
+              </Button>
+            )}
           </div>
           <div className="flex flex-col items-center gap-1">
             <span className="text-xl font-bold">{user.name}</span>
@@ -281,15 +322,11 @@ const Profile = () => {
               </Button>
             ) : (
               <div className="flex gap-2">
-                <Button
-                  onClick={handleProfileSave}
-                  variant="accent"
-                  isLoading={isUpdating}
-                >
-                  Save
-                </Button>
                 <Button onClick={handleCancel} variant="outline">
                   Cancel
+                </Button>
+                <Button onClick={handleProfileSave} isLoading={isUpdating}>
+                  Save
                 </Button>
               </div>
             )}
@@ -334,103 +371,16 @@ const Profile = () => {
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <MapPin className="h-5 w-5" /> Addresses
               </h3>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setShowAddressForm((v) => !v)}
-              >
-                Add Address
-              </Button>
+              {editMode && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={openAddAddressDialog}
+                >
+                  Add Address
+                </Button>
+              )}
             </div>
-            {showAddressForm && (
-              <form
-                className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-muted/50 p-4 rounded-lg mb-4"
-                onSubmit={handleAddAddress}
-              >
-                <Input
-                  name="name"
-                  placeholder="Address Name"
-                  value={addressForm.name}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <Input
-                  name="contact_number"
-                  placeholder="Phone"
-                  value={addressForm.contact_number}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <Input
-                  name="address_line1"
-                  placeholder="Address Line 1"
-                  value={addressForm.address_line1}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <Input
-                  name="address_line2"
-                  placeholder="Address Line 2"
-                  value={addressForm.address_line2}
-                  onChange={handleAddressChange}
-                />
-                <Input
-                  name="city"
-                  placeholder="City"
-                  value={addressForm.city}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <Input
-                  name="state"
-                  placeholder="State"
-                  value={addressForm.state}
-                  onChange={handleAddressChange}
-                />
-                <Input
-                  name="postal_code"
-                  placeholder="Postal Code"
-                  value={addressForm.postal_code}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <Input
-                  name="country"
-                  placeholder="Country"
-                  value={addressForm.country}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <Input
-                  name="country_code"
-                  placeholder="Country Code"
-                  value={addressForm.country_code}
-                  onChange={handleAddressChange}
-                />
-                <label className="flex items-center gap-2 col-span-2">
-                  <input
-                    type="checkbox"
-                    name="is_default"
-                    checked={addressForm.is_default}
-                    onChange={handleAddressChange}
-                  />
-                  Set as default
-                </label>
-                <div className="col-span-2 flex gap-2 justify-end">
-                  <Button type="submit" variant="accent" size="sm">
-                    Save
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddressForm(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            )}
             {isLoadingAddresses ? (
               <div className="text-muted-foreground">Loading addresses...</div>
             ) : addresses.length === 0 ? (
@@ -466,13 +416,23 @@ const Profile = () => {
                         Default
                       </Badge>
                     )}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => openEditAddressDialog(address)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => handleDeleteAddress(address)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -480,6 +440,27 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      {/* Address Add/Edit Dialog */}
+      <AddressDialog
+        open={isAddressDialogOpen}
+        onOpenChange={setIsAddressDialogOpen}
+        addressForm={addressForm}
+        setAddressForm={setAddressForm}
+        editingAddress={editingAddress}
+        handleAddressFormChange={handleAddressFormChange}
+        handleAddressFormSubmit={handleAddressFormSubmit}
+        isLoading={isAdding || isUpdatingAddress}
+      />
+
+      {/* Delete Address Dialog */}
+      <DeleteDialogLayout
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteAddress}
+        itemName={addressToDelete?.name + " Address" || "this address"}
+        itemType="Address"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

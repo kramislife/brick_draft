@@ -94,8 +94,9 @@ const LotteryForm = ({ formData, onChange }) => {
             setCsvParts([]);
           } else {
             // Filter out empty rows and ensure required fields exist
+            // Only item_id and name are required; part_id and color are optional
             const filtered = results.data.filter(
-              (row) => row.item_id && row.part_id && row.name && row.color
+              (row) => row.item_id && row.name
             );
             setCsvParts(filtered);
             // Update formData.parts for submission
@@ -463,8 +464,8 @@ const LotteryForm = ({ formData, onChange }) => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Upload a CSV file with columns: item_id, part_id, name, color,
-                  etc.
+                  Upload a CSV file with columns: item_id (required), name
+                  (required), part_id (optional), color (optional), etc.
                 </p>
                 {csvError && (
                   <div className="text-xs text-red-500 mt-1">{csvError}</div>

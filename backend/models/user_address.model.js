@@ -55,10 +55,6 @@ const addressSchema = new mongoose.Schema(
       required: [true, "Country is required"],
       trim: true,
     },
-    country_code: {
-      type: String,
-      trim: true,
-    },
     is_default: {
       type: Boolean,
       default: false,

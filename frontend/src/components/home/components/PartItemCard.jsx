@@ -3,12 +3,8 @@ import { Box, Palette } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PartItemCard = ({ part }) => {
-  const displayId = part.part_id;
-
-  // Get color name from the color object or use direct color string
-  const colorName = part.color?.color_name || part.color || "Unknown";
-
-  // Get image from item_images array or use direct image
+  const displayId = part.part_id || part.item_id || "No ID";
+  const colorName = part.color?.color_name || part.color || "No Color";
   const partImage =
     part.item_image?.url ||
     part.item_image?.[0] ||
@@ -17,30 +13,30 @@ const PartItemCard = ({ part }) => {
 
   return (
     <Card className="p-0 rounded">
-      <CardContent className="flex flex-col sm:flex-row items-start gap-2 pt-1 px-1">
-        <div className="w-full sm:w-22 h-auto sm:h-22 flex-shrink-0 rounded bg-muted-foreground/10 p-0.5 flex items-center justify-center">
+      <CardContent className="flex flex-row items-start gap-2 py-1 px-1">
+        <div className="flex-shrink-0 rounded bg-muted-foreground/10 p-0.5 flex items-center justify-center transition-all duration-300 w-23 h-23">
           {partImage && partImage !== "/placeholder-part.jpg" ? (
             <img
               src={partImage}
               alt={part.name}
-              className="w-full h-full object-cover aspect-square rounded"
+              className="object-cover aspect-square rounded transition-all duration-300 w-full h-full"
               onError={(e) => {
                 e.target.src = "/placeholder-part.jpg";
               }}
             />
           ) : (
-            <Box className="w-10 h-10 text-muted-foreground mx-auto" />
+            <Box className="text-muted-foreground mx-auto transition-all duration-300 w-10 h-10" />
           )}
         </div>
 
         <div className="flex flex-col pt-1 pb-1">
           <h4 className="text-lg font-semibold line-clamp-1">
-            <span>{displayId || "Part ID"}</span>
+            <span>{displayId}</span>
             <span className="mx-1">•</span>
             {part.name || "Part Name"}
           </h4>
 
-          {/* <div className="flex flex-wrap gap-2 font-semibold text-lg">
+          <div className="flex flex-wrap gap-2 font-semibold text-lg">
             <span className="flex items-center gap-1">
               <span>Quantity:</span>
               {part.quantity || "0"}
@@ -51,7 +47,7 @@ const PartItemCard = ({ part }) => {
                 ${Number(part.total_value || part.totalValue || 0).toFixed(2)}
               </span>
             </span>
-          </div> */}
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 font-semibold text-lg">
             <span className="flex items-center gap-1">

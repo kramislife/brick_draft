@@ -65,7 +65,7 @@ const Parts = () => {
       category: data.category,
       category_name: data.category_name,
       weight: data.weight,
-      color: data.color._id || data.color,
+      color: data.color?._id || data.color || "",
       image: data.item_image?.url,
     });
     setIsDialogOpen(true);
@@ -163,6 +163,14 @@ const Parts = () => {
     {
       accessorKey: "part_id",
       header: "Part ID",
+      cell: ({ row }) => {
+        const partId = row.original.part_id;
+        return (
+          <span className={partId ? "" : "text-muted-foreground"}>
+            {partId || "N/A"}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "item_id",
@@ -187,10 +195,12 @@ const Parts = () => {
               className="w-4 h-4 rounded border"
               style={{ backgroundColor: color.hex_code }}
             />
-            <span>{color.color_name}</span>
+            <span className={color.color_name ? "" : "text-muted-foreground"}>
+              {color.color_name || "N/A"}
+            </span>
           </div>
         ) : (
-          "N/A"
+          <span className="text-muted-foreground">N/A</span>
         );
       },
     },
@@ -258,7 +268,11 @@ const Parts = () => {
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
-        itemName={`${selectedPart?.name} - ${selectedPart?.color?.color_name}`}
+        itemName={`${selectedPart?.name}${
+          selectedPart?.color?.color_name
+            ? ` - ${selectedPart.color.color_name}`
+            : ""
+        }`}
         itemType="Part"
         isLoading={isDeleting}
       />

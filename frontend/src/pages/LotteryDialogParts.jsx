@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import PartItemCard from "@/components/home/components/PartItemCard";
 
-const LotteryDialogParts = ({ parts, setName }) => {
+const LotteryDialogParts = ({ parts, setName, drawDate }) => {
   // If no parts data, show a message
   if (!parts || parts.length === 0) {
     return (
@@ -65,7 +65,7 @@ const LotteryDialogParts = ({ parts, setName }) => {
             </h3>
             <div className="space-y-1">
               {categoryParts.map((part) => (
-                <PartItemCard key={part._id} part={part} />
+                <PartItemCard key={part._id} part={part} drawDate={drawDate} />
               ))}
             </div>
           </div>
