@@ -9,7 +9,7 @@ const partSchema = new mongoose.Schema(
     },
     part_id: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     item_id: {
@@ -37,7 +37,7 @@ const partSchema = new mongoose.Schema(
     color: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Color",
-      required: true,
+      required: false,
     },
     item_image: {
       public_id: { type: String, default: null },

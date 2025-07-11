@@ -48,7 +48,7 @@ export const createPart = catchAsyncErrors(async (req, res, next) => {
     image,
   } = req.body;
 
-  if (!name || !part_id || !item_id || !category || !category_name || !color) {
+  if (!name || !item_id || !category || !category_name) {
     return next(new customErrorHandler("Required fields missing", 400));
   }
 
@@ -76,12 +76,12 @@ export const createPart = catchAsyncErrors(async (req, res, next) => {
 
   const partData = {
     name: name.trim(),
-    part_id: part_id.trim(),
+    part_id: part_id ? part_id.trim() : undefined,
     item_id: item_id.trim(),
     category: category.toLowerCase(),
     category_name: category_name.trim(),
     weight: weight ? Number(weight) : 0,
-    color,
+    color: color || undefined,
     ...(imageData && { item_image: imageData }),
     created_by: req.user.user_id,
   };

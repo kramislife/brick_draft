@@ -71,6 +71,11 @@ const processImageUpload = async (image, existingImage = null) => {
 
 // find or create color
 const findOrCreateColor = async (colorName, userId) => {
+  // If no color name provided, return null 
+  if (!colorName || colorName.trim() === "") {
+    return null;
+  }
+
   let colorDoc = await Color.findOne({
     color_name: { $regex: `^${colorName.trim()}$`, $options: "i" },
   });
@@ -121,14 +126,14 @@ const findOrCreatePart = async (csvPart, colorDoc, userId) => {
     try {
       partDoc = await Part.create({
         name: csvPart.name.trim(),
-        part_id: csvPart.part_id.trim(),
+        part_id: csvPart.part_id ? csvPart.part_id.trim() : undefined,
         item_id: csvPart.item_id.trim(),
         category: csvPart.category ? csvPart.category.toLowerCase() : "part",
         category_name: csvPart.category_name
           ? csvPart.category_name.trim()
           : "Part",
         weight: cleanWeight,
-        color: colorDoc._id,
+        color: colorDoc ? colorDoc._id : undefined,
         item_image: csvPart.item_image || undefined,
         created_by: userId,
       });
@@ -149,12 +154,13 @@ const processPartsFromCSV = async (parts, userId) => {
   const partRefs = [];
 
   for (const csvPart of parts) {
-    // Find or create color
+    // Find or create color 
     const colorDoc = await findOrCreateColor(csvPart.color, userId);
-    if (!colorDoc) {
-      skippedCount++;
-      continue;
-    }
+    // Don't skip if color creation fails since color is optional
+    // if (!colorDoc) {
+    //   skippedCount++;
+    //   continue;
+    // }
 
     // Find or create part
     const {
