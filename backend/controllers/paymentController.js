@@ -386,3 +386,39 @@ export const getUserPurchases = catchAsyncErrors(async (req, res, next) => {
     purchases,
   });
 });
+
+// ===================== ADMIN: GET ALL TICKETS ========================
+export const getAllTickets = catchAsyncErrors(async (req, res, next) => {
+  // Only allow admin/superAdmin (should be enforced in route)
+  const tickets = await Ticket.find()
+    .populate("user_id", "name email")
+    .populate(
+      "lottery.lottery_id",
+      "title drawDate drawTime formattedDrawDate formattedDrawTime image"
+    )
+    .sort({ createdAt: -1 });
+
+  // Transform for frontend table
+  const data = tickets.map((ticket) => {
+    const lottery = ticket.lottery.lottery_id || {};
+    return {
+      purchase_id: ticket.purchase_id,
+      lottery_set: lottery.title || "-",
+      draw_date: lottery.formattedDrawDate || formatDate(lottery.drawDate),
+      draw_time: lottery.formattedDrawTime || formatTime(lottery.drawTime),
+      customer_name: ticket.user_id?.name || "-",
+      customer_email: ticket.user_id?.email || "-",
+      purchase_date: formatDate(ticket.createdAt),
+      purchase_time: formatTime(ticket.createdAt),
+      price: ticket.ticket_price,
+      quantity: ticket.quantity,
+      total_amount: ticket.total_amount,
+      _raw: ticket, // for details view
+    };
+  });
+
+  res.status(200).json({
+    success: true,
+    tickets: data,
+  });
+});

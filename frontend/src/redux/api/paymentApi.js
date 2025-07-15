@@ -23,6 +23,10 @@ export const paymentApi = createApi({
       query: () => "/user/purchases",
       providesTags: ["UserPurchases"],
     }),
+    getAllTickets: builder.query({
+      query: () => "/admin/tickets",
+      providesTags: ["Payment"],
+    }),
   }),
 });
 
@@ -30,4 +34,5 @@ export const {
   useCreateCheckoutSessionMutation,
   useGetPaymentSuccessDetailsQuery,
   useGetUserPurchasesQuery,
+  useGetAllTicketsQuery,
 } = paymentApi;

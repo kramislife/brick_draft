@@ -74,10 +74,12 @@ const ViewLayout = ({
           <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           <p className="text-muted-foreground text-sm">{description}</p>
         </div>
-        <Button onClick={onAdd} variant="accent">
-          <Plus />
-          New {title}
-        </Button>
+        {onAdd && (
+          <Button onClick={onAdd} variant="accent">
+            <Plus />
+            New {title}
+          </Button>
+        )}
       </div>
 
       <div className="space-y-3">
