@@ -81,7 +81,7 @@ if (process.env.NODE_ENV === "PRODUCTION") {
       app.use(express.static(distDir));
 
       // Serve index.html for all non-API routes
-      app.get("/:path", (req, res) => {
+      app.get("*", (req, res) => {
         // Skip API routes
         if (req.path.startsWith("/api/")) {
           return res.status(404).json({ message: "API endpoint not found" });
