@@ -69,7 +69,7 @@ const CollectionDetails = () => {
                 drawDate: lottery.drawDate,
                 drawTime: lottery.drawTime,
                 totalSlots: lottery.totalSlots,
-                slotsAvailable: lottery.totalSlots, // Adjust if you have real slots left
+                slotsAvailable: lottery.slotsAvailable,
                 dateAdded: lottery.createdAt,
                 tag: lottery.tag,
                 whyCollect: lottery.whyCollect,

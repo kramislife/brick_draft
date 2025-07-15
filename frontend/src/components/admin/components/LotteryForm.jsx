@@ -124,7 +124,7 @@ const LotteryForm = ({ formData, onChange }) => {
         name: part.name || part.part?.name || "",
         color:
           typeof part.color === "object"
-            ? part.color.color_name
+            ? part.color?.color_name || ""
             : part.color || "",
         weight: part.weight || part.part?.weight || "",
         price: part.price || part.part?.price || "",

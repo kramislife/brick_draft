@@ -42,6 +42,11 @@ const lotterySchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    slotsAvailable: {
+      type: Number,
+      required: false,
+      min: 0,
+    },
     pieces: {
       type: Number,
       required: true,

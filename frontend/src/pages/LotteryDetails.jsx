@@ -146,7 +146,7 @@ const LotteryDetails = () => {
       drawDate: lottery.formattedDrawDate || "TBD",
       drawTime: lottery.formattedDrawTime || "",
       totalSlots: lottery.totalSlots,
-      slotsAvailable: lottery.totalSlots,
+      slotsAvailable: lottery.slotsAvailable,
       whyCollect: lottery.whyCollect || [],
       parts: lottery.parts || [],
     };
