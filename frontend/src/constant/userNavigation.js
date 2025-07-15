@@ -15,6 +15,7 @@ import {
   Tv,
   Settings,
   LayoutDashboard,
+  ShoppingBag,
 } from "lucide-react";
 
 export const publicNavLinks = [
@@ -64,7 +65,12 @@ export const accountLinks = [
 ];
 
 // User menu items configuration for authenticated users
-export const getUserMenuItems = (isAdmin, onAdminClick, onProfileClick) => [
+export const getUserMenuItems = (
+  isAdmin,
+  onAdminClick,
+  onProfileClick,
+  onPurchasesClick
+) => [
   ...(isAdmin
     ? [
         {
@@ -83,6 +89,13 @@ export const getUserMenuItems = (isAdmin, onAdminClick, onProfileClick) => [
     icon: User,
     onClick: onProfileClick,
     path: "/profile",
+  },
+  {
+    id: "purchases",
+    label: "Purchase History",
+    icon: ShoppingBag,
+    onClick: onPurchasesClick,
+    path: "/purchases",
   },
   {
     id: "settings",

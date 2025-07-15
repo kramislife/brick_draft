@@ -24,18 +24,24 @@ const MobileMenu = ({
   onLogout,
   onProfileClick,
   onAdminClick,
+  onPurchasesClick,
   getUserInitials,
   isAuthDialogOpen,
   onAuthDialogOpenChange,
   onCloseAuthDialog,
 }) => {
   // Get user menu items from centralized configuration
-  const userMenuItems = getUserMenuItems(isAdmin, onAdminClick, onProfileClick);
+  const userMenuItems = getUserMenuItems(
+    isAdmin,
+    onAdminClick,
+    onProfileClick,
+    onPurchasesClick
+  );
 
   return (
     <SheetContent
       side="right"
-      className="bg-foreground dark:bg-background border-none font-['Bangers'] tracking-widest flex flex-col"
+      className="bg-foreground dark:bg-background border-none font-['Bangers'] tracking-widest flex flex-col overflow-y-auto"
     >
       <SheetHeader>
         <SheetTitle className="text-left sr-only">Menu</SheetTitle>
@@ -96,7 +102,7 @@ const MobileMenu = ({
         {/* User Menu Items - Only show when authenticated */}
         {isAuthenticated && userMenuItems.length > 0 && (
           <>
-            <div className="border-t border-border my-2"></div>
+            <div className="border-t border-muted-foreground"></div>
 
             {userMenuItems.map((item) => {
               const Icon = item.icon;

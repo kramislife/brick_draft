@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Plus, Minus, Gift, Ticket } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { useCreateCheckoutSessionMutation } from "@/redux/api/paymentApi";
 
 const LotteryPurchaseSection = ({
   set,
   quantity,
   setQuantity,
   paymentMethod,
+  userEmail,
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [createCheckoutSession] = useCreateCheckoutSessionMutation();
+
   const handleDecrement = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
@@ -19,6 +24,40 @@ const LotteryPurchaseSection = ({
 
   const handleIncrement = () => {
     setQuantity(quantity + 1);
+  };
+
+  const handleBuyTicket = async () => {
+    setIsLoading(true);
+    try {
+      const result = await createCheckoutSession({
+        lotteryId: set.id,
+        quantity,
+        email: userEmail,
+      }).unwrap();
+
+      if (result.url) {
+        // Open Stripe in a new tab
+        const stripeWindow = window.open(
+          result.url,
+          "_blank",
+          "noopener,noreferrer"
+        );
+        // Poll to check if the tab is closed
+        const pollTimer = setInterval(() => {
+          if (stripeWindow.closed) {
+            clearInterval(pollTimer);
+            // Redirect to the success page using the URL-friendly set name from backend
+            window.location.href = `/ticket-success/${result.urlFriendlySetName}/${result.purchase_id}`;
+          }
+        }, 500);
+      } else {
+        toast.error(result.message || "Failed to create checkout session");
+      }
+    } catch (err) {
+      toast.error(err.data?.message || "Payment failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const total = (set.price * quantity).toFixed(2);
@@ -99,39 +138,6 @@ const LotteryPurchaseSection = ({
         </TabsList>
 
         <TabsContent
-          value="credit-card"
-          className="space-y-4 mt-4 bg-white dark:bg-slate-800/50 p-5 rounded-lg shadow-sm"
-        >
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Card Number
-            </label>
-            <Input
-              placeholder="1234 5678 9012 3456"
-              className="w-full border-amber-200 focus:border-amber-400 focus:ring-amber-400/20"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Expiry Date
-              </label>
-              <Input
-                placeholder="MM/YY"
-                className="w-full border-amber-200 focus:border-amber-400 focus:ring-amber-400/20"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">CVC</label>
-              <Input
-                placeholder="123"
-                className="w-full border-amber-200 focus:border-amber-400 focus:ring-amber-400/20"
-              />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent
           value="paypal"
           className="mt-4 bg-white dark:bg-slate-800/50 p-5 rounded-lg shadow-sm"
         >
@@ -144,9 +150,17 @@ const LotteryPurchaseSection = ({
       </Tabs>
 
       {/* Purchase Button */}
-      <Button variant="accent" className="w-full">
+      <Button
+        variant="accent"
+        className="w-full"
+        onClick={handleBuyTicket}
+        isLoading={isLoading}
+        disabled={isLoading}
+      >
         <Gift className="w-5 h-5" />
-        Buy {quantity > 1 ? `${quantity} Tickets` : "Ticket"} Now
+        {isLoading
+          ? "Redirecting to Stripe..."
+          : `Buy ${quantity > 1 ? `${quantity} Tickets` : "Ticket"} Now`}
       </Button>
 
       {/* How it works section */}
