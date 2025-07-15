@@ -13,6 +13,8 @@ import {
   useGetLotteryPartsByIdQuery,
 } from "@/redux/api/lotteryApi";
 import { PART_SORT_OPTIONS, PER_PAGE_OPTIONS } from "@/constant/sortOption";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/redux/features/authSlice";
 
 const LotteryDetails = () => {
   const { id } = useParams();
@@ -152,6 +154,8 @@ const LotteryDetails = () => {
     };
   }, [lotteryData]);
 
+  const user = useSelector(selectCurrentUser);
+
   if (isLotteryLoading) {
     return (
       <div className="p-5">
@@ -220,6 +224,7 @@ const LotteryDetails = () => {
             quantity={quantity}
             setQuantity={setQuantity}
             paymentMethod={paymentMethod}
+            userEmail={user?.email}
           />
         </div>
       </div>

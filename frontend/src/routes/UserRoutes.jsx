@@ -26,6 +26,8 @@ import Collections from "@/pages/admin/Collections";
 import Colors from "@/pages/admin/Colors";
 import CollectionDetails from "@/pages/CollectionDetails";
 import EmailVerification from "@/pages/EmailVerification";
+import TicketDetails from "@/pages/TicketDetails";
+import Purchases from "@/pages/Purchases";
 
 const UserRoutes = () => {
   return (
@@ -48,10 +50,15 @@ const UserRoutes = () => {
         <Route path="/lottery/:id" element={<LotteryDetails />} />
         <Route path="/collections/:id" element={<CollectionDetails />} />
         <Route path="/verify_user/:token" element={<EmailVerification />} />
+        <Route
+          path="/ticket-success/:setName/:purchaseId"
+          element={<TicketDetails />}
+        />
 
         {/* Protected User Routes */}
         <Route element={<ProtectedRoutes />}>
           <Route path="/profile" element={<Profile />} />
+          <Route path="/purchases" element={<Purchases />} />
         </Route>
 
         {/* Protected Admin Routes */}

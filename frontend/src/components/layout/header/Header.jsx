@@ -86,6 +86,10 @@ const Header = () => {
     navigate("/admin");
   };
 
+  const handlePurchasesClick = () => {
+    navigate("/purchases");
+  };
+
   // Auth dialog handlers
   const handleCloseAuthDialog = () => {
     setIsAuthDialogOpen(false);
@@ -149,6 +153,7 @@ const Header = () => {
                 onLogout={handleLogout}
                 onProfileClick={handleProfileClick}
                 onAdminClick={handleAdminClick}
+                onPurchasesClick={handlePurchasesClick}
                 getUserInitials={getUserInitials}
               />
             </div>
@@ -182,6 +187,7 @@ const Header = () => {
               onLogout={handleLogout}
               onProfileClick={handleProfileClick}
               onAdminClick={handleAdminClick}
+              onPurchasesClick={handlePurchasesClick}
               getUserInitials={getUserInitials}
               isAuthDialogOpen={isAuthDialogOpen}
               onAuthDialogOpenChange={setIsAuthDialogOpen}

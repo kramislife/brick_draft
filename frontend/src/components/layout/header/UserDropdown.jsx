@@ -19,10 +19,16 @@ const UserDropdown = ({
   onLogout,
   onProfileClick,
   onAdminClick,
+  onPurchasesClick,
   getUserInitials,
 }) => {
   // Get user menu items from centralized configuration
-  const userMenuItems = getUserMenuItems(isAdmin, onAdminClick, onProfileClick);
+  const userMenuItems = getUserMenuItems(
+    isAdmin,
+    onAdminClick,
+    onProfileClick,
+    onPurchasesClick
+  );
 
   return (
     <DropdownMenu>

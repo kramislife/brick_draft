@@ -6,6 +6,7 @@ import { collectionApi } from "@/redux/api/collectionApi";
 import { colorApi } from "@/redux/api/colorApi";
 import { partApi } from "@/redux/api/partItemApi";
 import { lotteryApi } from "@/redux/api/lotteryApi";
+import { paymentApi } from "@/redux/api/paymentApi";
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     [colorApi.reducerPath]: colorApi.reducer,
     [partApi.reducerPath]: partApi.reducer,
     [lotteryApi.reducerPath]: lotteryApi.reducer,
+    [paymentApi.reducerPath]: paymentApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -23,7 +25,8 @@ export const store = configureStore({
       colorApi.middleware,
       partApi.middleware,
       lotteryApi.middleware,
-    )
+      paymentApi.middleware
+    ),
 });
 
 // Setup listeners for refetchOnFocus/refetchOnReconnect behaviors
