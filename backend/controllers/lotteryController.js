@@ -71,15 +71,16 @@ const processImageUpload = async (image, existingImage = null) => {
 
 // find or create color
 const findOrCreateColor = async (colorName, userId) => {
-  // If no color name provided, return null 
-  if (!colorName || colorName.trim() === "") {
+  // Accept colorName as string or object
+  if (typeof colorName === "object" && colorName !== null) {
+    colorName = colorName.color_name || colorName.name || "";
+  }
+  if (typeof colorName !== "string" || colorName.trim() === "") {
     return null;
   }
-
   let colorDoc = await Color.findOne({
     color_name: { $regex: `^${colorName.trim()}$`, $options: "i" },
   });
-
   if (!colorDoc) {
     try {
       colorDoc = await Color.create({
@@ -99,7 +100,6 @@ const findOrCreateColor = async (colorName, userId) => {
       }
     }
   }
-
   return colorDoc;
 };
 
@@ -154,13 +154,8 @@ const processPartsFromCSV = async (parts, userId) => {
   const partRefs = [];
 
   for (const csvPart of parts) {
-    // Find or create color 
+    // Find or create color
     const colorDoc = await findOrCreateColor(csvPart.color, userId);
-    // Don't skip if color creation fails since color is optional
-    // if (!colorDoc) {
-    //   skippedCount++;
-    //   continue;
-    // }
 
     // Find or create part
     const {
@@ -515,6 +510,7 @@ export const createLottery = catchAsyncErrors(async (req, res, next) => {
       drawDate,
       drawTime,
       totalSlots,
+      slotsAvailable: totalSlots, // Automatically set to totalSlots
       pieces,
       collection,
       tag,
@@ -561,11 +557,14 @@ export const updateLottery = catchAsyncErrors(async (req, res, next) => {
       partRefs = newPartRefs;
     }
 
-    // Update lottery
+    // Remove slotsAvailable from updateData to prevent manual updates
+    const { slotsAvailable, ...updateDataWithoutSlots } = updateData;
+
+    // Update lottery (slotsAvailable can only be updated by payment system)
     const updatedLottery = await Lottery.findByIdAndUpdate(
       id,
       {
-        ...updateData,
+        ...updateDataWithoutSlots,
         image: imageData,
         updatedBy: req.user.user_id,
         parts: partRefs,

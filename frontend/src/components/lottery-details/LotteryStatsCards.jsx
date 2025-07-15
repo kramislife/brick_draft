@@ -42,7 +42,10 @@ const LotteryStatsCards = ({ set }) => {
         const Icon = card.icon;
 
         return (
-          <Card key={card.id} className="overflow-hidden shadow-md dark:border-none">
+          <Card
+            key={card.id}
+            className="overflow-hidden shadow-md dark:border-none"
+          >
             <CardContent className="relative px-5">
               <div
                 className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 ${card.bgColor} rounded-full`}

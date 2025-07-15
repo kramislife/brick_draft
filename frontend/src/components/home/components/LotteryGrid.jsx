@@ -29,7 +29,7 @@ const LotteryGrid = ({ title, showViewAll = false, limit }) => {
     drawDate: lottery.formattedDrawDate || "TBD",
     drawTime: lottery.formattedDrawTime || "",
     totalSlots: lottery.totalSlots,
-    slotsAvailable: lottery.totalSlots,
+    slotsAvailable: lottery.slotsAvailable,
     dateAdded: lottery.createdAt,
     tag: lottery.tag,
     whyCollect: lottery.whyCollect,

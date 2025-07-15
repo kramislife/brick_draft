@@ -41,7 +41,7 @@ const LotteryCard = ({ set }) => {
       </div>
 
       <CardContent className="p-3 space-y-2">
-        <h3 className="text-xl font-semibold line-clamp-1">{set.name}</h3>
+        <h3 className="text-lg font-semibold line-clamp-1">{set.name}</h3>
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 text-muted-foreground text-sm">
