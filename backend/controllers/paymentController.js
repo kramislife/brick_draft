@@ -7,31 +7,6 @@ import { generate_id } from "../utills/generate_id.js";
 // ===================== STRIPE CONFIGURATION ========================
 const STRIPE = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const SHIPPING_OPTIONS = [
-  {
-    shipping_rate_data: {
-      type: "fixed_amount",
-      fixed_amount: { amount: 0, currency: "usd" },
-      display_name: "Free shipping",
-      delivery_estimate: {
-        minimum: { unit: "business_day", value: 5 },
-        maximum: { unit: "business_day", value: 7 },
-      },
-    },
-  },
-  {
-    shipping_rate_data: {
-      type: "fixed_amount",
-      fixed_amount: { amount: 500, currency: "usd" }, // $5.00
-      display_name: "Express shipping",
-      delivery_estimate: {
-        minimum: { unit: "business_day", value: 1 },
-        maximum: { unit: "business_day", value: 1 },
-      },
-    },
-  },
-];
-
 // ===================== UTILITY FUNCTIONS ========================
 
 // Date and time formatting utilities
@@ -256,6 +231,9 @@ export const createCheckoutSession = catchAsyncErrors(
     const purchase_id = generate_id("PURCHASE");
     const urlFriendlySetName = createUrlFriendlySetName(lottery.title);
 
+    // Calculate shipping: $8 for 1, +$2 for each additional
+    const shippingAmount = 800 + (Math.max(1, quantity) - 1) * 200;
+
     // Create Stripe session
     const session = await STRIPE.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -274,11 +252,23 @@ export const createCheckoutSession = catchAsyncErrors(
       ],
       mode: "payment",
       success_url: `${process.env.FRONTEND_URL}/ticket-success/${urlFriendlySetName}/${purchase_id}`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+     
       shipping_address_collection: { allowed_countries: ["US"] },
       billing_address_collection: "required",
       customer_email: email || req.user.email,
-      shipping_options: SHIPPING_OPTIONS,
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: shippingAmount, currency: "usd" },
+            display_name: "Standard shipping",
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 3 },
+              maximum: { unit: "business_day", value: 5 },
+            },
+          },
+        },
+      ],
       automatic_tax: { enabled: true },
       metadata: { lotteryId, purchaseId: purchase_id, quantity },
     });
