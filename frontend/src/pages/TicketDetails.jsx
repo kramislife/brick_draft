@@ -91,6 +91,30 @@ const TicketDetails = () => {
 
   const hasPriorityList = !!existingPriorityListData?.priorityList;
 
+  // Auto-open PriorityListDialog once after successful payment
+  useEffect(() => {
+    if (data && purchaseId && data.payment_status === "paid") {
+      const shownKey = `priorityDialogShown_${purchaseId}`;
+      const hasBeenShown = localStorage.getItem(shownKey);
+
+      if (!hasBeenShown) {
+        // Auto-open dialog after a short delay
+        setTimeout(() => {
+          setPriorityDialogOpen(true);
+          toast.success(
+            "Set your priority list to get your favorite pieces first!",
+            {
+              duration: 4000,
+            }
+          );
+        }, 1500); // Delay to let confetti animation play first
+
+        // Mark as shown so it won't open again
+        localStorage.setItem(shownKey, "true");
+      }
+    }
+  }, [data, purchaseId]);
+
   // When data loads, set selectedParts from priorityList
   useEffect(() => {
     if (priorityListData?.priorityList?.priorityItems) {

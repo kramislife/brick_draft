@@ -9,7 +9,10 @@ export const lotteryApi = createApi({
   tagTypes: ["Lotteries"],
   endpoints: (builder) => ({
     getLotteries: builder.query({
-      query: () => "lotteries",
+      query: (params) => ({
+        url: "lotteries",
+        params,
+      }),
       providesTags: ["Lotteries"],
     }),
     getLotteryById: builder.query({

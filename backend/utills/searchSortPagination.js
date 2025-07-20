@@ -52,33 +52,21 @@ export const sortLotteries = (lotteries, sortBy) => {
     featured: (a, b) =>
       (b.tag?.includes("featured") || false) -
       (a.tag?.includes("featured") || false),
-    "-featured": (a, b) =>
-      (a.tag?.includes("featured") || false) -
-      (b.tag?.includes("featured") || false),
 
     // best seller sorting
     best_seller: (a, b) =>
       (b.tag?.includes("best_seller") || false) -
       (a.tag?.includes("best_seller") || false),
-    "-best_seller": (a, b) =>
-      (a.tag?.includes("best_seller") || false) -
-      (b.tag?.includes("best_seller") || false),
 
     // new arrival sorting
     new_arrival: (a, b) =>
       (b.tag?.includes("new_arrival") || false) -
       (a.tag?.includes("new_arrival") || false),
-    "-new_arrival": (a, b) =>
-      (a.tag?.includes("new_arrival") || false) -
-      (b.tag?.includes("new_arrival") || false),
 
     // limited edition sorting
     limited_edition: (a, b) =>
       (b.tag?.includes("limited_edition") || false) -
       (a.tag?.includes("limited_edition") || false),
-    "-limited_edition": (a, b) =>
-      (a.tag?.includes("limited_edition") || false) -
-      (b.tag?.includes("limited_edition") || false),
 
     // draw date sorting
     draw_date: (a, b) => new Date(a.drawDate || 0) - new Date(b.drawDate || 0),
