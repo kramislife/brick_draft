@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SORT_OPTIONS } from "@/constant/sortOption";
+import { LOTTERY_SORT_OPTIONS } from "@/constant/sortOption";
 
 const LotterySort = ({ sortBy, onSortChange }) => {
   return (
@@ -17,9 +17,9 @@ const LotterySort = ({ sortBy, onSortChange }) => {
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(SORT_OPTIONS).map(([key, value]) => (
-            <SelectItem key={key} value={value}>
-              {value}
+          {LOTTERY_SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
             </SelectItem>
           ))}
         </SelectContent>

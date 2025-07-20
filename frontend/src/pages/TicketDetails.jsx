@@ -1,18 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import Confetti from "react-confetti";
-import { CheckCircle, ArrowLeft, X } from "lucide-react";
+import { CheckCircle, ArrowLeft, X, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import TicketDetailsCard from "@/components/ticket-details/TicketDetailsCard";
 import ShippingAddressCard from "@/components/ticket-details/ShippingAddressCard";
 import PaymentSummary from "@/components/ticket-details/PaymentSummary";
 import TicketIdsGrid from "@/components/ticket-details/TicketIdsGrid";
-import { useGetPaymentSuccessDetailsQuery } from "@/redux/api/paymentApi";
+import PriorityListDialog from "@/components/ticket-details/PriorityListDialog";
+import {
+  useGetPaymentSuccessDetailsQuery,
+  useGetPriorityListQuery,
+  useCreatePriorityListMutation,
+  useUpdatePriorityListMutation,
+  useDeletePriorityListMutation,
+  paymentApi,
+} from "@/redux/api/paymentApi";
 
 const TicketDetails = () => {
   const { purchaseId } = useParams();
+  const dispatch = useDispatch();
+
+  // General state
   const [copied, setCopied] = useState(false);
   const [copiedTicketId, setCopiedTicketId] = useState(null);
+  const [priorityDialogOpen, setPriorityDialogOpen] = useState(false);
+
+  // Priority list state
+  const [selectedParts, setSelectedParts] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [selectAllLoading, setSelectAllLoading] = useState(false);
+  const [isSelectAllMode, setIsSelectAllMode] = useState(false);
+
+  // Pagination state
+  const [paginationParams, setPaginationParams] = useState({
+    sort: "name", // Set initial sort to trigger proper sorting from the start
+    page: 1,
+    limit: 20,
+  });
+
+  // Wrapper function to handle pagination changes and reset select all mode
+  const handlePaginationChange = (params) => {
+    setPaginationParams(params);
+    setIsSelectAllMode(false);
+  };
 
   const copyToClipboard = async (text, type = "general") => {
     try {
@@ -36,6 +69,149 @@ const TicketDetails = () => {
   } = useGetPaymentSuccessDetailsQuery(purchaseId, {
     skip: !purchaseId,
   });
+
+  // Priority list queries
+  const {
+    data: priorityListData,
+    isLoading,
+    refetch,
+  } = useGetPriorityListQuery(
+    { purchaseId, params: paginationParams },
+    { skip: !purchaseId }
+  );
+  const [createPriorityList] = useCreatePriorityListMutation();
+  const [updatePriorityList] = useUpdatePriorityListMutation();
+  const [deletePriorityList] = useDeletePriorityListMutation();
+
+  // Check if priority list exists (for button text)
+  const { data: existingPriorityListData } = useGetPriorityListQuery(
+    { purchaseId, params: {} },
+    { skip: !purchaseId }
+  );
+
+  const hasPriorityList = !!existingPriorityListData?.priorityList;
+
+  // When data loads, set selectedParts from priorityList
+  useEffect(() => {
+    if (priorityListData?.priorityList?.priorityItems) {
+      setSelectedParts(priorityListData.priorityList.priorityItems);
+    } else {
+      // Clear selected parts if no priority list or empty priority items
+      setSelectedParts([]);
+    }
+  }, [priorityListData?.priorityList?.priorityItems]);
+
+  // Compute available parts (not in selectedParts)
+  const availableParts = useMemo(() => {
+    if (!priorityListData?.parts) return [];
+    const selectedIds = new Set(selectedParts.map((p) => p.item._id || p.item));
+    return priorityListData.parts.filter((part) => !selectedIds.has(part._id));
+  }, [priorityListData, selectedParts]);
+
+  // Add part to priority list
+  const handleAddPart = (part) => {
+    if (selectedParts.some((p) => (p.item._id || p.item) === part._id)) return;
+    setSelectedParts([
+      ...selectedParts,
+      {
+        item: part,
+        priority: selectedParts.length + 1,
+      },
+    ]);
+    setIsSelectAllMode(false);
+  };
+
+  // Remove part from priority list
+  const handleRemovePart = (partId) => {
+    setSelectedParts(
+      selectedParts.filter((p) => (p.item._id || p.item) !== partId)
+    );
+  };
+
+  // Save priority list
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const priorityItems = selectedParts.map((p, i) => ({
+        item: p.item._id || p.item,
+        priority: i + 1,
+      }));
+
+      let result;
+      if (priorityListData?.priorityList) {
+        // Update existing priority list
+        result = await updatePriorityList({
+          purchaseId,
+          priorityItems,
+        }).unwrap();
+      } else {
+        // Create new priority list
+        result = await createPriorityList({
+          purchaseId,
+          priorityItems,
+        }).unwrap();
+      }
+
+      refetch();
+      setPriorityDialogOpen(false);
+      toast.success(result?.message || "Priority list saved successfully");
+    } catch (err) {
+      toast.error(
+        err?.data?.message || err?.error || "Failed to save priority list"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Select all parts for the lottery set (not just current page)
+  const handleSelectAll = async () => {
+    setSelectAllLoading(true);
+    setIsSelectAllMode(true);
+    try {
+      const result = await dispatch(
+        paymentApi.endpoints.getPriorityList.initiate({
+          purchaseId,
+          params: {
+            ...paginationParams,
+            limit: "all",
+          },
+        })
+      ).unwrap();
+      const allParts = result.parts || [];
+      const selectedIds = new Set(
+        selectedParts.map((p) => p.item._id || p.item)
+      );
+      const toAdd = allParts.filter((part) => !selectedIds.has(part._id));
+      setSelectedParts([
+        ...selectedParts,
+        ...toAdd.map((part, idx) => ({
+          item: part,
+          priority: selectedParts.length + idx + 1,
+        })),
+      ]);
+      toast.success("All parts added to your priority list");
+    } catch (err) {
+      toast.error(
+        err?.data?.message || err?.error || "Failed to select all parts"
+      );
+    } finally {
+      setSelectAllLoading(false);
+    }
+  };
+
+  // Clear all selected parts
+  const handleClearAll = () => {
+    setSelectedParts([]);
+    setIsSelectAllMode(false);
+    toast.success("Priority list cleared");
+  };
+
+  // Pagination helpers
+  const totalPages = priorityListData?.totalPages || 1;
+  const currentPage = priorityListData?.page || 1;
+  const startEntry = priorityListData?.startEntry || 0;
+  const endEntry = priorityListData?.endEntry || 0;
 
   if (loading) {
     return (
@@ -117,12 +293,52 @@ const TicketDetails = () => {
         <h1 className="text-4xl md:text-5xl font-bold text-emerald-600 mb-5">
           Payment Successful!
         </h1>
-        <p className=" text-muted-foreground max-w-xl mx-auto">
+        <p className=" text-muted-foreground max-w-xl mx-auto mb-5">
           🎉 Congratulations! Your {ticket_count} lottery ticket
           {ticket_count > 1 ? "s have" : " has"} been confirmed. Good luck in
           the upcoming draw!
         </p>
+        <Button
+          variant="accent"
+          className="gap-2"
+          onClick={() => {
+            setPriorityDialogOpen(true);
+          }}
+        >
+          <ListTodo className="w-4 h-4" />
+          {hasPriorityList ? "Update Priority List" : "Set Priority List"}
+        </Button>
       </div>
+
+      <PriorityListDialog
+        open={priorityDialogOpen}
+        onClose={() => {
+          setPriorityDialogOpen(false);
+        }}
+        // Data props
+        selectedParts={selectedParts}
+        availableParts={availableParts}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        startEntry={startEntry}
+        endEntry={endEntry}
+        // Handler props
+        handleAddPart={handleAddPart}
+        handleRemovePart={handleRemovePart}
+        handleSave={handleSave}
+        handleSelectAll={handleSelectAll}
+        handleClearAll={handleClearAll}
+        // Loading states
+        saving={saving}
+        selectAllLoading={selectAllLoading}
+        isLoading={isLoading}
+        // Data from API
+        data={priorityListData}
+        // Callback for when params change
+        onParamsChange={handlePaginationChange}
+        // Select all mode state
+        isSelectAllMode={isSelectAllMode}
+      />
 
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">

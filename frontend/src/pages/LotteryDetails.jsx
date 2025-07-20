@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { Package } from "lucide-react";
 import LotteryImageSection from "@/components/lottery-details/LotteryImageSection";
@@ -12,21 +13,17 @@ import {
   useGetLotteryByIdQuery,
   useGetLotteryPartsByIdQuery,
 } from "@/redux/api/lotteryApi";
-import { PART_SORT_OPTIONS, PER_PAGE_OPTIONS } from "@/constant/sortOption";
-import { useSelector } from "react-redux";
+
 import { selectCurrentUser } from "@/redux/features/authSlice";
 
 const LotteryDetails = () => {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
-
-  // PARTS STATE
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("name");
-  const [category, setCategory] = useState("all");
-  const [color, setColor] = useState("all");
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [paginationParams, setPaginationParams] = useState({
+    sort: "name", // Set initial sort to trigger proper sorting from the start
+    page: 1,
+    limit: 20,
+  });
 
   // Fetch lottery details
   const {
@@ -35,7 +32,7 @@ const LotteryDetails = () => {
     error: lotteryError,
   } = useGetLotteryByIdQuery(id);
 
-  // Fetch parts data from backend with all logic handled server-side
+  // Fetch parts data 
   const {
     data: partsData,
     isLoading: isPartsLoading,
@@ -43,14 +40,7 @@ const LotteryDetails = () => {
   } = useGetLotteryPartsByIdQuery(
     {
       id,
-      params: {
-        search,
-        sort,
-        color: color === "all" ? undefined : color,
-        category: category === "all" ? undefined : category,
-        page,
-        limit: perPage === "all" ? undefined : perPage,
-      },
+      params: paginationParams,
     },
     {
       // Skip the query if we don't have the lottery ID yet
@@ -64,72 +54,9 @@ const LotteryDetails = () => {
   const totalPages = partsData?.totalPages || 1;
   const currentPage = partsData?.page || 1;
 
-  // Calculate pagination display values
-  const startEntry =
-    totalParts === 0
-      ? 0
-      : (currentPage - 1) * (perPage === "all" ? totalParts : perPage) + 1;
-  const endEntry =
-    perPage === "all"
-      ? totalParts
-      : Math.min(
-          startEntry + (perPage === "all" ? totalParts : perPage) - 1,
-          totalParts
-        );
-
-  //  context-aware filter options
+  // Context-aware filter options
   const categoryOptions = partsData?.availableCategories || [];
   const colorOptions = partsData?.availableColors || [];
-
-  // Pagination numbers (show up to 3 around current)
-  const getPageNumbers = () => {
-    if (totalPages <= 1) {
-      return [];
-    }
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const pages = [];
-    pages.push(1);
-    if (currentPage > 4) pages.push("...");
-    for (
-      let i = Math.max(2, currentPage - 1);
-      i <= Math.min(totalPages - 1, currentPage + 1);
-      i++
-    ) {
-      pages.push(i);
-    }
-    if (currentPage < totalPages - 3) pages.push("...");
-    if (totalPages > 1) {
-      pages.push(totalPages);
-    }
-    return pages;
-  };
-
-  // Handlers
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
-  const handleSortChange = (value) => {
-    setSort(value);
-    setPage(1);
-  };
-  const handleCategoryChange = (value) => {
-    setCategory(value);
-    setPage(1);
-  };
-  const handleColorChange = (value) => {
-    setColor(value);
-    setPage(1);
-  };
-  const handlePerPageChange = (value) => {
-    setPerPage(value === "all" ? "all" : Number(value));
-    setPage(1);
-  };
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
-  };
 
   // Transform lottery data
   const set = useMemo(() => {
@@ -232,31 +159,17 @@ const LotteryDetails = () => {
       {/* Parts Section */}
       <LotteryPartsSection
         partsTitle={set.name + " Parts"}
-        search={search}
-        sort={sort}
-        category={category}
-        color={color}
-        perPage={perPage}
-        page={page}
-        onSearchChange={handleSearchChange}
-        onSortChange={handleSortChange}
-        onCategoryChange={handleCategoryChange}
-        onColorChange={handleColorChange}
-        onPerPageChange={handlePerPageChange}
-        onPageChange={handlePageChange}
-        categoryOptions={categoryOptions}
-        colorOptions={colorOptions}
-        sortOptions={PART_SORT_OPTIONS}
-        perPageOptions={PER_PAGE_OPTIONS}
         paginatedParts={parts}
         totalParts={totalParts}
-        startEntry={startEntry}
-        endEntry={endEntry}
+        startEntry={partsData?.startEntry || 1}
+        endEntry={partsData?.endEntry || totalParts}
         totalPages={totalPages}
         currentPage={currentPage}
-        getPageNumbers={getPageNumbers}
+        categoryOptions={categoryOptions}
+        colorOptions={colorOptions}
         isLoading={isPartsLoading}
         drawDate={set.drawDate}
+        onParamsChange={setPaginationParams}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import userAuthentication from "./routes/auth.route.js";
 import colorRoutes from "./routes/color.route.js";
 import lotteryRoutes from "./routes/lottery.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+import priorityListRoutes from "./routes/priority_list.route.js";
 
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
@@ -57,6 +58,7 @@ app.use("/api/v1", userAuthentication);
 app.use("/api/v1", colorRoutes);
 app.use("/api/v1", lotteryRoutes);
 app.use("/api/v1", paymentRoutes);
+app.use("/api/v1", priorityListRoutes);
 
 // ERROR MIDDLEWARE
 app.use(errorsMiddleware);
