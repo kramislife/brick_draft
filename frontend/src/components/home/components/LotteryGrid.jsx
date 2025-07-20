@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import LotteryCard from "@/components/home/components/LotteryCard";
 import LotterySort from "@/components/home/components/LotterySort";
 import FallbackStates from "@/components/layout/fallback/FallbackStates";
-import { LOTTERY_SORT_OPTIONS } from "@/constant/sortOption";
 import { useGetLotteriesQuery } from "@/redux/api/lotteryApi";
 
 const LotteryGrid = ({ title, showViewAll = false, limit }) => {
-  const [sortBy, setSortBy] = useState(LOTTERY_SORT_OPTIONS[0].value);
+  const [sortBy, setSortBy] = useState("created_at"); // Default to newly created first
   const {
     data: lotteriesData,
     isLoading,

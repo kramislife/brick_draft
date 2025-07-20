@@ -13,7 +13,7 @@ const LotterySort = ({ sortBy, onSortChange }) => {
     <div className="flex items-center gap-2">
       <span className="text-sm hidden sm:block">Sort by:</span>
       <Select value={sortBy} onValueChange={onSortChange}>
-        <SelectTrigger className=" sm:w-[180px]">
+        <SelectTrigger>
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>

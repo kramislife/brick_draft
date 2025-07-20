@@ -69,7 +69,7 @@ const LotteryCard = ({ set }) => {
       </CardContent>
 
       <CardFooter className="px-2 pb-3 grid grid-cols-2 gap-2">
-        <Dialog>
+        <Dialog key={set.id}>
           <DialogTrigger asChild>
             <Button onClick={(e) => e.stopPropagation()}>View Parts</Button>
           </DialogTrigger>
@@ -77,6 +77,7 @@ const LotteryCard = ({ set }) => {
             parts={set.parts}
             setName={set.name}
             drawDate={set.drawDate}
+            lotteryId={set.id}
           />
         </Dialog>
         <Button
