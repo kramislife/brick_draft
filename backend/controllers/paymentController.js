@@ -44,22 +44,20 @@ const formatTime = (timeString, options = {}) => {
   }
 };
 
-// String manipulation utilities
-const createUrlFriendlySetName = (title) => {
-  return title
-    .replace(/[^a-zA-Z0-9\s-&]/g, "") // Remove special characters except spaces, hyphens, &
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+//  Display lottery name in url
+const createUrlFriendlySetName = (title) =>
+  title
+    .replace(/[^a-zA-Z0-9\s-&]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
     .toLowerCase()
     .trim();
-};
 
-// ID generation utilities
-const generateTicketIds = (quantity) => {
-  return Array.from({ length: quantity }, () => generate_id("TICKET"));
-};
+// Generate ticket IDs (TKT-000-111-222)
+const generateTicketIds = (quantity) =>
+  Array.from({ length: quantity }, () => generate_id("TICKET"));
 
-// Stripe session utilities
+// Find stripe session by purchase ID
 const findStripeSession = async (purchaseId) => {
   const sessions = await STRIPE.checkout.sessions.list({ limit: 100 });
   return sessions.data.find(
@@ -67,44 +65,33 @@ const findStripeSession = async (purchaseId) => {
   );
 };
 
-const validatePaymentSession = (session, purchaseId) => {
-  if (!session) {
-    throw new Error("Purchase not found");
-  }
-  if (session.payment_status !== "paid") {
+const validatePaymentSession = (session) => {
+  if (!session) throw new Error("Purchase not found");
+  if (session.payment_status !== "paid")
     throw new Error("Payment not completed");
-  }
   return session;
 };
 
-// Fee calculation utilities
+// Calculate shipping and tax fees
 const calculateFees = (session, quantity) => {
   const getIndividualFee = (amount) => (amount ? amount / quantity / 100 : 0);
-
-  const individualShippingFee = getIndividualFee(
-    session.total_details?.amount_shipping
-  );
-  const individualTax = getIndividualFee(session.total_details?.amount_tax);
-
   return {
-    shippingFee: individualShippingFee * quantity,
-    tax: individualTax * quantity,
+    shippingFee:
+      getIndividualFee(session.total_details?.amount_shipping) * quantity,
+    tax: getIndividualFee(session.total_details?.amount_tax) * quantity,
   };
 };
 
-// Address utilities
+// Create shipping address from stripe session
 const createShippingAddress = (session) => {
   if (!session.customer_details?.address) return null;
-
   return {
     ...session.customer_details.address,
     name: session.customer_details.name,
   };
 };
 
-// ===================== DATA TRANSFORMATION FUNCTIONS ========================
-
-// Lottery data transformation
+// ===================== DATA TRANSFORMATION ========================
 const createLotteryResponse = (lottery) => ({
   title: lottery.title,
   description: lottery.description,
@@ -118,11 +105,13 @@ const createLotteryResponse = (lottery) => ({
   slotsAvailable: lottery.slotsAvailable,
 });
 
-// Ticket data transformation
+// Create ticket data for database
 const createTicketData = (lottery, session, purchaseId, userId, quantity) => {
   const ticketIds = generateTicketIds(quantity);
   const { shippingFee, tax } = calculateFees(session, quantity);
-
+  const delivery_method = session.metadata?.delivery_method || "delivery";
+  const address = createShippingAddress(session);
+  const address_type = delivery_method === "delivery" ? "shipping" : "billing";
   return {
     user_id: userId,
     lottery: {
@@ -131,22 +120,24 @@ const createTicketData = (lottery, session, purchaseId, userId, quantity) => {
     },
     ticket_id: ticketIds,
     ticket_price: lottery.ticketPrice,
-    quantity: quantity,
+    quantity,
     payment_method: "stripe",
     payment_status: session.payment_status || "paid",
     createdBy: userId,
     payment_reference: session.payment_intent,
     session_id: session.id,
     shipping_fee: shippingFee,
-    tax: tax,
+    tax,
     total_amount: session.amount_total / 100,
-    shipping_address: createShippingAddress(session),
+    address,
+    address_type,
     purchase_id: purchaseId,
   };
 };
 
-const transformTicketsForResponse = (ticketDoc) => {
-  return ticketDoc.ticket_id.map((ticketId, index) => ({
+
+const transformTicketsForResponse = (ticketDoc) =>
+  ticketDoc.ticket_id.map((ticketId, index) => ({
     ticket_id: ticketId,
     ticket_number: index + 1,
     ticket_price: ticketDoc.ticket_price,
@@ -154,9 +145,7 @@ const transformTicketsForResponse = (ticketDoc) => {
     payment_status: ticketDoc.payment_status,
     created_at: ticketDoc.createdAt,
   }));
-};
 
-// Purchase data transformation
 const transformPurchaseForResponse = (ticket) => ({
   purchase_id: ticket.purchase_id,
   total_amount: ticket.total_amount,
@@ -182,194 +171,162 @@ const transformPurchaseForResponse = (ticket) => ({
 });
 
 // ===================== DATABASE OPERATIONS ========================
-
-// Lottery operations
 const findLotteryById = async (lotteryId) => {
   const lottery = await Lottery.findById(lotteryId);
-  if (!lottery) {
-    throw new Error("Lottery not found");
-  }
+  if (!lottery) throw new Error("Lottery not found");
   return lottery;
 };
 
 const decrementLotterySlots = async (lotteryId) => {
-  await Lottery.findByIdAndUpdate(lotteryId, {
-    $inc: { slotsAvailable: -1 },
-  });
+  await Lottery.findByIdAndUpdate(lotteryId, { $inc: { slotsAvailable: -1 } });
 };
 
-// Ticket operations
-const findTicketByPurchaseId = async (purchaseId) => {
-  return await Ticket.findOne({ purchase_id: purchaseId }).populate(
-    "lottery.lottery_id"
-  );
-};
+const findTicketByPurchaseId = async (purchaseId) =>
+  Ticket.findOne({ purchase_id: purchaseId }).populate("lottery.lottery_id");
 
-const checkUserHasOtherTickets = async (
-  userId,
-  lotteryId,
-  currentPurchaseId
-) => {
-  return await Ticket.exists({
+const checkUserHasOtherTickets = async (userId, lotteryId, currentPurchaseId) =>
+  Ticket.exists({
     user_id: userId,
     "lottery.lottery_id": lotteryId,
     purchase_id: { $ne: currentPurchaseId },
   });
-};
 
 // ===================== CONTROLLER FUNCTIONS ========================
-
 // Create Stripe checkout session
-export const createCheckoutSession = catchAsyncErrors(
-  async (req, res, next) => {
-    const { lotteryId, quantity = 1, email } = req.body;
+export const createCheckoutSession = catchAsyncErrors(async (req, res) => {
+  const {
+    lotteryId,
+    quantity = 1,
+    email,
+    delivery_method = "delivery",
+  } = req.body;
+  const lottery = await findLotteryById(lotteryId);
+  // Generate purchase ID (PUR-000-111-222) and URL
+  const purchase_id = generate_id("PURCHASE");
+  const urlFriendlySetName = createUrlFriendlySetName(lottery.title);
+  // Calculate shipping amount ($8 for 1, +$2 for each additional)
+  const shippingAmount = 800 + (Math.max(1, quantity) - 1) * 200;
 
-    // Validate lottery exists
-    const lottery = await findLotteryById(lotteryId);
-
-    // Generate IDs and URLs
-    const purchase_id = generate_id("PURCHASE");
-    const urlFriendlySetName = createUrlFriendlySetName(lottery.title);
-
-    // Calculate shipping: $8 for 1, +$2 for each additional
-    const shippingAmount = 800 + (Math.max(1, quantity) - 1) * 200;
-
-    // Create Stripe session
-    const session = await STRIPE.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: lottery.title,
-              images: [lottery.image?.url],
-            },
-            unit_amount: Math.round(lottery.ticketPrice * 100),
+  const sessionParams = {
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: lottery.title,
+            images: [lottery.image?.url],
           },
-          quantity,
+          unit_amount: Math.round(lottery.ticketPrice * 100),
         },
-      ],
-      mode: "payment",
-      success_url: `${process.env.FRONTEND_URL}/ticket-success/${urlFriendlySetName}/${purchase_id}`,
-     
-      shipping_address_collection: { allowed_countries: ["US"] },
-      billing_address_collection: "required",
-      customer_email: email || req.user.email,
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: { amount: shippingAmount, currency: "usd" },
-            display_name: "Standard shipping",
-            delivery_estimate: {
-              minimum: { unit: "business_day", value: 3 },
-              maximum: { unit: "business_day", value: 5 },
-            },
+        quantity,
+      },
+    ],
+    mode: "payment",
+    success_url: `${process.env.FRONTEND_URL}/ticket-success/${urlFriendlySetName}/${purchase_id}`,
+    customer_email: email || req.user.email,
+    automatic_tax: { enabled: true },
+    metadata: {
+      lotteryId,
+      purchaseId: purchase_id,
+      quantity,
+      delivery_method,
+    },
+  };
+
+  if (delivery_method === "delivery") {
+    sessionParams.shipping_address_collection = { allowed_countries: ["US"] };
+    sessionParams.shipping_options = [
+      {
+        shipping_rate_data: {
+          type: "fixed_amount",
+          fixed_amount: { amount: shippingAmount, currency: "usd" },
+          display_name: "Standard shipping",
+          delivery_estimate: {
+            minimum: { unit: "business_day", value: 3 },
+            maximum: { unit: "business_day", value: 5 },
           },
         },
-      ],
-      automatic_tax: { enabled: true },
-      metadata: { lotteryId, purchaseId: purchase_id, quantity },
-    });
-
-    res.json({
-      url: session.url,
-      purchase_id,
-      urlFriendlySetName,
-    });
+      },
+    ];
+  } else if (delivery_method === "pick-up") {
+    sessionParams.shipping_options = [
+      {
+        shipping_rate_data: {
+          type: "fixed_amount",
+          fixed_amount: { amount: 0, currency: "usd" },
+          display_name: "Pick-Up in Store",
+        },
+      },
+    ];
   }
-);
+
+  const session = await STRIPE.checkout.sessions.create(sessionParams);
+  res.json({ url: session.url, purchase_id, urlFriendlySetName });
+});
 
 // Get payment success details and create ticket if needed
-export const getPaymentSuccessDetails = catchAsyncErrors(
-  async (req, res, next) => {
-    const { purchaseId } = req.params;
-
-    // Validate purchase ID
-    if (!purchaseId) {
-      return res.status(400).json({
-        message: "Missing purchase ID",
-        customer_email: null,
-        payment_status: null,
-      });
-    }
-
-    // Find existing ticket or create new one
-    let ticketDoc = await findTicketByPurchaseId(purchaseId);
-
-    if (!ticketDoc) {
-      // Create ticket from Stripe session
-      const session = await findStripeSession(purchaseId);
-      validatePaymentSession(session, purchaseId);
-
-      const lottery = await findLotteryById(session.metadata.lotteryId);
-      const quantity = Number(session.metadata.quantity) || 1;
-
-      const ticketData = createTicketData(
-        lottery,
-        session,
-        purchaseId,
-        req.user.user_id,
-        quantity
-      );
-
-      ticketDoc = await Ticket.create(ticketData);
-
-      // Only decrement slots per user
-      const userHasOtherTickets = await checkUserHasOtherTickets(
-        req.user.user_id,
-        lottery._id,
-        purchaseId
-      );
-
-      if (!userHasOtherTickets) {
-        await decrementLotterySlots(lottery._id);
-      }
-
-      // Populate lottery for response
-      ticketDoc = await Ticket.findById(ticketDoc._id).populate(
-        "lottery.lottery_id"
-      );
-    }
-
-    // Get lottery details for response
-    const lottery =
-      ticketDoc.lottery?.lottery_id ||
-      (await findLotteryById(ticketDoc.lottery.lottery_id));
-
-    // Prepare response
-    const response = {
-      customer_email: ticketDoc.user_id?.email || "N/A",
-      payment_status: ticketDoc.payment_status || null,
-      amount_total: ticketDoc.total_amount * 100,
-      payment_reference: ticketDoc.payment_reference,
-      payment_method: ticketDoc.payment_method,
-      tickets: transformTicketsForResponse(ticketDoc),
-      ticket_count: ticketDoc.ticket_id.length,
-      quantity: ticketDoc.quantity,
-      shipping_address: ticketDoc.shipping_address,
-      shipping_fee: ticketDoc.shipping_fee,
-      tax: ticketDoc.tax,
-      lottery: createLotteryResponse(lottery),
-    };
-
-    res.json(response);
+export const getPaymentSuccessDetails = catchAsyncErrors(async (req, res) => {
+  const { purchaseId } = req.params;
+  if (!purchaseId) {
+    return res.status(400).json({
+      message: "Missing purchase ID",
+      customer_email: null,
+      payment_status: null,
+    });
   }
-);
+  let ticketDoc = await findTicketByPurchaseId(purchaseId);
+  if (!ticketDoc) {
+    const session = await findStripeSession(purchaseId);
+    validatePaymentSession(session);
+    const lottery = await findLotteryById(session.metadata.lotteryId);
+    const quantity = Number(session.metadata.quantity) || 1;
+    const ticketData = createTicketData(
+      lottery,
+      session,
+      purchaseId,
+      req.user.user_id,
+      quantity
+    );
+    ticketDoc = await Ticket.create(ticketData);
+    const userHasOtherTickets = await checkUserHasOtherTickets(
+      req.user.user_id,
+      lottery._id,
+      purchaseId
+    );
+    if (!userHasOtherTickets) await decrementLotterySlots(lottery._id);
+    ticketDoc = await Ticket.findById(ticketDoc._id).populate(
+      "lottery.lottery_id"
+    );
+  }
+  const lottery =
+    ticketDoc.lottery?.lottery_id ||
+    (await findLotteryById(ticketDoc.lottery.lottery_id));
+  const response = {
+    customer_email: ticketDoc.user_id?.email || "N/A",
+    payment_status: ticketDoc.payment_status || null,
+    address: ticketDoc.address,
+    address_type: ticketDoc.address_type,
+    amount_total: ticketDoc.total_amount * 100,
+    payment_reference: ticketDoc.payment_reference,
+    payment_method: ticketDoc.payment_method,
+    tickets: transformTicketsForResponse(ticketDoc),
+    ticket_count: ticketDoc.ticket_id.length,
+    quantity: ticketDoc.quantity,
+    shipping_fee: ticketDoc.shipping_fee,
+    tax: ticketDoc.tax,
+    lottery: createLotteryResponse(lottery),
+  };
+  res.json(response);
+});
 
 // Get user purchases
-export const getUserPurchases = catchAsyncErrors(async (req, res, next) => {
+export const getUserPurchases = catchAsyncErrors(async (req, res) => {
   const userId = req.user.user_id;
-
-  // Find all tickets for the user
   const tickets = await Ticket.find({ user_id: userId })
     .populate("lottery.lottery_id")
     .sort({ createdAt: -1 });
-
-  // Transform the data for frontend
   const purchases = tickets.map(transformPurchaseForResponse);
-
   res.status(200).json({
     success: true,
     message: `${purchases.length} purchases found`,
@@ -377,9 +334,8 @@ export const getUserPurchases = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// ===================== ADMIN: GET ALL TICKETS ========================
-export const getAllTickets = catchAsyncErrors(async (req, res, next) => {
-  // Only allow admin/superAdmin (should be enforced in route)
+// Get all tickets
+export const getAllTickets = catchAsyncErrors(async (req, res) => {
   const tickets = await Ticket.find()
     .populate("user_id", "name email")
     .populate(
@@ -387,8 +343,7 @@ export const getAllTickets = catchAsyncErrors(async (req, res, next) => {
       "title drawDate drawTime formattedDrawDate formattedDrawTime image"
     )
     .sort({ createdAt: -1 });
-
-  // Transform for frontend table
+  // Transform tickets for admin table
   const data = tickets.map((ticket) => {
     const lottery = ticket.lottery.lottery_id || {};
     return {
@@ -406,7 +361,6 @@ export const getAllTickets = catchAsyncErrors(async (req, res, next) => {
       _raw: ticket, // for details view
     };
   });
-
   res.status(200).json({
     success: true,
     tickets: data,

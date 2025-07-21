@@ -285,14 +285,16 @@ const TicketDetails = () => {
   if (!data) return null;
 
   const { tickets, ticket_count, lottery } = data;
+  const address = data.address || {};
   const shippingAddress = {
-    ...data.shipping_address,
-    address_line1: data.shipping_address?.line1,
-    address_line2: data.shipping_address?.line2,
+    ...address,
+    address_line1: address?.line1,
+    address_line2: address?.line2,
   };
   const paymentSummary = {
     payment_reference: data.payment_reference,
     payment_method: data.payment_method,
+    address_type: data.address_type,
     ticket_price: data.tickets?.[0]?.ticket_price || 0,
     quantity: data.quantity || 1,
     subtotal: (data.tickets?.[0]?.ticket_price || 0) * (data.quantity || 1),
@@ -367,7 +369,10 @@ const TicketDetails = () => {
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
           <TicketDetailsCard lottery={lottery} />
-          <ShippingAddressCard shippingAddress={shippingAddress} />
+          <ShippingAddressCard
+            shippingAddress={shippingAddress}
+            addressType={data.address_type}
+          />
         </div>
         <div className="lg:sticky lg:top-5 lg:self-start space-y-5">
           <TicketIdsGrid

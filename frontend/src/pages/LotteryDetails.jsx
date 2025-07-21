@@ -6,7 +6,7 @@ import LotteryImageSection from "@/components/lottery-details/LotteryImageSectio
 import LotteryWhyCollect from "@/components/lottery-details/LotteryWhyCollect";
 import LotteryStatsCards from "@/components/lottery-details/LotteryStatsCards";
 import LotteryPurchaseSection from "@/components/lottery-details/LotteryPurchaseSection";
-import { paymentMethod } from "@/constant/paymentMethod";
+import { paymentMethod, deliveryMethod } from "@/constant/paymentMethod";
 import FallbackStates from "@/components/layout/fallback/FallbackStates";
 import LotteryPartsSection from "@/components/lottery-details/LotteryPartsSection";
 import {
@@ -32,7 +32,7 @@ const LotteryDetails = () => {
     error: lotteryError,
   } = useGetLotteryByIdQuery(id);
 
-  // Fetch parts data 
+  // Fetch parts data
   const {
     data: partsData,
     isLoading: isPartsLoading,
@@ -151,6 +151,7 @@ const LotteryDetails = () => {
             quantity={quantity}
             setQuantity={setQuantity}
             paymentMethod={paymentMethod}
+            deliveryMethod={deliveryMethod}
             userEmail={user?.email}
           />
         </div>

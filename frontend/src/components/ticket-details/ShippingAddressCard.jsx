@@ -3,8 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
-const ShippingAddressCard = ({ shippingAddress }) => {
-  if (!shippingAddress) return null;
+const ShippingAddressCard = ({ shippingAddress, addressType }) => {
+  if (addressType !== "shipping" || !shippingAddress) return null;
 
   const columns = [
     [
