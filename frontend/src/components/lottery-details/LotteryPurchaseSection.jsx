@@ -12,9 +12,11 @@ const LotteryPurchaseSection = ({
   setQuantity,
   paymentMethod,
   userEmail,
+  deliveryMethod,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
+  const [selectedDelivery, setSelectedDelivery] = useState("delivery");
 
   const handleDecrement = () => {
     if (quantity > 1) {
@@ -33,6 +35,7 @@ const LotteryPurchaseSection = ({
         lotteryId: set.id,
         quantity,
         email: userEmail,
+        delivery_method: selectedDelivery,
       }).unwrap();
 
       if (result.url) {
@@ -116,8 +119,24 @@ const LotteryPurchaseSection = ({
         </div>
       </Card>
 
+      {/* Delivery Method Selection */}
+      <Tabs value={selectedDelivery} onValueChange={setSelectedDelivery}>
+        <TabsList className="w-full grid grid-cols-2 h-10">
+          {deliveryMethod.map((method) => (
+            <TabsTrigger
+              key={method.value}
+              value={method.value}
+              className="flex items-center justify-center gap-2 h-8 dark:data-[state=active]:bg-accent"
+            >
+              <span>{method.icon}</span>
+              {method.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {/* Payment Options */}
-      <Tabs defaultValue="credit-card" className="w-full">
+      <Tabs defaultValue="credit-card">
         <TabsList className="w-full grid grid-cols-2 h-10">
           {paymentMethod.map((method) => (
             <TabsTrigger

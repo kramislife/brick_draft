@@ -22,11 +22,14 @@ const ticketSchema = new mongoose.Schema(
     },
     ticket_id: [
       {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 3,
-        maxlength: 50,
+        _id: false,
+        ticket_id: {
+          type: String,
+          required: true,
+          trim: true,
+          minlength: 3,
+          maxlength: 50,
+        },
       },
     ],
     ticket_price: {
@@ -48,9 +51,14 @@ const ticketSchema = new mongoose.Schema(
       enum: ["paid", "pending", "failed"],
       default: "paid",
     },
-    shipping_address: {
+    address: {
       type: Object,
-      default: null,
+      required: true,
+    },
+    address_type: {
+      type: String,
+      enum: ["billing", "shipping"],
+      required: true,
     },
     shipping_fee: {
       type: Number,

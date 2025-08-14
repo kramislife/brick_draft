@@ -12,7 +12,7 @@ const PartItemCard = ({ part }) => {
     "/placeholder-part.jpg";
 
   return (
-    <Card className="p-0 rounded">
+    <Card className="p-0 rounded border-2 hover:border-blue-300 cursor-pointer transition-all duration-300">
       <CardContent className="flex flex-row items-start gap-2 py-1 px-1">
         <div className="flex-shrink-0 rounded bg-muted-foreground/10 p-0.5 flex items-center justify-center transition-all duration-300 w-23 h-23">
           {partImage && partImage !== "/placeholder-part.jpg" ? (

@@ -4,6 +4,10 @@ import { uploadImage, deleteImage } from "../utills/cloudinary.js";
 import Lottery from "../models/lottery.model.js";
 import Part from "../models/part.model.js";
 import Color from "../models/color.model.js";
+import {
+  processDataWithFilters,
+  processLotteriesWithFilters,
+} from "../utills/searchSortPagination.js";
 
 // ==================== VALIDATION HELPERS ====================
 
@@ -239,169 +243,24 @@ const formatTagForDisplay = (tag) => {
   return [tag.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())];
 };
 
+// create URL-friendly set name
+const createUrlFriendlySetName = (title) => {
+  return title
+    .replace(/[^a-zA-Z0-9\s-&]/g, "") // Remove special characters except spaces, hyphens, &
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .toLowerCase()
+    .trim();
+};
+
 // format lottery data for frontend
 const formatLotteryForFrontend = (lottery) => ({
   ...lottery,
   formattedDrawDate: formatDrawDate(lottery.drawDate),
   formattedDrawTime: formatDrawTime(lottery.drawTime),
   formattedTag: formatTagForDisplay(lottery.tag),
+  urlFriendlySetName: createUrlFriendlySetName(lottery.title),
 });
-
-// ==================== SORTING HELPERS ====================
-
-// sort lotteries based on criteria
-const sortLotteries = (lotteries, sortBy) => {
-  if (!sortBy) {
-    return lotteries.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-  }
-
-  const sortFunctions = {
-    Featured: (a, b) =>
-      b.tag?.includes("featured") - a.tag?.includes("featured"),
-    "Best Seller": (a, b) =>
-      b.tag?.includes("best_seller") - a.tag?.includes("best_seller"),
-    "New Arrival": (a, b) =>
-      b.tag?.includes("new_arrival") - a.tag?.includes("new_arrival"),
-    "Limited Edition": (a, b) =>
-      b.tag?.includes("limited_edition") - a.tag?.includes("limited_edition"),
-    "Ending Soon": (a, b) => new Date(a.drawDate) - new Date(b.drawDate),
-    "Draw Date": (a, b) => new Date(a.drawDate) - new Date(b.drawDate),
-    "Newly Added": (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-    "Price: Low to High": (a, b) => a.ticketPrice - b.ticketPrice,
-    "Price: High to Low": (a, b) => b.ticketPrice - a.ticketPrice,
-  };
-
-  const sortFunction = sortFunctions[sortBy];
-  return sortFunction
-    ? lotteries.sort(sortFunction)
-    : lotteries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-};
-
-// sort parts based on criteria
-const sortParts = (parts, sort) => {
-  if (!sort) return parts;
-
-  const sortFunctions = {
-    name: (a, b) => a.name.localeCompare(b.name),
-    "-name": (a, b) => b.name.localeCompare(a.name),
-    part_id: (a, b) => (a.part_id || "").localeCompare(b.part_id || ""),
-    "-part_id": (a, b) => (b.part_id || "").localeCompare(a.part_id || ""),
-    quantity: (a, b) => (a.quantity || 0) - (b.quantity || 0),
-    "-quantity": (a, b) => (b.quantity || 0) - (a.quantity || 0),
-    total_value: (a, b) => (a.total_value || 0) - (b.total_value || 0),
-    "-total_value": (a, b) => (b.total_value || 0) - (a.total_value || 0),
-    date: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-    "-date": (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  };
-
-  const sortFunction = sortFunctions[sort];
-  return sortFunction ? parts.sort(sortFunction) : parts;
-};
-
-// ==================== FILTERING HELPERS ====================
-
-// filter parts by search term
-const filterPartsBySearch = (parts, search) => {
-  if (!search) return parts;
-
-  const searchLower = search.toLowerCase();
-  return parts.filter(
-    (part) =>
-      part.name?.toLowerCase().includes(searchLower) ||
-      (part.part_id && part.part_id.toLowerCase().includes(searchLower)) ||
-      (part.item_id && part.item_id.toLowerCase().includes(searchLower)) ||
-      (part.category_name &&
-        part.category_name.toLowerCase().includes(searchLower)) ||
-      (part.color && part.color.color_name.toLowerCase().includes(searchLower))
-  );
-};
-
-// filter parts by color
-const filterPartsByColor = (parts, color) => {
-  if (!color) return parts;
-  return parts.filter(
-    (part) => part.color && part.color._id.toString() === color
-  );
-};
-
-// filter parts by category
-const filterPartsByCategory = (parts, category) => {
-  if (!category) return parts;
-  return parts.filter(
-    (part) => part.category_name && part.category_name === category
-  );
-};
-
-// ==================== PAGINATION HELPERS ====================
-
-// paginate parts
-const paginateParts = (parts, page, limit) => {
-  const totalParts = parts.length;
-  const pageNum = parseInt(page, 10) || 1;
-
-  if (limit === undefined || limit === "all") {
-    return {
-      paginatedParts: parts,
-      totalParts,
-      totalPages: 1,
-      page: pageNum,
-    };
-  }
-
-  const limitNum = parseInt(limit, 10) || 10;
-  const totalPages = Math.ceil(totalParts / limitNum);
-  const startIdx = (pageNum - 1) * limitNum;
-  const paginatedParts = parts.slice(startIdx, startIdx + limitNum);
-
-  return {
-    paginatedParts,
-    totalParts,
-    totalPages,
-    page: pageNum,
-  };
-};
-
-// ==================== FILTER OPTIONS HELPERS ====================
-
-// get available categories
-const getAvailableCategories = (allParts, colorFilter) => {
-  let filteredParts = allParts;
-
-  if (colorFilter) {
-    filteredParts = allParts.filter(
-      (part) => part.color && part.color._id.toString() === colorFilter
-    );
-  }
-
-  return Array.from(
-    new Set(filteredParts.map((p) => p.category_name).filter(Boolean))
-  );
-};
-
-// get available colors
-const getAvailableColors = (allParts, categoryFilter) => {
-  let filteredParts = allParts;
-
-  if (categoryFilter) {
-    filteredParts = allParts.filter(
-      (part) => part.category_name && part.category_name === categoryFilter
-    );
-  }
-
-  return filteredParts
-    .map((p) => p.color)
-    .filter(Boolean)
-    .map((c) => ({
-      id: c._id,
-      name: c.color_name,
-      hex: c.hex_code,
-    }))
-    .filter((c, index, arr) => arr.findIndex((cc) => cc.id === c.id) === index);
-};
-
-// ==================== ERROR HANDLING HELPERS ====================
 
 // handle controller errors
 const handleControllerError = (error, next) => {
@@ -415,7 +274,7 @@ const handleControllerError = (error, next) => {
 
 // ==================== GET ALL LOTTERIES ========================
 export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
-  const { sortBy } = req.query;
+  const { sortBy, page, limit } = req.query;
 
   let lotteries = await Lottery.find()
     .populate("collection", "name")
@@ -425,10 +284,7 @@ export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
     })
     .lean();
 
-  // Apply sorting
-  lotteries = sortLotteries(lotteries, sortBy);
-
-  // Format lottery data
+  // Format lottery data first
   const formattedLotteries = lotteries.map((lottery) => {
     const flatParts = (lottery.parts || []).map((p) => ({
       ...p.part,
@@ -442,10 +298,27 @@ export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
     };
   });
 
+  // Apply sorting and pagination using utility functions
+  const {
+    processedLotteries,
+    totalItems,
+    totalPages,
+    currentPage,
+    hasNextPage,
+    hasPrevPage,
+  } = processLotteriesWithFilters(formattedLotteries, { sortBy, page, limit });
+
   res.status(200).json({
     success: true,
-    message: `${formattedLotteries.length} lotteries retrieved`,
-    lotteries: formattedLotteries,
+    message: `${totalItems} lotteries retrieved`,
+    lotteries: processedLotteries,
+    pagination: {
+      totalItems,
+      totalPages,
+      currentPage,
+      hasNextPage,
+      hasPrevPage,
+    },
   });
 });
 
@@ -619,33 +492,33 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
     }
 
     // Extract part objects from the parts array
-    let parts = (lottery.parts || []).map((p) => ({
+    const parts = (lottery.parts || []).map((p) => ({
       ...(p.part.toObject ? p.part.toObject() : p.part),
       quantity: p.quantity,
       total_value: p.total_value,
       price: p.price,
     }));
 
-    // Apply filters
-    parts = filterPartsBySearch(parts, search);
-    parts = filterPartsByColor(parts, color);
-    parts = filterPartsByCategory(parts, category);
-
-    // Apply sorting
-    parts = sortParts(parts, sort);
-
-    // Apply pagination
+    // Utility functions for sorting and pagination
     const {
-      paginatedParts,
-      totalParts,
+      processedData: paginatedParts,
+      totalItems: totalParts,
       totalPages,
-      page: pageNum,
-    } = paginateParts(parts, page, limit);
-
-    // Calculate available filter options
-    const allParts = (lottery.parts || []).map((p) => p.part);
-    const availableCategories = getAvailableCategories(allParts, color);
-    const availableColors = getAvailableColors(allParts, category);
+      currentPage: pageNum,
+      hasNextPage,
+      hasPrevPage,
+      startEntry,
+      endEntry,
+      availableCategories,
+      availableColors,
+    } = processDataWithFilters(parts, {
+      search,
+      sort,
+      color,
+      category,
+      page,
+      limit,
+    });
 
     res.status(200).json({
       success: true,
@@ -653,9 +526,23 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
       totalParts,
       totalPages,
       page: pageNum,
+      hasNextPage,
+      hasPrevPage,
+      startEntry,
+      endEntry,
       parts: paginatedParts,
       availableCategories,
       availableColors,
     });
   }
 );
+
+// ==================== SOCKET CONFIG ========================
+export const getSocketConfig = (req, res) => {
+  res.json({
+    socketUrl:
+      process.env.FRONTEND_URL ||
+      `http://localhost:${process.env.PORT || 4000}`,
+    port: process.env.PORT || 4000,
+  });
+};

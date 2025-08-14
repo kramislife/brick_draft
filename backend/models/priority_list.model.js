@@ -12,8 +12,14 @@ const priorityListSchema = new mongoose.Schema(
       ref: "Lottery",
       required: true,
     },
+    purchaseId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     priorityItems: [
       {
+        _id: false,
         item: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Part",
@@ -31,13 +37,16 @@ const priorityListSchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
-    modifiedBy: {
+    updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },
   { timestamps: true }
 );
-priorityListSchema.index({ user: 1, lottery: 1 }, { unique: true });
+priorityListSchema.index(
+  { user: 1, lottery: 1, purchaseId: 1 },
+  { unique: true }
+);
 
 export default mongoose.model("PriorityList", priorityListSchema);

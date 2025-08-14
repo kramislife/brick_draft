@@ -3,17 +3,31 @@ import {
   createCheckoutSession,
   getPaymentSuccessDetails,
   getUserPurchases,
+  getAllTickets,
 } from "../controllers/paymentController.js";
-import { isAuthenticatedUser } from "../middleware/auth.middleware.js";
+import {
+  isAuthenticatedUser,
+  isAuthorizedUser,
+} from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/checkout-session", isAuthenticatedUser, createCheckoutSession);
-router.get(
-  "/ticket/:purchaseId",
-  isAuthenticatedUser,
-  getPaymentSuccessDetails
-);
-router.get("/user/purchases", isAuthenticatedUser, getUserPurchases);
+router
+  .route("/checkout-session")
+  .post(isAuthenticatedUser, createCheckoutSession);
+
+router
+  .route("/ticket/:purchaseId")
+  .get(isAuthenticatedUser, getPaymentSuccessDetails);
+
+router.route("/user/purchases").get(isAuthenticatedUser, getUserPurchases);
+
+router
+  .route("/admin/tickets")
+  .get(
+    isAuthenticatedUser,
+    isAuthorizedUser("admin", "superAdmin"),
+    getAllTickets
+  );
 
 export default router;

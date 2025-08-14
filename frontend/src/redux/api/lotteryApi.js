@@ -9,7 +9,10 @@ export const lotteryApi = createApi({
   tagTypes: ["Lotteries"],
   endpoints: (builder) => ({
     getLotteries: builder.query({
-      query: () => "lotteries",
+      query: (params) => ({
+        url: "lotteries",
+        params,
+      }),
       providesTags: ["Lotteries"],
     }),
     getLotteryById: builder.query({
@@ -46,6 +49,9 @@ export const lotteryApi = createApi({
       }),
       invalidatesTags: ["Lotteries"],
     }),
+    getSocketConfig: builder.query({
+      query: () => "socket-config",
+    }),
   }),
 });
 
@@ -56,4 +62,5 @@ export const {
   useAddLotteryMutation,
   useUpdateLotteryMutation,
   useDeleteLotteryMutation,
+  useGetSocketConfigQuery,
 } = lotteryApi;

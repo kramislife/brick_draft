@@ -8,7 +8,7 @@ const PaymentSummary = ({ summary, copyToClipboard, copied }) => {
   const rows = [
     {
       label: "Payment Method",
-      value: summary.payment_method || "Stripe",
+      value: summary.payment_method || "NA",
       isCurrency: false,
       capitalize: true,
       borderBottom: true,
