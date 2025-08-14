@@ -6,6 +6,7 @@ import {
   updateLottery,
   deleteLottery,
   getLotteryPartsWithQuery,
+  getSocketConfig,
 } from "../controllers/lotteryController.js";
 import {
   isAuthenticatedUser,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.route("/lotteries").get(getAllLotteries);
 router.route("/lotteries/:id").get(getLotteryById);
 router.route("/lotteries/:id/parts").get(getLotteryPartsWithQuery);
+router.route("/socket-config").get(getSocketConfig);
 
 // Admin routes
 router

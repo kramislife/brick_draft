@@ -90,8 +90,8 @@ const lotterySchema = new mongoose.Schema(
     lottery_status: {
       type: String,
       required: true,
-      enum: ["upcomming", "active", "completed", "cancelled"],
-      default: "upcomming",
+      enum: ["upcoming", "live", "completed", "cancelled"],
+      default: "upcoming",
       lowercase: true,
       index: true,
     },

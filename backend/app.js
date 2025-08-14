@@ -10,6 +10,8 @@ import colorRoutes from "./routes/color.route.js";
 import lotteryRoutes from "./routes/lottery.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import priorityListRoutes from "./routes/priority_list.route.js";
+import draftResultRoutes from "./routes/draftResult.route.js";
+import liveDrawRoutes from "./routes/liveDraw.route.js";
 
 // IMPORT MIDDLEWARE
 import errorsMiddleware from "./middleware/errors.middleware.js";
@@ -19,6 +21,12 @@ import fs from "fs";
 // FRONTEND FILE PATH SETUP
 import path from "path";
 import { fileURLToPath } from "url";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
+import {
+  startLiveDrawChecker,
+  handleLiveDrawSockets,
+} from "./controllers/liveDrawController.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +67,8 @@ app.use("/api/v1", colorRoutes);
 app.use("/api/v1", lotteryRoutes);
 app.use("/api/v1", paymentRoutes);
 app.use("/api/v1", priorityListRoutes);
+app.use("/api/v1", draftResultRoutes);
+app.use("/api/v1", liveDrawRoutes);
 
 // ERROR MIDDLEWARE
 app.use(errorsMiddleware);
@@ -96,11 +106,31 @@ if (process.env.NODE_ENV === "PRODUCTION") {
   }
 }
 
+// Create HTTP server and initialize Socket.IO
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+// ✅ Make io globally available for other controllers
+global.io = io;
+
+// Make io available in app (optional, for other controllers)
+app.set("io", io);
+
+// Initialize Socket.IO handlers
+handleLiveDrawSockets(io);
+
 // START SERVER
-const server = app.listen(process.env.PORT, () => {
+server.listen(process.env.PORT, () => {
   console.log(
     `✅ Server running on PORT: ${process.env.PORT} in ${process.env.NODE_ENV} mode`
   );
+  // Start the live draw checker after server is up
+  startLiveDrawChecker(io);
 });
 
 // HANDLE UNHANDLED PROMISE REJECTIONS
