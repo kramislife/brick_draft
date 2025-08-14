@@ -262,7 +262,6 @@ const formatLotteryForFrontend = (lottery) => ({
   urlFriendlySetName: createUrlFriendlySetName(lottery.title),
 });
 
-
 // handle controller errors
 const handleControllerError = (error, next) => {
   if (error instanceof customErrorHandler) {
@@ -542,7 +541,8 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
 export const getSocketConfig = (req, res) => {
   res.json({
     socketUrl:
-      process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 4000}`,
+      process.env.FRONTEND_URL ||
+      `http://localhost:${process.env.PORT || 4000}`,
     port: process.env.PORT || 4000,
   });
 };
