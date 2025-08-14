@@ -152,6 +152,30 @@ const TicketDetails = () => {
     );
   };
 
+  // Move part up in priority list
+  const handleMoveUp = (index) => {
+    if (index === 0) return; // Can't move up if already at top
+
+    const newSelectedParts = [...selectedParts];
+    const temp = newSelectedParts[index];
+    newSelectedParts[index] = newSelectedParts[index - 1];
+    newSelectedParts[index - 1] = temp;
+
+    setSelectedParts(newSelectedParts);
+  };
+
+  // Move part down in priority list
+  const handleMoveDown = (index) => {
+    if (index === selectedParts.length - 1) return; // Can't move down if already at bottom
+
+    const newSelectedParts = [...selectedParts];
+    const temp = newSelectedParts[index];
+    newSelectedParts[index] = newSelectedParts[index + 1];
+    newSelectedParts[index + 1] = temp;
+
+    setSelectedParts(newSelectedParts);
+  };
+
   // Save priority list
   const handleSave = async () => {
     setSaving(true);
@@ -351,6 +375,8 @@ const TicketDetails = () => {
         // Handler props
         handleAddPart={handleAddPart}
         handleRemovePart={handleRemovePart}
+        handleMoveUp={handleMoveUp}
+        handleMoveDown={handleMoveDown}
         handleSave={handleSave}
         handleSelectAll={handleSelectAll}
         handleClearAll={handleClearAll}

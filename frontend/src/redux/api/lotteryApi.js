@@ -49,6 +49,9 @@ export const lotteryApi = createApi({
       }),
       invalidatesTags: ["Lotteries"],
     }),
+    getSocketConfig: builder.query({
+      query: () => "socket-config",
+    }),
   }),
 });
 
@@ -59,4 +62,5 @@ export const {
   useAddLotteryMutation,
   useUpdateLotteryMutation,
   useDeleteLotteryMutation,
+  useGetSocketConfigQuery,
 } = lotteryApi;

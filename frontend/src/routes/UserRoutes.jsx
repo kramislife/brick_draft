@@ -28,6 +28,8 @@ import CollectionDetails from "@/pages/CollectionDetails";
 import EmailVerification from "@/pages/EmailVerification";
 import TicketDetails from "@/pages/TicketDetails";
 import Purchases from "@/pages/Purchases";
+import LiveDrawDetails from "@/pages/LiveDrawDetails";
+import LiveDrawManagement from "@/pages/admin/LiveDrawManagement";
 
 const UserRoutes = () => {
   return (
@@ -39,6 +41,7 @@ const UserRoutes = () => {
         <Route path="/contact-us" element={<Contact />} />
         <Route path="/results" element={<Results />} />
         <Route path="/live-draw" element={<LiveDraw />} />
+        <Route path="/live-draw/:id" element={<LiveDrawDetails />} />
         <Route path="/terms-of-use" element={<TermsofUse />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -72,6 +75,7 @@ const UserRoutes = () => {
           <Route path="/admin/parts" element={<Parts />} />
           <Route path="/admin/tickets" element={<Tickets />} />
           <Route path="/admin/users" element={<Users />} />
+          <Route path="/admin/live-draw" element={<LiveDrawManagement />} />
         </Route>
       </Route>
     </Routes>

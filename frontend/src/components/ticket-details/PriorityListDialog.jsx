@@ -1,5 +1,5 @@
 import React from "react";
-import { X } from "lucide-react";
+import { X, ChevronUp, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,26 +18,28 @@ const PriorityListDialog = ({
   open,
   onClose,
   // Data props
-  selectedParts,
-  availableParts,
-  totalPages,
-  currentPage,
-  startEntry,
-  endEntry,
+  selectedParts = [],
+  availableParts = [],
+  totalPages = 1,
+  currentPage = 1,
+  startEntry = 0,
+  endEntry = 0,
   // Handler props
-  handleAddPart,
-  handleRemovePart,
-  handleSave,
-  handleSelectAll,
-  handleClearAll,
+  handleAddPart = () => {},
+  handleRemovePart = () => {},
+  handleMoveUp = () => {},
+  handleMoveDown = () => {},
+  handleSave = () => {},
+  handleSelectAll = () => {},
+  handleClearAll = () => {},
   // Loading states
-  saving,
-  selectAllLoading,
-  isLoading,
+  saving = false,
+  selectAllLoading = false,
+  isLoading = false,
   // Data from API
-  data,
+  data = {},
   // Callback for when params change
-  onParamsChange,
+  onParamsChange = () => {},
   // Select all mode state
   isSelectAllMode = false,
 }) => {
@@ -94,7 +96,7 @@ const PriorityListDialog = ({
                       disabled={
                         selectAllLoading ||
                         !data?.totalAllParts ||
-                        availableParts.length === 0
+                        availableParts?.length === 0
                       }
                     >
                       {selectAllLoading ? "Selecting..." : "Select All"}
@@ -104,7 +106,7 @@ const PriorityListDialog = ({
                       variant="ghost"
                       className="h-7 text-xs"
                       onClick={handleClearAll}
-                      disabled={selectedParts.length === 0}
+                      disabled={selectedParts?.length === 0}
                     >
                       Clear All
                     </Button>
@@ -119,14 +121,14 @@ const PriorityListDialog = ({
                           className="animate-pulse h-16 bg-muted rounded"
                         />
                       ))
-                    ) : availableParts.length === 0 ? (
+                    ) : availableParts?.length === 0 ? (
                       <div className="text-center text-muted-foreground py-8">
-                        {selectedParts.length > 0
+                        {selectedParts?.length > 0
                           ? "All parts have been added to your priority list."
                           : "No available parts found."}
                       </div>
                     ) : (
-                      availableParts.map((part, index) => (
+                      availableParts?.map((part, index) => (
                         <div
                           key={`${part._id}-${index}`}
                           className="relative cursor-pointer flex items-center"
@@ -149,29 +151,60 @@ const PriorityListDialog = ({
             <CardHeader className="flex items-center gap-2">
               <CardTitle>Your Priority List</CardTitle>
               <Badge variant="secondary" className="ml-auto">
-                {selectedParts.length} selected
+                {selectedParts?.length || 0} selected
               </Badge>
             </CardHeader>
 
             <CardContent className="space-y-1">
-              {selectedParts.length === 0 ? (
+              {selectedParts?.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   No parts in your priority list.
                 </div>
               ) : (
-                selectedParts.map((p, index) => (
+                selectedParts?.map((p, index) => (
                   <div
                     key={`${p.item._id || p.item}-${index}`}
                     className="relative flex items-center gap-3"
                   >
+                    {/* Priority Number */}
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-blue-400">
+                        {index + 1}
+                      </span>
+                    </div>
+
                     <div className="flex-1 min-w-0">
                       <PartItemCard part={p.item} />
                     </div>
+
                     <div className="flex flex-col gap-1 items-end">
+                      {/* Move Up Button */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive/80"
+                        className="h-7 w-7 text-gray-400 hover:text-blue-400"
+                        onClick={() => handleMoveUp(index)}
+                        disabled={index === 0}
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </Button>
+
+                      {/* Move Down Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-gray-400 hover:text-blue-400"
+                        onClick={() => handleMoveDown(index)}
+                        disabled={index === selectedParts.length - 1}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+
+                      {/* Remove Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive/80"
                         onClick={() => handleRemovePart(p.item._id || p.item)}
                       >
                         <X className="w-4 h-4" />

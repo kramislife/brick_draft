@@ -15,7 +15,7 @@ const Home = () => {
       <Banner />
       <LotterySet />
       <UpcomingDraw />
-      <CollectionGrid showViewAll={true} limit={8} />
+      {/* <CollectionGrid showViewAll={true} limit={8} /> */}
       <WhyChoose data={whyChooseData} animations={aboutAnimations.choose} />
     </>
   );
