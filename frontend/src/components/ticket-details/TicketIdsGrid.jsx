@@ -24,7 +24,7 @@ const TicketIdsGrid = ({
         <div className="space-y-3">
           {tickets.map((ticket, index) => (
             <div
-              key={ticket.ticket_id}
+              key={`ticket-${index}-${ticket.ticket_id || "unknown"}`}
               className="flex items-center justify-between p-3 bg-muted rounded-lg"
             >
               <div className="flex items-center gap-2">
@@ -33,14 +33,27 @@ const TicketIdsGrid = ({
                     {index + 1}
                   </span>
                 </div>
-                <span className="font-mono text-sm">{ticket.ticket_id}</span>
+                <span className="font-mono text-sm">
+                  {typeof ticket.ticket_id === "string"
+                    ? ticket.ticket_id
+                    : ticket.ticket_id?.ticket_id || "NO-TICKET-ID"}
+                </span>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => copyToClipboard(ticket.ticket_id)}
+                onClick={() =>
+                  copyToClipboard(
+                    typeof ticket.ticket_id === "string"
+                      ? ticket.ticket_id
+                      : ticket.ticket_id?.ticket_id || "NO-TICKET-ID"
+                  )
+                }
               >
-                {copiedTicketId === ticket.ticket_id ? (
+                {copiedTicketId ===
+                (typeof ticket.ticket_id === "string"
+                  ? ticket.ticket_id
+                  : ticket.ticket_id?.ticket_id || "NO-TICKET-ID") ? (
                   <Check className="w-4 h-4 text-green-500" />
                 ) : (
                   <Copy className="w-4 h-4" />

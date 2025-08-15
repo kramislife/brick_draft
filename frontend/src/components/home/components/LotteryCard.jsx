@@ -86,8 +86,20 @@ const LotteryCard = ({ set }) => {
             e.stopPropagation();
             navigate(`/lottery/${set.id}`);
           }}
+          disabled={
+            set.lottery_status === "live" || set.lottery_status === "completed"
+          }
+          className={
+            set.lottery_status === "live" || set.lottery_status === "completed"
+              ? "opacity-50 cursor-not-allowed"
+              : ""
+          }
         >
-          Buy Ticket
+          {set.lottery_status === "live"
+            ? "Live Now"
+            : set.lottery_status === "completed"
+            ? "Completed"
+            : "Buy Ticket"}
         </Button>
       </CardFooter>
     </Card>

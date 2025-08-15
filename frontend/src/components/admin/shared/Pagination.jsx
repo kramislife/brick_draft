@@ -7,6 +7,7 @@ const Pagination = ({
   totalEntries,
   startEntry,
   endEntry,
+  disabled = false,
 }) => {
   return (
     <div className="flex items-center justify-between w-full">
@@ -17,14 +18,14 @@ const Pagination = ({
         <Button
           variant="outline"
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage === 1 || disabled}
         >
           Previous
         </Button>
         <Button
           variant="outline"
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages || disabled}
         >
           Next
         </Button>

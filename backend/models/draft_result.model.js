@@ -45,6 +45,10 @@ const draftResultsSchema = new mongoose.Schema(
               ref: "Part",
               required: true,
             },
+            item_id: {
+              type: String,
+              required: false, // Fallback for parts without part_id
+            },
             round_number: { type: Number, required: true }, // Which round this was picked
             pick_time: { type: Date, default: Date.now },
           },

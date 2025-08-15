@@ -153,6 +153,7 @@ const LotteryDetails = () => {
             paymentMethod={paymentMethod}
             deliveryMethod={deliveryMethod}
             userEmail={user?.email}
+            lottery_status={lotteryData?.lottery?.lottery_status}
           />
         </div>
       </div>

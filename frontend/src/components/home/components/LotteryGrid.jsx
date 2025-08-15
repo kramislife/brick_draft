@@ -33,6 +33,7 @@ const LotteryGrid = ({ title, showViewAll = false, limit }) => {
     tag: lottery.tag,
     whyCollect: lottery.whyCollect,
     parts: lottery.parts || [],
+    lottery_status: lottery.lottery_status,
   }));
 
   // Apply limit from LotterySet.jsx

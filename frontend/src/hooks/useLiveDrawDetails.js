@@ -705,7 +705,8 @@ export const useLiveDrawDetails = () => {
   };
 
   const handleViewResults = () => {
-    // Navigate to results page or show results dialog
+    // Navigate to results page
+    navigate("/results");
   };
 
   const handleBackToDraws = () => {
