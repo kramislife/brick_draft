@@ -1,35 +1,24 @@
 import React from "react";
-import { motion, AnimatePresence } from "motion/react";
-import {
-  Zap,
-  BookOpen,
-  ListTodo,
-  Crown,
-  Clock,
-  User,
-  Trophy,
-  Target,
-  Hash,
-} from "lucide-react";
+import { motion } from "motion/react";
+import { Zap, BookOpen, ListTodo, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const PlayroomHeader = ({
   countdown,
   currentDrafter,
   currentUser,
   currentRound = 1,
-  currentPick = 1,
-  totalTickets = 0,
   onRulesClick,
   onPriorityListClick,
-  pickedParts = [], // ✅ Add pickedParts prop
   userPriorityCount = 0, // ✅ Add user priority count
   pickedPriorityCount = 0, // ✅ Add picked priority count
-  isAutoPicking = false, // ✅ Add auto-picking state
-  autoPickEnabled = false, // ✅ Add auto-pick enabled state
+  showPriorityButton = true, // ✅ New prop to control visibility
 }) => {
+  const navigate = useNavigate();
+
   // Check if current user is the current drafter
   const isCurrentUserTurn = currentDrafter?.user_id === currentUser?._id;
 
@@ -37,25 +26,30 @@ const PlayroomHeader = ({
   const maxCountdown = 15;
   const countdownProgress = Math.max(0, countdown) / maxCountdown;
 
+  const handleHomeClick = () => {
+    navigate("/");
+  };
+
   return (
     <div className="relative z-20 bg-gradient-to-r from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-md border-b border-white/10 p-4">
       <div className="grid grid-cols-12 items-center gap-4">
         {/* Left - Title and Stats */}
         <div className="col-span-3 flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <motion.div
-              className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg"
-              animate={{
-                boxShadow: [
-                  "0 0 20px rgba(251, 191, 36, 0.3)",
-                  "0 0 30px rgba(251, 191, 36, 0.5)",
-                  "0 0 20px rgba(251, 191, 36, 0.3)",
-                ],
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
+            <Button
+              onClick={handleHomeClick}
+              variant="ghost"
+              size="sm"
+              className="p-0 h-auto w-auto hover:bg-transparent group"
+              title="Go back to Home"
             >
-              <Zap className="w-6 h-6 text-black font-bold" />
-            </motion.div>
+              <motion.div
+                className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg cursor-pointer transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl"
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Zap className="w-6 h-6 text-black font-bold" />
+              </motion.div>
+            </Button>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                 LEGO Draft Arena
@@ -178,56 +172,25 @@ const PlayroomHeader = ({
                 </div>
               </motion.div>
             </div>
-
-            {/* Auto-Picking Status */}
-            <AnimatePresence>
-              {isAutoPicking && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-3 flex items-center justify-center gap-2 text-blue-400"
-                >
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm font-medium">
-                    🤖 Auto-picking...
-                  </span>
-                </motion.div>
-              )}
-
-              {autoPickEnabled && !isAutoPicking && isCurrentUserTurn && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-3 text-center"
-                >
-                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
-                    🤖 Auto-pick is ON
-                  </Badge>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
 
         {/* Right - Round Info and Action Buttons */}
-        <div className="col-span-3 flex items-center justify-end gap-3">
-          {/* Round Information */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-yellow-400/50 transition-all duration-200"
-          >
-            <div className="text-center">
-              <p className="text-xs text-gray-400">
-                Round <span className="text-blue-400">{currentRound}</span>
-              </p>
-            </div>
-          </Button>
-
+        <div className="col-span-3 flex items-center justify-end">
           {/* Action Buttons */}
           <div className="flex gap-2">
+            {/* Round Information */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-yellow-400/50 transition-all duration-200"
+            >
+              <div className="text-center">
+                <p className="text-xs text-gray-400">
+                  Round <span className="text-blue-400">{currentRound}</span>
+                </p>
+              </div>
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -238,29 +201,31 @@ const PlayroomHeader = ({
               <span className="hidden sm:inline">Rules</span>
             </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onPriorityListClick}
-              className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-green-400/50 transition-all duration-200 relative"
-            >
-              <ListTodo className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Priority</span>
+            {showPriorityButton && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPriorityListClick}
+                className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-green-400/50 transition-all duration-200 relative"
+              >
+                <ListTodo className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Priority</span>
 
-              {/* Priority List Status Indicator */}
-              {userPriorityCount > 0 && (
-                <div className="ml-2 flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-xs text-green-400 font-medium">
-                    {userPriorityCount - pickedPriorityCount}
-                  </span>
-                  <span className="text-xs text-slate-400">/</span>
-                  <span className="text-xs text-slate-400">
-                    {userPriorityCount}
-                  </span>
-                </div>
-              )}
-            </Button>
+                {/* Priority List Status Indicator */}
+                {userPriorityCount > 0 && (
+                  <div className="ml-2 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                    <span className="text-xs text-green-400 font-medium">
+                      {userPriorityCount - pickedPriorityCount}
+                    </span>
+                    <span className="text-xs text-slate-400">/</span>
+                    <span className="text-xs text-slate-400">
+                      {userPriorityCount}
+                    </span>
+                  </div>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import React from "react";
 import { AnimatePresence } from "motion/react";
-import { Loader, ArrowLeft, X } from "lucide-react";
+import { Loader, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLiveDrawDetails } from "@/hooks/useLiveDrawDetails";
+import AnimatedBackground from "@/components/ui/animated-background";
 
 // Import child components
 import WelcomeScreen from "@/components/live-draw/WelcomeScreen";
@@ -91,6 +92,7 @@ const LiveDrawDetails = () => {
     partsError,
     isCurrentUserTurn,
     lastElementRef,
+    totalPartsCount,
 
     // DraftQueue refs
     scrollContainerRef,
@@ -109,10 +111,11 @@ const LiveDrawDetails = () => {
   // Loading state
   if (loading || lotteryLoading || !phaseInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Connecting to live draw...</p>
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center overflow-hidden relative">
+        <AnimatedBackground />
+        <div className="relative z-10 text-center">
+          <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+          <p className="text-gray-300">Connecting to live draw...</p>
         </div>
       </div>
     );
@@ -121,20 +124,27 @@ const LiveDrawDetails = () => {
   // Connection error state
   if (!connected) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-5">
-        <div className="text-center max-w-md mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center p-5 overflow-hidden relative">
+        <AnimatedBackground />
+        <div className="relative z-10 text-center max-w-md mx-auto">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <X className="w-8 h-8 text-red-500" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Connection Lost</h2>
-          <p className="text-muted-foreground mb-6">
+          <h2 className="text-2xl font-bold mb-2 text-white">
+            Connection Lost
+          </h2>
+          <p className="text-gray-300 mb-6">
             Unable to connect to the live draw. Please check your internet
             connection and try again.
           </p>
-          <div className="space-x-4">
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              variant="destructive"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
             <Button variant="outline" onClick={handleBackToDraws}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Draws
             </Button>
           </div>
@@ -161,6 +171,7 @@ const LiveDrawDetails = () => {
             key="welcome"
             onReadRules={handleReadRules}
             onStartPlaying={handleStartPlaying}
+            isLoggedIn={Boolean(currentUser?._id)}
           />
         )}
 
@@ -229,6 +240,7 @@ const LiveDrawDetails = () => {
             lastElementRef={lastElementRef}
             isCurrentUserTurn={isCurrentUserTurn}
             availableParts={availableParts}
+            totalPartsCount={totalPartsCount}
             // DraftQueue refs
             scrollContainerRef={scrollContainerRef}
             currentDrafterRef={currentDrafterRef}

@@ -17,10 +17,12 @@ const DraftQueue = ({
   // Additional props for auto-scroll functionality
   scrollContainerRef,
   currentDrafterRef,
+  // New control to hide auto-pick UI for guests
+  showAutoPickToggle = true,
 }) => {
   return (
     <div className="col-span-3">
-      <Card className="h-full bg-gradient-to-b from-slate-800/90 to-slate-900/90 border-none">
+      <Card className="h-[700px] bg-gradient-to-b from-slate-800/90 to-slate-900/90 border-none">
         <CardContent className="p-4 h-full flex flex-col">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
@@ -39,7 +41,11 @@ const DraftQueue = ({
           {/* Scrollable Queue */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 max-h-[calc(100vh-420px)]"
+            className={`flex-1 overflow-y-auto space-y-2 ${
+              showAutoPickToggle
+                ? "mb-4 min-h-0 max-h-[580px]"
+                : "min-h-0 max-h-[580px]"
+            }`}
           >
             <AnimatePresence>
               {sortedQueue.map((ticket, index) => {
@@ -118,9 +124,9 @@ const DraftQueue = ({
           </div>
 
           {/* Auto-Pick Toggle Section - Show when draft is active */}
-          {currentDrafter && (
+          {showAutoPickToggle && currentDrafter && (
             <div className="border-t border-slate-600 pt-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <Bot className="w-4 h-4 text-blue-400" />
                   <Label className="text-sm font-medium text-white">
@@ -184,7 +190,7 @@ const DraftQueue = ({
           )}
 
           {/* Show message when draft hasn't started yet */}
-          {!currentDrafter && (
+          {!currentDrafter && showAutoPickToggle && (
             <div className="border-t border-slate-600 pt-4">
               <div className="text-center p-3">
                 <Bot className="w-4 h-4 text-slate-400 mx-auto mb-2" />

@@ -8,20 +8,27 @@ const DraftPartCard = ({
   onClick,
   disabled = false,
   isPicked = false,
+  isCurrentUserTurn = false,
+  autoPickEnabled = false,
+  isAutoPicking = false,
+  isGuest = false,
 }) => {
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.02 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      className={`relative group transition-all duration-300 ${
-        disabled ? "cursor-default" : "cursor-pointer"
+      whileHover={!isGuest ? { scale: 1.02, y: -2 } : {}}
+      whileTap={!isGuest ? { scale: 0.98 } : {}}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      className={`group transition-all duration-300 ${
+        isGuest
+          ? "cursor-default"
+          : disabled || isPicked
+          ? "cursor-default"
+          : "cursor-pointer"
       }`}
-      onClick={disabled ? undefined : onClick}
+      onClick={!isGuest ? onClick : undefined}
     >
       {/* Main Card */}
-      <div
-        className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl border-2 overflow-hidden border-gray-600"
-      >
+      <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl border-2 overflow-hidden border-gray-600">
         {/* Card Content */}
         <div className="relative p-4 h-full flex flex-col">
           {/* Part Image */}
@@ -57,8 +64,8 @@ const DraftPartCard = ({
             </h3>
 
             {/* Category & Color */}
-            <div className="flex items-center gap-2 mb-3">
-              {part.color?.color_name && (
+            <div className="flex items-center gap-2 mb-3 min-h-[20px]">
+              {part.color?.color_name ? (
                 <div className="flex items-center gap-1">
                   <div
                     className="w-3 h-3 rounded-full border border-white/30"
@@ -69,6 +76,11 @@ const DraftPartCard = ({
                   <span className="text-xs text-slate-400">
                     {part.color.color_name}
                   </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full border border-white/30 bg-slate-600" />
+                  <span className="text-xs text-slate-500">No color</span>
                 </div>
               )}
             </div>
@@ -95,17 +107,60 @@ const DraftPartCard = ({
           </div>
         </div>
 
-        {/* Pick Action Overlay - Only show when it's user's turn */}
-        {!disabled && !isPicked && (
+        {/* Pick Action Overlay - Show different messages based on state (not for guests) */}
+        {!isPicked && !isGuest && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-black text-lg font-bold">👆</span>
-              </div>
-              <p className="text-white font-bold text-sm mb-1">
-                Pick this item
-              </p>
-              <p className="text-yellow-400 text-xs">Click to select</p>
+              {isCurrentUserTurn && !disabled ? (
+                // User's turn and can pick
+                autoPickEnabled ? (
+                  // Auto-pick is ON - show message to turn off
+                  <>
+                    <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-lg font-bold">🤖</span>
+                    </div>
+                    <p className="text-white font-bold text-sm mb-1">
+                      Auto-pick is ON
+                    </p>
+                    <p className="text-blue-400 text-xs">
+                      Turn off toggle to pick manually
+                    </p>
+                  </>
+                ) : (
+                  // Auto-pick is OFF - can pick manually
+                  <>
+                    <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                      <span className="text-black text-lg font-bold">👆</span>
+                    </div>
+                    <p className="text-white font-bold text-sm mb-1">
+                      Pick this item
+                    </p>
+                    <p className="text-yellow-400 text-xs">Click to select</p>
+                  </>
+                )
+              ) : isCurrentUserTurn && disabled ? (
+                // User's turn but disabled (auto-picking)
+                <>
+                  <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-lg font-bold">⚡</span>
+                  </div>
+                  <p className="text-white font-bold text-sm mb-1">
+                    Auto-picking...
+                  </p>
+                  <p className="text-green-400 text-xs">Please wait</p>
+                </>
+              ) : (
+                // Not user's turn
+                <>
+                  <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-slate-500 to-slate-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-lg font-bold">⏳</span>
+                  </div>
+                  <p className="text-white font-bold text-sm mb-1">
+                    Not your turn
+                  </p>
+                  <p className="text-slate-400 text-xs">Wait for your turn</p>
+                </>
+              )}
             </div>
           </div>
         )}

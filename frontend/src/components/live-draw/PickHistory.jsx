@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Trophy, Clock, Hand, Bot, Zap } from "lucide-react";
+import { Trophy, Clock, Hand, Bot, Zap, ImageIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ const PickHistory = ({ pickHistory }) => {
 
   return (
     <div className="col-span-3">
-      <Card className="h-[calc(100vh-160px)] bg-gradient-to-b from-slate-800/90 to-slate-900/90 backdrop-blur-sm border-white/10">
+      <Card className="h-[700px] bg-gradient-to-b from-slate-800/90 to-slate-900/90 backdrop-blur-sm border-white/10">
         <CardContent className="p-4 h-full flex flex-col">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
@@ -138,15 +138,15 @@ const PickHistory = ({ pickHistory }) => {
                           <div className="border-t border-slate-600 pt-3">
                             <div className="flex items-center gap-3">
                               {/* Part Image */}
-                              <div className="w-8 h-8 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                              <div className="w-12 h-12 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0 p-1">
                                 {pick.part?.item_image?.url ? (
                                   <img
                                     src={pick.part.item_image.url}
                                     alt={pick.part.name}
-                                    className="w-full h-full object-cover rounded-md"
+                                    className="w-full h-full object-contain rounded-md"
                                   />
                                 ) : (
-                                  <span className="text-xs">🧱</span>
+                                  <ImageIcon className="w-6 h-6 text-slate-400" />
                                 )}
                               </div>
 
@@ -157,7 +157,7 @@ const PickHistory = ({ pickHistory }) => {
                                 </p>
                                 <div className="flex items-center gap-2">
                                   {/* Color indicator */}
-                                  {pick.part?.color?.color_name && (
+                                  {pick.part?.color?.color_name ? (
                                     <div className="flex items-center gap-1">
                                       <div
                                         className="w-2 h-2 rounded-full border border-white/30"
@@ -169,6 +169,13 @@ const PickHistory = ({ pickHistory }) => {
                                       />
                                       <span className="text-xs text-gray-400">
                                         {pick.part.color.color_name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-2 h-2 rounded-full border border-white/30 bg-slate-600" />
+                                      <span className="text-xs text-slate-500">
+                                        No color
                                       </span>
                                     </div>
                                   )}
