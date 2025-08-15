@@ -45,23 +45,12 @@ const DraftCompletionScreen = ({
             transition={{ duration: 0.8, delay: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button onClick={onViewResults}>View Complete Results</Button>
-            <Button onClick={onBackToDraws} variant="outline">
+            <Button variant="accent" onClick={onViewResults}>
+              View Complete Results
+            </Button>
+            <Button onClick={onBackToDraws} variant="secondary">
               Back to Live Draws
             </Button>
-          </motion.div>
-
-          {/* Thank You Message */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="text-center mt-8"
-          >
-            <p className="text-gray-400 text-sm">
-              Thank you for participating in the {lotteryData?.title || "LEGO"}{" "}
-              draft! Your parts will be shipped to your registered address.
-            </p>
           </motion.div>
         </div>
       </div>

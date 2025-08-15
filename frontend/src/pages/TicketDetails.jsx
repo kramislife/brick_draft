@@ -84,7 +84,10 @@ const TicketDetails = () => {
   const [deletePriorityList] = useDeletePriorityListMutation();
 
   // Check if priority list exists (for button text)
-  const { data: existingPriorityListData } = useGetPriorityListQuery(
+  const {
+    data: existingPriorityListData,
+    isLoading: isExistingPriorityLoading,
+  } = useGetPriorityListQuery(
     { purchaseId, params: {} },
     { skip: !purchaseId }
   );
@@ -354,9 +357,18 @@ const TicketDetails = () => {
           onClick={() => {
             setPriorityDialogOpen(true);
           }}
+          disabled={
+            isExistingPriorityLoading || lottery?.lottery_status === "completed"
+          }
         >
           <ListTodo className="w-4 h-4" />
-          {hasPriorityList ? "Update Priority List" : "Set Priority List"}
+          {isExistingPriorityLoading
+            ? "Loading..."
+            : lottery?.lottery_status === "completed"
+            ? "Lottery Completed"
+            : hasPriorityList
+            ? "Update Priority List"
+            : "Set Priority List"}
         </Button>
       </div>
 

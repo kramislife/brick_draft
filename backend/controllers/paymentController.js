@@ -55,7 +55,9 @@ const createUrlFriendlySetName = (title) =>
 
 // Generate ticket IDs (TKT-000-111-222)
 const generateTicketIds = (quantity) =>
-  Array.from({ length: quantity }, () => generate_id("TICKET"));
+  Array.from({ length: quantity }, () => ({
+    ticket_id: generate_id("TICKET"),
+  }));
 
 // Find stripe session by purchase ID
 const findStripeSession = async (purchaseId) => {
@@ -135,10 +137,9 @@ const createTicketData = (lottery, session, purchaseId, userId, quantity) => {
   };
 };
 
-
 const transformTicketsForResponse = (ticketDoc) =>
-  ticketDoc.ticket_id.map((ticketId, index) => ({
-    ticket_id: ticketId,
+  ticketDoc.ticket_id.map((ticketIdObj, index) => ({
+    ticket_id: ticketIdObj.ticket_id,
     ticket_number: index + 1,
     ticket_price: ticketDoc.ticket_price,
     total_amount: ticketDoc.total_amount / ticketDoc.ticket_id.length,

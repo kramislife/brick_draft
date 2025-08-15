@@ -176,10 +176,10 @@ const handlePartPick = async (
       pickMethod: pickMethod,
       partValue: pickedPart.total_value || 0,
       pickData: {
-        part: pickedPart,
+        part_id: pickedPart._id, // Use _id as part_id (required by schema)
+        item_id: pickedPart.item_id, // Fallback item_id
         round_number: roomState.currentRound,
-        pick_method: pickMethod,
-        timestamp: new Date(),
+        pick_time: new Date(),
       },
     };
 
