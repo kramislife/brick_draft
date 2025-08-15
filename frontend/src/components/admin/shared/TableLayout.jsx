@@ -11,8 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
-const TableLayout = ({ columns, data }) => {
+const TableLayout = ({ columns, data, isLoading = false }) => {
   const table = useReactTable({
     data,
     columns,
@@ -38,7 +39,20 @@ const TableLayout = ({ columns, data }) => {
         ))}
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows?.length ? (
+        {isLoading ? (
+          // Loading state
+          <TableRow>
+            <TableCell colSpan={columns.length} className="h-24 text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">
+                  Loading...
+                </span>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : table.getRowModel().rows?.length ? (
+          // Data rows
           table.getRowModel().rows.map((row) => (
             <TableRow key={row.id}>
               {row.getVisibleCells().map((cell) => (
@@ -49,9 +63,12 @@ const TableLayout = ({ columns, data }) => {
             </TableRow>
           ))
         ) : (
+          // Empty state
           <TableRow>
             <TableCell colSpan={columns.length} className="h-24 text-center">
-              No results
+              <div className="text-sm text-muted-foreground">
+                No results found
+              </div>
             </TableCell>
           </TableRow>
         )}

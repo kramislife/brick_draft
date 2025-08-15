@@ -6,13 +6,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const ShowEntries = ({ value, onChange, totalEntries }) => {
+const ShowEntries = ({ value, onChange, totalEntries, disabled = false }) => {
   const entryOptions = [10, 25, 50, 100];
 
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">Show</span>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger>
           <SelectValue placeholder="10" />
         </SelectTrigger>

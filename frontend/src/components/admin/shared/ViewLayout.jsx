@@ -88,11 +88,13 @@ const ViewLayout = ({
             value={entriesPerPage}
             onChange={handleEntriesChange}
             totalEntries={totalEntries}
+            disabled={isLoading}
           />
           <SearchBar
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Search ${title}`}
+            disabled={isLoading}
           />
         </div>
 
@@ -109,6 +111,7 @@ const ViewLayout = ({
           totalEntries={totalEntries}
           startEntry={startEntry}
           endEntry={endEntry}
+          disabled={isLoading}
         />
       </div>
     </div>
