@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Results from "@/pages/Results";
+import ResultsDetails from "@/pages/ResultsDetails";
 import TermsofUse from "@/components/layout/footer/TermsofUse";
 import PrivacyPolicy from "@/components/layout/footer/PrivacyPolicy";
 import Profile from "@/pages/auth/Profile";
@@ -40,6 +41,7 @@ const UserRoutes = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact-us" element={<Contact />} />
         <Route path="/results" element={<Results />} />
+        <Route path="/results/:id" element={<ResultsDetails />} />
         <Route path="/live-draw" element={<LiveDraw />} />
         <Route path="/live-draw/:id" element={<LiveDrawDetails />} />
         <Route path="/terms-of-use" element={<TermsofUse />} />
