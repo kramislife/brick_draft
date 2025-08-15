@@ -175,6 +175,12 @@ class OptimizedRoomState {
 
   // Auto-pick management
   setAutoPick(userId, enabled, forNextRound = false) {
+    // Handle null/undefined userId (for guests)
+    if (!userId) {
+      console.warn("⚠️ Attempted to set auto-pick for null/undefined userId");
+      return;
+    }
+
     const userIdStr = userId.toString();
 
     if (forNextRound) {
@@ -199,10 +205,20 @@ class OptimizedRoomState {
   }
 
   hasAutoPickEnabled(userId) {
+    // Handle null/undefined userId (for guests)
+    if (!userId) {
+      return false;
+    }
+
     return this.autoPickSettings.has(userId.toString());
   }
 
   hasNextRoundAutoPick(userId) {
+    // Handle null/undefined userId (for guests)
+    if (!userId) {
+      return false;
+    }
+
     return this.nextRoundAutoPick.has(userId.toString());
   }
 
@@ -223,6 +239,14 @@ class OptimizedRoomState {
 
   // Get auto-pick status for a user
   getAutoPickStatus(userId) {
+    // Handle null/undefined userId (for guests)
+    if (!userId) {
+      return {
+        currentRound: false,
+        nextRound: false,
+      };
+    }
+
     const userIdStr = userId.toString();
     return {
       currentRound: this.autoPickSettings.has(userIdStr),

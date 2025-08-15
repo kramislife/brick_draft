@@ -53,6 +53,12 @@ export const useLiveDrawDetails = () => {
     currentRound: false,
     nextRound: false,
   });
+  // ✅ Add state to track current drafter's auto-pick status
+  const [currentDrafterAutoPickStatus, setCurrentDrafterAutoPickStatus] =
+    useState({
+      currentRound: false,
+      nextRound: false,
+    });
 
   // Priority list state
   const [priorityViewOpen, setPriorityViewOpen] = useState(false);
@@ -106,12 +112,13 @@ export const useLiveDrawDetails = () => {
   const [createPriorityList] = useCreatePriorityListMutation();
   const [updatePriorityList] = useUpdatePriorityListMutation();
 
-  // Parts data state
-  const [currentPage, setCurrentPage] = useState(1);
+  // Parts state
   const [allParts, setAllParts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const observerRef = useRef();
+  const [totalPartsCount, setTotalPartsCount] = useState(0);
+  const observerRef = useRef(null);
 
   // Fetch parts with pagination
   const {
@@ -138,6 +145,8 @@ export const useLiveDrawDetails = () => {
     if (partsData?.parts) {
       if (currentPage === 1) {
         setAllParts(partsData.parts);
+        // Set total parts count from API response
+        setTotalPartsCount(partsData.totalParts || 0);
       } else {
         setAllParts((prev) => [...prev, ...partsData.parts]);
       }
@@ -224,36 +233,28 @@ export const useLiveDrawDetails = () => {
           return;
         }
 
-        // Calculate the position to scroll to
+        // Calculate the position to scroll to within the container
         const containerRect = scrollContainer.getBoundingClientRect();
         const elementRect = currentDrafterElement.getBoundingClientRect();
 
-        // Check if the current drafter is not fully visible
+        // Check if the current drafter is not fully visible within the container
         const isVisible =
           elementRect.top >= containerRect.top &&
           elementRect.bottom <= containerRect.bottom;
 
         if (!isVisible) {
-          // Try scrollIntoView first (more reliable)
-          try {
-            currentDrafterElement.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-              inline: "nearest",
-            });
-          } catch (error) {
-            // Fallback to manual scroll calculation
-            const scrollTop =
-              currentDrafterElement.offsetTop -
-              scrollContainer.offsetTop -
-              scrollContainer.clientHeight / 2 +
-              currentDrafterElement.clientHeight / 2;
+          // Calculate scroll position within the container
+          const scrollTop =
+            currentDrafterElement.offsetTop -
+            scrollContainer.offsetTop -
+            scrollContainer.clientHeight / 2 +
+            currentDrafterElement.clientHeight / 2;
 
-            scrollContainer.scrollTo({
-              top: Math.max(0, scrollTop),
-              behavior: "smooth",
-            });
-          }
+          // Scroll within the container only
+          scrollContainer.scrollTo({
+            top: Math.max(0, scrollTop),
+            behavior: "smooth",
+          });
         }
       }, 200); // 200ms delay to ensure DOM is fully updated
 
@@ -340,7 +341,6 @@ export const useLiveDrawDetails = () => {
   useEffect(() => {
     if (connected && !phaseInitialized) {
       const fallbackTimer = setTimeout(() => {
-        console.log("⏰ Fallback: No phase update received, assuming welcome");
         setPhase("welcome");
         setPhaseInitialized(true);
       }, 5000);
@@ -358,6 +358,11 @@ export const useLiveDrawDetails = () => {
     socket.on("connect", () => {
       setConnected(true);
       socket.emit("joinLiveDrawRoom", { drawId: id, userId: currentUser?._id });
+      // Ensure viewers (including guests) sync full current state on refresh/join
+      socket.emit("requestDraftState", {
+        drawId: id,
+        userId: currentUser?._id,
+      });
       setLoading(false);
     });
 
@@ -366,7 +371,6 @@ export const useLiveDrawDetails = () => {
     });
 
     socket.on("phaseUpdate", (data) => {
-      console.log(`📱 Received phase update: ${data.phase}`);
       setPhase(data.phase);
       setPhaseInitialized(true);
 
@@ -407,8 +411,6 @@ export const useLiveDrawDetails = () => {
     });
 
     socket.on("draftState", (data) => {
-      console.log("🔄 Received draft state sync:", data);
-
       if (data.currentDrafter) {
         setCurrentDrafter(data.currentDrafter);
       }
@@ -426,68 +428,6 @@ export const useLiveDrawDetails = () => {
       }
 
       if (data.pickHistory && data.pickHistory.length > 0) {
-        console.log("📋 Syncing pick history from server:", data.pickHistory);
-        setPickHistory(data.pickHistory);
-
-        const allPickedPartIds = data.pickHistory.map((pick) => pick.part._id);
-        setPickedParts(allPickedPartIds);
-
-        console.log("✅ Synced picked parts:", allPickedPartIds);
-      }
-
-      if (data.autoPickStatus) {
-        setAutoPickStatus(data.autoPickStatus);
-        console.log("🤖 Synced auto-pick status:", data.autoPickStatus);
-      }
-    });
-
-    socket.on("autoPickStatusUpdate", (data) => {
-      console.log("🤖 Auto-pick status update:", data);
-
-      if (data.userId === currentUser?._id) {
-        setAutoPickStatus(data.autoPickStatus);
-
-        if (data.enabled) {
-          toast.success("Auto-pick scheduled for next round!", {
-            description:
-              "Auto-pick will be activated when the next round starts",
-            duration: 4000,
-          });
-        } else {
-          toast.info("Auto-pick disabled", {
-            description: "You will need to manually pick parts",
-            duration: 3000,
-          });
-        }
-      }
-    });
-
-    socket.on("draftStarted", (data) => {
-      setCurrentDrafter(data.currentDrafter);
-      setDraftCountdown(data.countdown || 15);
-      setPickHistory([]);
-      setPickedParts([]);
-      setCurrentRound(data.round || 1);
-      setCurrentPick(data.pick || 1);
-      setIsStartingDraft(false); // Reset the starting state when draft actually starts
-      console.log("🎮 Draft started!", data);
-    });
-
-    socket.on("draftCountdownTick", (data) => {
-      const countdown = Math.max(0, data.seconds);
-      console.log(`📱 Frontend received countdown: ${countdown}s`);
-      setDraftCountdown(countdown);
-    });
-
-    socket.on("partPicked", (data) => {
-      console.log("🎯 Part picked event received:", data);
-
-      if (data.part) {
-        setPickedParts((prev) => [...prev, data.part._id]);
-      }
-
-      if (data.pickHistory && data.pickHistory.length > 0) {
-        console.log("📋 Using server pick history:", data.pickHistory);
         setPickHistory(data.pickHistory);
 
         const allPickedPartIds = data.pickHistory.map((pick) => pick.part._id);
@@ -502,11 +442,67 @@ export const useLiveDrawDetails = () => {
           timestamp: data.timestamp || new Date(),
         };
 
-        console.log("📋 Adding individual pick entry:", newPickEntry);
+        setPickHistory((prev) => {
+          const updated = [newPickEntry, ...prev];
+          return updated;
+        });
+      }
+
+      if (data.autoPickStatus) {
+        setAutoPickStatus(data.autoPickStatus);
+      }
+    });
+
+    socket.on("autoPickStatusUpdate", (data) => {
+      // ✅ Update current drafter's auto-pick status if it's for the current drafter
+      if (data.userId === currentDrafter?.user_id) {
+        setCurrentDrafterAutoPickStatus(data.autoPickStatus);
+      }
+
+      // Update current user's auto-pick status
+      if (data.userId === currentUser?._id) {
+        setAutoPickStatus(data.autoPickStatus);
+        // ✅ Removed all auto-pick toast notifications for cleaner UX
+      }
+    });
+
+    socket.on("draftStarted", (data) => {
+      setCurrentDrafter(data.currentDrafter);
+      setDraftCountdown(data.countdown || 15);
+      setPickHistory([]);
+      setPickedParts([]);
+      setCurrentRound(data.round || 1);
+      setCurrentPick(data.pick || 1);
+      setIsStartingDraft(false); // Reset the starting state when draft actually starts
+    });
+
+    socket.on("draftCountdownTick", (data) => {
+      const countdown = Math.max(0, data.seconds);
+      setDraftCountdown(countdown);
+    });
+
+    socket.on("partPicked", (data) => {
+      if (data.part) {
+        setPickedParts((prev) => [...prev, data.part._id]);
+      }
+
+      if (data.pickHistory && data.pickHistory.length > 0) {
+        setPickHistory(data.pickHistory);
+
+        const allPickedPartIds = data.pickHistory.map((pick) => pick.part._id);
+        setPickedParts(allPickedPartIds);
+      } else {
+        const newPickEntry = {
+          user: data.user || { name: "Unknown User", _id: "unknown" },
+          part: data.part || { name: "Unknown Part", _id: "unknown" },
+          ticket_id: data.ticket_id || "unknown",
+          round_number: data.round_number || data.round || 1,
+          pick_method: data.pick_method || "manual",
+          timestamp: data.timestamp || new Date(),
+        };
 
         setPickHistory((prev) => {
           const updated = [newPickEntry, ...prev];
-          console.log("📋 Updated pick history:", updated);
           return updated;
         });
       }
@@ -516,35 +512,16 @@ export const useLiveDrawDetails = () => {
       setCurrentRound(data.round || 1);
       setCurrentPick(data.pick || 1);
 
-      console.log(
-        `🎯 Part picked, new countdown: ${
-          data.countdown || 15
-        }s for next drafter: ${data.nextDrafter?.user?.name}`
-      );
-
-      if (data.part && currentUser && data.user?._id !== currentUser._id) {
-        toast.info(
-          `📋 ${data.user?.name} picked ${data.part?.name} - Check your Priority List!`,
-          {
-            duration: 4000,
-            style: {
-              background: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
-              color: "white",
-              border: "1px solid #60a5fa",
-            },
-          }
-        );
-      }
-
+      // ✅ Show standardized toast based on pick method for all users
       let pickMethodText = "✋ Manual Pick";
       let toastStyle = {};
 
       if (data.pick_method === "afk") {
         pickMethodText = "⚡ AFK Auto-Pick";
         toastStyle = {
-          background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+          background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
           color: "white",
-          border: "1px solid #fbbf24",
+          border: "1px solid #f87171",
         };
       } else if (data.pick_method === "auto") {
         pickMethodText = "🤖 Auto-Pick";
@@ -554,20 +531,26 @@ export const useLiveDrawDetails = () => {
           border: "1px solid #34d399",
         };
       } else {
-        toastStyle = {
-          background: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
-          color: "white",
-          border: "1px solid #60a5fa",
-        };
+        // Manual pick - use toast.success (green)
+        toast.success(
+          `${pickMethodText}: ${data.user?.name || "Unknown User"} got ${
+            data.part?.name || "Unknown Part"
+          }!`,
+          {
+            duration: 3000,
+          }
+        );
+        return; // Exit early for manual pick to avoid duplicate toast
       }
 
-      toast.success(
+      // For auto-pick and AFK, use custom styled toast
+      toast.info(
         `${pickMethodText}: ${data.user?.name || "Unknown User"} got ${
           data.part?.name || "Unknown Part"
         }!`,
         {
           duration: 3000,
-          style: Object.keys(toastStyle).length > 0 ? toastStyle : undefined,
+          style: toastStyle,
         }
       );
     });
@@ -722,7 +705,7 @@ export const useLiveDrawDetails = () => {
   };
 
   const handleViewResults = () => {
-    console.log("View detailed results");
+    // Navigate to results page or show results dialog
   };
 
   const handleBackToDraws = () => {
@@ -890,6 +873,7 @@ export const useLiveDrawDetails = () => {
     availableParts,
     isCurrentUserTurn,
     lastElementRef,
+    totalPartsCount,
 
     // DraftQueue refs
     scrollContainerRef,

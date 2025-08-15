@@ -57,6 +57,7 @@ const PlayroomScreen = ({
   lastElementRef,
   isCurrentUserTurn,
   availableParts,
+  totalPartsCount,
   // DraftQueue refs
   scrollContainerRef,
   currentDrafterRef,
@@ -83,8 +84,7 @@ const PlayroomScreen = ({
         onPriorityListClick={onPriorityListClick}
         userPriorityCount={priorityListStats.userPriorityCount}
         pickedPriorityCount={priorityListStats.pickedPriorityCount}
-        isAutoPicking={false}
-        autoPickEnabled={autoPickStatus.currentRound}
+        showPriorityButton={Boolean(currentUser?._id)}
       />
 
       {/* Main Content */}
@@ -99,6 +99,7 @@ const PlayroomScreen = ({
           autoPickStatus={autoPickStatus}
           scrollContainerRef={scrollContainerRef}
           currentDrafterRef={currentDrafterRef}
+          showAutoPickToggle={Boolean(currentUser?._id)}
         />
 
         {/* Center Content - Parts Grid */}
@@ -119,6 +120,13 @@ const PlayroomScreen = ({
           // Computed values
           isCurrentUserTurn={isCurrentUserTurn}
           availableParts={availableParts}
+          // Auto-pick status props
+          autoPickEnabled={autoPickStatus.currentRound}
+          isAutoPicking={false}
+          // Guest user prop
+          isGuest={!Boolean(currentUser?._id)}
+          // Total parts count for display - use actual lottery parts count
+          totalParts={totalPartsCount}
         />
 
         {/* Right Sidebar - Pick History */}
@@ -130,6 +138,7 @@ const PlayroomScreen = ({
         open={rulesOpen}
         onClose={() => setRulesOpen(false)}
         onUnderstand={() => setRulesOpen(false)}
+        showUnderstandButton={false}
       />
 
       {/* Priority List View Dialog */}

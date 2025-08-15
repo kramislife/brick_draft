@@ -4,7 +4,7 @@ import { Trophy, Gamepad2, BookOpenCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimatedBackground from "@/components/ui/animated-background";
 
-const WelcomeScreen = ({ onReadRules, onStartPlaying }) => (
+const WelcomeScreen = ({ onReadRules, onStartPlaying, isLoggedIn = true }) => (
   <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 overflow-hidden relative">
     {/* Animated background */}
     <AnimatedBackground />
@@ -115,7 +115,7 @@ const WelcomeScreen = ({ onReadRules, onStartPlaying }) => (
             </Button>
           </motion.div>
 
-          {/* Start Playing Button */}
+          {/* Start Playing / Watch Live Draw Button */}
           <motion.div
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
@@ -140,7 +140,9 @@ const WelcomeScreen = ({ onReadRules, onStartPlaying }) => (
               >
                 <Gamepad2 className="w-5 h-5 " />
               </motion.div>
-              <span className="ml-2">Start Playing</span>
+              <span className="ml-2">
+                {isLoggedIn ? "Start Playing" : "Watch Live Draw"}
+              </span>
             </Button>
           </motion.div>
         </motion.div>

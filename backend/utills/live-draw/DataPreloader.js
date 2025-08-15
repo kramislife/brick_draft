@@ -32,31 +32,44 @@ class DataPreloader {
       // Cache lottery data
       this.lotteryCache.set(`lottery:${lotteryId}`, lottery, 1800000); // 30 minutes
 
-      // Load tickets with user data
-      const tickets = await Ticket.find({
-        "lottery.lottery_id": lotteryId,
-      })
-        .populate("user_id", "name email profile_picture")
-        .sort({ createdAt: 1 })
-        .lean();
+      // Load tickets with user data (optional - might not exist yet for guests)
+      let tickets = [];
+      let userIds = [];
 
-      // Transform tickets to flat structure
-      const flatTickets = this.transformTickets(tickets);
+      try {
+        const ticketData = await Ticket.find({
+          "lottery.lottery_id": lotteryId,
+        })
+          .populate("user_id", "name email profile_picture")
+          .sort({ createdAt: 1 })
+          .lean();
 
-      // Pre-load priority lists for all users
-      const userIds = [...new Set(flatTickets.map((t) => t.user_id))];
-      await this.preloadPriorityLists(lotteryId, userIds);
+        // Transform tickets to flat structure
+        tickets = this.transformTickets(ticketData);
 
-      // Pre-load user data
-      await this.preloadUserData(userIds);
+        // Pre-load priority lists for all users (only if there are tickets)
+        if (tickets && tickets.length > 0) {
+          userIds = [...new Set(tickets.map((t) => t.user_id))];
+          await this.preloadPriorityLists(lotteryId, userIds);
+
+          // Pre-load user data
+          await this.preloadUserData(userIds);
+        }
+      } catch (ticketError) {
+        console.warn(
+          "⚠️ No tickets found for lottery (might be guest viewing):",
+          ticketError.message
+        );
+        // Continue without tickets - this is fine for guests
+      }
 
       console.log(
-        `✅ Preloaded data: ${lottery.parts.length} parts, ${flatTickets.length} tickets, ${userIds.length} users`
+        `✅ Preloaded data: ${lottery.parts.length} parts, ${tickets.length} tickets, ${userIds.length} users`
       );
 
       return {
         lottery,
-        tickets: flatTickets,
+        tickets: tickets,
         userIds,
       };
     } catch (error) {

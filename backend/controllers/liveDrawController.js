@@ -143,12 +143,6 @@ const handlePartPick = async (
     const userId = roomState.currentDrafter.user_id?.toString();
     const userData = dataPreloader.getUserData(userId);
 
-    console.log("🔍 Debug user data:", {
-      userId,
-      userData,
-      currentDrafter: roomState.currentDrafter,
-    });
-
     if (!userData) {
       console.error("❌ User data not found for userId:", userId);
       return { success: false, reason: "User data not found" };
@@ -198,6 +192,18 @@ const handlePartPick = async (
     const nextDrafter = DraftAlgorithm.getNextDrafter(roomState);
     roomState.currentDrafter = nextDrafter;
 
+    // ✅ Emit auto-pick status update for the new drafter
+    const statusEmitter = new ThrottledEmitter(io, drawId);
+    const nextUserId = nextDrafter?.user_id?.toString();
+    if (nextUserId) {
+      statusEmitter.emit("autoPickStatusUpdate", {
+        userId: nextUserId,
+        enabled: roomState.hasAutoPickEnabled(nextUserId),
+        forNextRound: false,
+        autoPickStatus: roomState.getAutoPickStatus(nextUserId),
+      });
+    }
+
     // Check if draft is complete
     if (DraftAlgorithm.isDraftComplete(roomState)) {
       await handleDraftComplete(io, drawId, roomState);
@@ -239,39 +245,25 @@ const handleAutoPick = async (io, drawId, roomState, pickMethod = "afk") => {
     const currentDrafter = roomState.currentDrafter;
     const userId = currentDrafter?.user_id?.toString();
 
-    console.log(
-      `🤖 Starting auto-pick for user ${userId} (method: ${pickMethod})`
-    );
-
     roomState.clearDraftCountdown();
 
     if (!currentDrafter || roomState.phase !== "playroom") {
-      console.log(
-        `❌ Auto-pick failed: Invalid state - drafter: ${!!currentDrafter}, phase: ${
-          roomState.phase
-        }`
-      );
       return false;
     }
 
     // Check if draft is complete
     if (DraftAlgorithm.isDraftComplete(roomState)) {
-      console.log("🏁 Draft complete, finishing up...");
       await handleDraftComplete(io, drawId, roomState);
       return true;
     }
 
     // Perform enhanced auto-pick with priority logic
-    console.log(`🎯 Executing priority-based auto-pick for user ${userId}`);
     const selectedPart = DraftAlgorithm.performOptimizedAutoPick(
       roomState,
       currentDrafter
     );
 
     if (selectedPart) {
-      console.log(
-        `✅ Auto-pick successful: ${selectedPart.name} (value: ${selectedPart.total_value})`
-      );
       await handlePartPick(
         io,
         drawId,
@@ -281,7 +273,6 @@ const handleAutoPick = async (io, drawId, roomState, pickMethod = "afk") => {
       );
       return true;
     } else {
-      console.log("🏁 No parts available, completing draft");
       await handleDraftComplete(io, drawId, roomState);
       return false;
     }
@@ -342,15 +333,18 @@ const startDraftCountdown = (io, drawId, roomState, nextDrafter) => {
   const currentUserId = nextDrafter.user_id?.toString();
   const hasAutoPickEnabled = roomState.hasAutoPickEnabled(currentUserId);
 
+  // ✅ Emit auto-pick status update to all clients when new drafter starts
+  const emitter = new ThrottledEmitter(io, drawId);
+  emitter.emit("autoPickStatusUpdate", {
+    userId: currentUserId,
+    enabled: hasAutoPickEnabled,
+    forNextRound: false, // This is current round now
+    autoPickStatus: roomState.getAutoPickStatus(currentUserId),
+  });
+
   if (hasAutoPickEnabled) {
-    console.log(
-      `🤖 Auto-pick enabled for user ${currentUserId}, will auto-pick in 5 seconds`
-    );
     // Auto-pick after 5 seconds for user-triggered auto-pick
     setTimeout(async () => {
-      console.log(
-        `🤖 Executing user-triggered auto-pick for user ${currentUserId}`
-      );
       await handleAutoPick(io, drawId, roomState, "auto");
     }, 5000);
   }
@@ -361,9 +355,6 @@ const startDraftCountdown = (io, drawId, roomState, nextDrafter) => {
 
     if (roomState.draftCountdown <= 0) {
       roomState.clearDraftCountdown();
-      console.log(
-        `😴 Countdown ended, executing AFK auto-pick for user ${currentUserId}`
-      );
       await handleAutoPick(io, drawId, roomState, "afk");
     } else {
       const emitter = new ThrottledEmitter(io, drawId);
@@ -415,23 +406,41 @@ export const handleLiveDrawSockets = (io) => {
 
         // Pre-load data if not already loaded
         if (roomState.tickets.length === 0) {
-          const { lottery, tickets } = await dataPreloader.preloadDraftData(
-            drawId
-          );
-          roomState.tickets = tickets;
-          roomState.setLotteryData(lottery);
-
-          // Set priority lists for all users
-          tickets.forEach((ticket) => {
-            const priorityList = dataPreloader.getPriorityList(
-              ticket.user_id,
+          try {
+            const { lottery, tickets } = await dataPreloader.preloadDraftData(
               drawId
             );
-            roomState.setUserPriorityList(ticket.user_id, priorityList);
-          });
+            roomState.tickets = tickets;
+            roomState.setLotteryData(lottery);
+
+            // Set priority lists for all users (only if there are tickets)
+            if (tickets && tickets.length > 0) {
+              tickets.forEach((ticket) => {
+                const priorityList = dataPreloader.getPriorityList(
+                  ticket.user_id,
+                  drawId
+                );
+                roomState.setUserPriorityList(ticket.user_id, priorityList);
+              });
+            }
+          } catch (preloadError) {
+            console.warn(
+              "⚠️ Could not preload draft data (might be guest or no tickets yet):",
+              preloadError.message
+            );
+            // Continue without tickets - this is fine for guests
+          }
         }
 
-        // Verify parts are loaded
+        // Verify parts are loaded (only if we have lottery data)
+        const lotteryData = dataPreloader.getLotteryData(drawId);
+        if (!lotteryData) {
+          socket.emit("error", {
+            message: "Lottery not found or not available for viewing.",
+          });
+          return;
+        }
+
         if (!dataPreloader.isLotteryDataLoaded(drawId)) {
           socket.emit("error", {
             message:
@@ -442,7 +451,7 @@ export const handleLiveDrawSockets = (io) => {
 
         // Send initial state
         socket.emit("phaseUpdate", { phase: roomState.phase });
-        socket.emit("ticketUpdate", { tickets: roomState.tickets });
+        socket.emit("ticketUpdate", { tickets: roomState.tickets || [] });
 
         // ✅ Send current draft state if in playroom phase
         if (roomState.phase === "playroom") {
@@ -467,6 +476,42 @@ export const handleLiveDrawSockets = (io) => {
       } catch (error) {
         console.error("Error in joinLiveDrawRoom:", error);
         socket.emit("error", { message: "Failed to join live draw room" });
+      }
+    });
+
+    // ✅ Allow clients to request the latest state (useful on refresh/late join)
+    socket.on("requestDraftState", async ({ drawId, userId }) => {
+      try {
+        const roomState = getRoomState(drawId);
+
+        // Always provide phase and tickets
+        socket.emit("phaseUpdate", { phase: roomState.phase });
+        socket.emit("ticketUpdate", { tickets: roomState.tickets || [] });
+
+        // Provide playroom details if applicable
+        if (roomState.phase === "playroom") {
+          socket.emit("draftState", {
+            currentDrafter: roomState.currentDrafter,
+            countdown: roomState.draftCountdown,
+            round: roomState.currentRound,
+            pick: roomState.currentPick,
+            pickHistory: roomState.pickHistoryManager.getPickHistory(),
+            totalPicks: roomState.pickHistoryManager.getTotalPicks(),
+            // Send actual auto-pick status for the user (or default for guests)
+            autoPickStatus: roomState.getAutoPickStatus(userId),
+          });
+        }
+
+        if (roomState.countdown > 0) {
+          socket.emit("countdownStart", { seconds: roomState.countdown });
+        }
+
+        if (roomState.isShuffling) {
+          socket.emit("shufflingStart");
+        }
+      } catch (error) {
+        console.error("Error in requestDraftState:", error);
+        socket.emit("error", { message: "Failed to fetch draft state" });
       }
     });
 
@@ -549,7 +594,6 @@ export const handleLiveDrawSockets = (io) => {
 
           // Check if parts are loaded before starting countdown
           if (!dataPreloader.isLotteryDataLoaded(drawId)) {
-            console.log("⚠️ Parts not fully loaded, delaying countdown...");
             // Wait 2 seconds and check again
             setTimeout(() => {
               if (dataPreloader.isLotteryDataLoaded(drawId)) {
@@ -616,14 +660,8 @@ export const handleLiveDrawSockets = (io) => {
           // ✅ Simplified logic: always schedule for next round when enabled
           if (enabled) {
             roomState.setAutoPick(userId, true, true); // Always for next round
-            console.log(
-              `🤖 Auto-pick scheduled for next round for user ${userId}`
-            );
           } else {
             roomState.setAutoPick(userId, false, false); // Disable both current and next round
-            console.log(
-              `✋ Auto-pick disabled for user ${userId} - manual picking required`
-            );
           }
 
           // Emit auto-pick status update to all users
@@ -673,8 +711,6 @@ export const startLiveDrawChecker = (io) => {
 
             const roomState = getRoomState(lottery._id.toString());
             roomState.phase = "welcome";
-
-            console.log(`🎯 Lottery ${lottery._id} went live`);
 
             io.emit("statusUpdate", {
               lotteryId: lottery._id,

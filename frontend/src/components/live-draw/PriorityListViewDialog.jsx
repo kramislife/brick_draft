@@ -102,23 +102,17 @@ const PriorityListViewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl w-full bg-gradient-to-b from-gray-900 to-gray-800 border-gray-700 max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-white pb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <ListTodo className="w-5 h-5 text-white" />
-            </div>
+      <DialogContent className="sm:max-w-3xl w-full bg-gradient-to-b from-gray-900 to-gray-800 border-gray-700 [&_svg]:text-white">
+        <DialogHeader className="border-b border-gray-700">
+          <DialogTitle className="text-xl font-bold text-white pb-5">
             Draft Overview
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-8">
+        <div className="space-y-5">
           {/* Priority List Section */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <ListTodo className="w-4 h-4 text-white" />
-              </div>
               <h3 className="text-xl font-bold text-white">Priority List</h3>
               {hasPriorityList && (
                 <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
@@ -159,11 +153,11 @@ const PriorityListViewDialog = ({
                         <div className="absolute top-2 right-2 z-10">
                           {pickedByCurrentUser ? (
                             <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
-                              Picked by You
+                              You
                             </Badge>
                           ) : (
                             <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white border-0">
-                              Picked by {pickInfo?.user?.name || "Unknown"}
+                              {pickInfo?.user?.name || "Unknown"}
                             </Badge>
                           )}
                         </div>
@@ -187,9 +181,6 @@ const PriorityListViewDialog = ({
           {hasUserPickedParts && (
             <div className="border-t border-gray-700 pt-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                  <Trophy className="w-4 h-4 text-white" />
-                </div>
                 <h3 className="text-xl font-bold text-white">
                   Your Picked Parts
                 </h3>
@@ -204,13 +195,6 @@ const PriorityListViewDialog = ({
 
                   return (
                     <div key={`${part._id}-${index}`} className="relative">
-                      {/* Picked Badge */}
-                      <div className="absolute top-2 right-2 z-10">
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
-                          Picked by You
-                        </Badge>
-                      </div>
-
                       {/* Use the actual DraftPartCard component */}
                       <DraftPartCard
                         part={part}
@@ -229,9 +213,6 @@ const PriorityListViewDialog = ({
           {!hasUserPickedParts && hasPriorityList && (
             <div className="border-t border-gray-700 pt-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                  <Trophy className="w-4 h-4 text-white" />
-                </div>
                 <h3 className="text-xl font-bold text-white">
                   Your Picked Parts
                 </h3>
