@@ -139,12 +139,55 @@ const handlePartPick = async (
       return { success: false, reason: validation.reason };
     }
 
-    // Get user data from cache
+    // Get user data from cache with fallback
     const userId = roomState.currentDrafter.user_id?.toString();
-    const userData = dataPreloader.getUserData(userId);
+    let userData = dataPreloader.getUserData(userId);
+
+    // If user data not in cache, try to load it from database as fallback
+    if (!userData && userId) {
+      console.warn(
+        "⚠️ User data not in cache, attempting to load from database:",
+        userId
+      );
+      try {
+        const User = (await import("../../models/user.model.js")).default;
+        const user = await User.findById(userId)
+          .select("name email profile_picture")
+          .lean();
+        if (user) {
+          // Cache the user data for future use with dynamic TTL
+          dataPreloader.userCache.set(
+            `user:${userId}`,
+            user,
+            dataPreloader.getCacheTTL()
+          );
+          userData = user;
+          console.log(
+            "✅ Loaded and cached user data from database:",
+            user.name
+          );
+        }
+      } catch (dbError) {
+        console.error(
+          "❌ Failed to load user data from database:",
+          dbError.message
+        );
+      }
+    }
+
+    // If still no user data, create a minimal user object from current drafter
+    if (!userData && roomState.currentDrafter) {
+      console.warn("⚠️ Creating fallback user data from current drafter");
+      userData = {
+        _id: roomState.currentDrafter.user_id,
+        name: roomState.currentDrafter.user?.name || "Unknown User",
+        email: roomState.currentDrafter.user?.email || "",
+        profile_picture: roomState.currentDrafter.user?.profile_picture || null,
+      };
+    }
 
     if (!userData) {
-      console.error("❌ User data not found for userId:", userId);
+      console.error("❌ Unable to get or create user data for userId:", userId);
       return { success: false, reason: "User data not found" };
     }
 
@@ -248,11 +291,16 @@ const handleAutoPick = async (io, drawId, roomState, pickMethod = "afk") => {
     roomState.clearDraftCountdown();
 
     if (!currentDrafter || roomState.phase !== "playroom") {
+      console.warn("⚠️ Auto-pick: Invalid state", {
+        hasCurrentDrafter: !!currentDrafter,
+        phase: roomState.phase,
+      });
       return false;
     }
 
     // Check if draft is complete
     if (DraftAlgorithm.isDraftComplete(roomState)) {
+      console.log("🎯 Auto-pick: Draft complete, finishing");
       await handleDraftComplete(io, drawId, roomState);
       return true;
     }
@@ -264,20 +312,32 @@ const handleAutoPick = async (io, drawId, roomState, pickMethod = "afk") => {
     );
 
     if (selectedPart) {
-      await handlePartPick(
+      console.log(
+        `🤖 Auto-pick: Selected part ${selectedPart.name} for user ${userId}`
+      );
+      const result = await handlePartPick(
         io,
         drawId,
         roomState,
         selectedPart._id.toString(),
         pickMethod
       );
+
+      if (!result.success) {
+        console.error("❌ Auto-pick failed:", result.reason);
+        // Don't let auto-pick failures stop the draft - try to continue
+        return false;
+      }
+
       return true;
     } else {
+      console.log("🎯 Auto-pick: No parts available, completing draft");
       await handleDraftComplete(io, drawId, roomState);
       return false;
     }
   } catch (error) {
     console.error("❌ Error in handleAutoPick:", error);
+    // Don't let auto-pick errors stop the draft - try to continue
     return false;
   }
 };
@@ -298,6 +358,9 @@ const startInitialCountdown = (emitter, roomState, drawId, io) => {
 
       // Initialize draft result
       await initializeDraftResult(drawId, roomState.tickets);
+
+      // Mark draft as active to prevent cache expiration
+      dataPreloader.markDraftActive(drawId);
 
       // Calculate first drafter
       const firstDrafter = DraftAlgorithm.calculateCurrentDrafter(
@@ -383,7 +446,9 @@ const handleDraftComplete = async (io, drawId, roomState) => {
       pickHistory: roomState.pickHistoryManager.getPickHistory(),
     });
 
-    // Cleanup room state after delay
+    // Mark draft as inactive and cleanup room state after delay
+    dataPreloader.markDraftInactive(drawId);
+
     setTimeout(() => {
       roomState.cleanup();
       draftRooms.delete(drawId);

@@ -72,18 +72,6 @@ const Results = () => {
       <AnimatedBackground />
 
       <div className="relative z-10 px-5 py-10">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-5">
-            <Trophy className="w-10 h-10 text-yellow-500" />
-            <h1 className="text-4xl font-bold text-white">Draft Results</h1>
-          </div>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            View completed lottery draft results and see which parts each
-            participant won
-          </p>
-        </div>
-
         {/* Results Grid */}
         {completedResults.length === 0 ? (
           <FallbackStates
@@ -93,93 +81,107 @@ const Results = () => {
             className="min-h-[500px]"
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {completedResults.map((result) => (
-              <Card
-                key={result.lottery.id}
-                className="relative overflow-hidden border-none p-0 gap-0 group w-full bg-gradient-to-br from-gray-900 to-gray-800 cursor-pointer"
-                onClick={() => handleResultClick(result.results[0])} // Use the first result for navigation
-              >
-                {/* Image Section */}
-                <div className="relative h-60 w-full overflow-hidden">
-                  <img
-                    src={
-                      result.lottery.image?.url || "/placeholder-lottery.jpg"
-                    }
-                    alt={result.lottery.title || result.lottery.name}
-                    className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-                  />
+          <>
+            {/* Header - Only show when there are results */}
+            <div className="text-center mb-10">
+              <div className="flex items-center justify-center gap-3 mb-5">
+                <Trophy className="w-10 h-10 text-yellow-500" />
+                <h1 className="text-4xl font-bold text-white">Draft Results</h1>
+              </div>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                View completed lottery draft results and see which parts each
+                participant won
+              </p>
+            </div>
 
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {completedResults.map((result) => (
+                <Card
+                  key={result.lottery.id}
+                  className="relative overflow-hidden border-none p-0 gap-0 group w-full bg-gradient-to-br from-gray-900 to-gray-800 cursor-pointer"
+                  onClick={() => handleResultClick(result.results[0])} // Use the first result for navigation
+                >
+                  {/* Image Section */}
+                  <div className="relative h-60 w-full overflow-hidden">
+                    <img
+                      src={
+                        result.lottery.image?.url || "/placeholder-lottery.jpg"
+                      }
+                      alt={result.lottery.title || result.lottery.name}
+                      className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                    />
 
-                  {/* Title with glow effect */}
-                  <div className="absolute bottom-4 left-4 right-4 z-10">
-                    <h3 className="font-bold text-white line-clamp-1">
-                      {result.lottery.title ||
-                        result.lottery.name ||
-                        "Unknown Lottery"}
-                    </h3>
-                  </div>
-                </div>
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                {/* Content Section */}
-                <CardContent className="py-5">
-                  {/* Stats Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Calendar className="w-4 h-4" />
-                        <span className="text-sm">Completed</span>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-slate-700 text-slate-300"
-                      >
-                        {formatDate(result.results[0]?.completed_at)}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Users className="w-4 h-4" />
-                        <span className="text-sm">Participants</span>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-slate-700 text-slate-300"
-                      >
-                        {result.results[0]?.draft_stats?.total_participants ||
-                          0}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Package className="w-4 h-4" />
-                        <span className="text-sm">Parts Distributed</span>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="bg-slate-700 text-slate-300"
-                      >
-                        {result.results[0]?.draft_stats
-                          ?.total_parts_distributed || 0}
-                      </Badge>
+                    {/* Title with glow effect */}
+                    <div className="absolute bottom-4 left-4 right-4 z-10">
+                      <h3 className="font-bold text-white line-clamp-1">
+                        {result.lottery.title ||
+                          result.lottery.name ||
+                          "Unknown Lottery"}
+                      </h3>
                     </div>
                   </div>
 
-                  {/* Action Button */}
-                  <div className="mt-4">
-                    <div className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 border border-green-400/40">
-                      <Trophy className="w-4 h-4" />
-                      <span>View Results</span>
+                  {/* Content Section */}
+                  <CardContent className="py-5">
+                    {/* Stats Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <Calendar className="w-4 h-4" />
+                          <span className="text-sm">Completed</span>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="bg-slate-700 text-slate-300"
+                        >
+                          {formatDate(result.results[0]?.completed_at)}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <Users className="w-4 h-4" />
+                          <span className="text-sm">Participants</span>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="bg-slate-700 text-slate-300"
+                        >
+                          {result.results[0]?.draft_stats?.total_participants ||
+                            0}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <Package className="w-4 h-4" />
+                          <span className="text-sm">Parts Distributed</span>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="bg-slate-700 text-slate-300"
+                        >
+                          {result.results[0]?.draft_stats
+                            ?.total_parts_distributed || 0}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+
+                    {/* Action Button */}
+                    <div className="mt-4">
+                      <div className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg flex items-center justify-center gap-2 border border-green-400/40">
+                        <Trophy className="w-4 h-4" />
+                        <span>View Results</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
