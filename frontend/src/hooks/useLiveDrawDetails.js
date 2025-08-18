@@ -244,17 +244,17 @@ export const useLiveDrawDetails = () => {
 
         if (!isVisible) {
           // Calculate scroll position within the container
-          const scrollTop =
-            currentDrafterElement.offsetTop -
-            scrollContainer.offsetTop -
-            scrollContainer.clientHeight / 2 +
-            currentDrafterElement.clientHeight / 2;
+            const scrollTop =
+              currentDrafterElement.offsetTop -
+              scrollContainer.offsetTop -
+              scrollContainer.clientHeight / 2 +
+              currentDrafterElement.clientHeight / 2;
 
           // Scroll within the container only
-          scrollContainer.scrollTo({
-            top: Math.max(0, scrollTop),
-            behavior: "smooth",
-          });
+            scrollContainer.scrollTo({
+              top: Math.max(0, scrollTop),
+              behavior: "smooth",
+            });
         }
       }, 200); // 200ms delay to ensure DOM is fully updated
 

@@ -129,7 +129,7 @@ const PickHistory = ({ pickHistory }) => {
 
                               {/* Ticket Info */}
                               <div className="text-xs text-gray-400">
-                                <span>Ticket {pick.ticket_id}</span>
+                                <span> {pick.ticket_id}</span>
                               </div>
                             </div>
                           </div>
