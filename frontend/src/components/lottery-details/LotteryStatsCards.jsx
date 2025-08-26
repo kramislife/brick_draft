@@ -2,13 +2,13 @@ import React from "react";
 import { Box, Sparkles, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
-const LotteryStatsCards = ({ set }) => {
+const LotteryStatsCards = ({ marketPrice, drawDate, drawTime, pieces }) => {
   const statsCards = [
     {
       id: "market-price",
       icon: Box,
       title: "Market Price",
-      value: `$${set.marketPrice}`,
+      value: `$${marketPrice}`,
       subtitle: "Retail value",
       color: "emerald",
       textColor: "text-emerald-500",
@@ -18,8 +18,8 @@ const LotteryStatsCards = ({ set }) => {
       id: "draw-date",
       icon: Calendar,
       title: "Draw Date",
-      value: set.drawDate,
-      subtitle: set.drawTime,
+      value: drawDate,
+      subtitle: drawTime,
       color: "blue",
       textColor: "text-blue-700 dark:text-blue-400/70",
       bgColor: "bg-blue-500/10",
@@ -28,7 +28,7 @@ const LotteryStatsCards = ({ set }) => {
       id: "pieces",
       icon: Sparkles,
       title: "Pieces",
-      value: set.pieces,
+      value: pieces,
       subtitle: "Complete set",
       color: "amber",
       textColor: "text-amber-400",
@@ -42,10 +42,7 @@ const LotteryStatsCards = ({ set }) => {
         const Icon = card.icon;
 
         return (
-          <Card
-            key={card.id}
-            className="overflow-hidden shadow-md dark:border-none"
-          >
+          <Card key={card.id} className="overflow-hidden dark:border-none">
             <CardContent className="relative px-5">
               <div
                 className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 ${card.bgColor} rounded-full`}
