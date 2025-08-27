@@ -29,6 +29,7 @@ const MobileMenu = ({
   isAuthDialogOpen,
   onAuthDialogOpenChange,
   onCloseAuthDialog,
+  onBeforeOpenAuthDialog,
 }) => {
   // Get user menu items from centralized configuration
   const userMenuItems = getUserMenuItems(
@@ -147,7 +148,16 @@ const MobileMenu = ({
         ) : (
           <Dialog open={isAuthDialogOpen} onOpenChange={onAuthDialogOpenChange}>
             <DialogTrigger asChild>
-              <Button variant="accent" size="lg" className="w-full">
+              <Button
+                variant="accent"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  try {
+                    onBeforeOpenAuthDialog && onBeforeOpenAuthDialog();
+                  } catch (_) {}
+                }}
+              >
                 <User />
                 <span>Sign In</span>
               </Button>
