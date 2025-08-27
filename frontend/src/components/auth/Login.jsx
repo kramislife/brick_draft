@@ -32,24 +32,31 @@ const Login = ({ onClose }) => {
       if (result.user) {
         dispatch(setCredentials({ user: result.user }));
 
-        // Role-based redirection
+        // Role-based default fallback
         const isAdmin = ["superAdmin", "admin", "employee"].includes(
           result.user.role
         );
-        const redirectPath = isAdmin ? "/admin" : "/";
+        const defaultPath = isAdmin ? "/admin" : "/";
+
+        // Post-login redirect to last attempted route (if any)
+        let redirectPath = defaultPath;
+        try {
+          const intended = sessionStorage.getItem("postLoginRedirect");
+          if (intended) {
+            redirectPath = intended;
+            sessionStorage.removeItem("postLoginRedirect");
+          }
+        } catch (_) {}
 
         toast.success(result.message || "Login successful!", {
           description: result.description || "Welcome back!",
         });
 
-        // Close dialog and navigate
-        if (onClose) {
-          onClose();
-        }
-        navigate(redirectPath);
+        if (onClose) onClose();
+        navigate(redirectPath, { replace: true });
       }
     } catch (error) {
-      toast.error(error.data?.message || "Login failed"); 
+      toast.error(error.data?.message || "Login failed");
     }
   };
 

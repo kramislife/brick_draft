@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Moon, Sun, Menu, Search } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ const Header = () => {
   const user = useSelector(selectCurrentUser);
   const isAdmin = useSelector(selectIsAdmin);
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [logoutMutation, { isLoading }] = useLogoutMutation();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
@@ -93,6 +94,14 @@ const Header = () => {
   // Auth dialog handlers
   const handleCloseAuthDialog = () => {
     setIsAuthDialogOpen(false);
+  };
+
+  const handleOpenAuthDialog = () => {
+    try {
+      const intended = `${location.pathname}${location.search || ""}`;
+      sessionStorage.setItem("postLoginRedirect", intended);
+    } catch (_) {}
+    setIsAuthDialogOpen(true);
   };
 
   // Get user initials for avatar fallback
@@ -160,7 +169,11 @@ const Header = () => {
           ) : (
             <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="hidden md:flex" variant="accent">
+                <Button
+                  className="hidden md:flex"
+                  variant="accent"
+                  onClick={handleOpenAuthDialog}
+                >
                   Sign In
                 </Button>
               </DialogTrigger>
@@ -192,6 +205,7 @@ const Header = () => {
               isAuthDialogOpen={isAuthDialogOpen}
               onAuthDialogOpenChange={setIsAuthDialogOpen}
               onCloseAuthDialog={handleCloseAuthDialog}
+              onBeforeOpenAuthDialog={handleOpenAuthDialog}
             />
           </Sheet>
         </div>
