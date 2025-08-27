@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Minus, Gift, Ticket } from "lucide-react";
+import { Plus, Minus, Gift, Ticket, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,12 +13,13 @@ const LotteryPurchaseSection = ({
   setQuantity,
   userEmail,
   lottery_status,
+  isTicketSalesClosed,
   lotteryName,
 }) => {
   const {
     isLoading,
     selectedDelivery,
-    isLotteryActive,
+
     isLotteryLive,
     total,
     handleDecrement,
@@ -32,6 +33,7 @@ const LotteryPurchaseSection = ({
     setQuantity,
     userEmail,
     lottery_status,
+    isTicketSalesClosed,
   });
   const { paypalButtonsRef } = usePayPalCheckout({
     lotteryId,
@@ -43,8 +45,8 @@ const LotteryPurchaseSection = ({
 
   return (
     <div className="space-y-5">
-      {/* Status Message - Show when lottery is active */}
-      {isLotteryActive && (
+      {/* Status Message - Show when ticket sales are closed or lottery is live */}
+      {(isTicketSalesClosed || isLotteryLive) && (
         <div className="text-center p-6 bg-muted/50 rounded-lg border">
           {isLotteryLive ? (
             <div className="space-y-3">
@@ -53,7 +55,18 @@ const LotteryPurchaseSection = ({
               </h3>
               <p className="text-sm text-orange-600/80">
                 This lottery is currently live! You can watch the draft in
-                progress, but ticket sales have ended.
+                progress.
+              </p>
+            </div>
+          ) : isTicketSalesClosed ? (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-red-600 flex items-center justify-center gap-2">
+                <Clock className="w-5 h-5" />
+                Ticket Sales Closed
+              </h3>
+              <p className="text-sm text-red-600/80">
+                Ticket sales have closed for this lottery. The draw will begin
+                soon!
               </p>
             </div>
           ) : (
@@ -70,8 +83,8 @@ const LotteryPurchaseSection = ({
         </div>
       )}
 
-      {/* Purchase Section - Only show if lottery is not active */}
-      {!isLotteryActive && (
+      {/* Purchase Section - Only show if ticket sales are open and lottery is not live */}
+      {!isTicketSalesClosed && !isLotteryLive && (
         <Card className="p-5">
           <div className="space-y-4">
             {/* Quantity Selector */}

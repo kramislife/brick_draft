@@ -76,6 +76,7 @@ const LotteryDetails = () => {
             setQuantity={setQuantity}
             userEmail={user?.email}
             lottery_status={lotteryData?.lottery?.lottery_status}
+            isTicketSalesClosed={lotteryData?.lottery?.isTicketSalesClosed}
             lotteryName={set.name}
           />
         </div>

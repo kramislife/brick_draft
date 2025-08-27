@@ -34,6 +34,7 @@ const transformLotteryData = (lottery) => ({
   slotsAvailable: lottery.slotsAvailable,
   whyCollect: lottery.whyCollect || [],
   lottery_status: lottery.lottery_status,
+  isTicketSalesClosed: lottery.isTicketSalesClosed || false,
 });
 
 // Create event handlers factory
@@ -116,6 +117,7 @@ export const useLottery = ({ title, showViewAll = false, limit }) => {
       drawTime: set.drawTime,
       totalSlots: set.totalSlots,
       slotsAvailable: set.slotsAvailable,
+      isTicketSalesClosed: set.isTicketSalesClosed,
 
       // Event handlers
       onCardClick: () => eventHandlers.handleNavigateToLottery(set.id),
@@ -202,14 +204,13 @@ export const useLotteryPurchase = ({
   setQuantity,
   userEmail,
   lottery_status,
+  isTicketSalesClosed,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
   const [selectedDelivery, setSelectedDelivery] = useState("delivery");
 
-  // Check if lottery is live or completed
-  const isLotteryActive =
-    lottery_status === "live" || lottery_status === "completed";
+  // Check if lottery is live
   const isLotteryLive = lottery_status === "live";
 
   // Event handlers
@@ -269,8 +270,8 @@ export const useLotteryPurchase = ({
     // State
     isLoading,
     selectedDelivery,
-    isLotteryActive,
     isLotteryLive,
+    isTicketSalesClosed,
 
     // Computed values
     total,
@@ -510,7 +511,13 @@ export const usePayPalCheckout = ({
         },
         onError: (err) => {
           console.error("PayPal button error", err);
-          toast.error("PayPal encountered an error");
+          const message =
+            (err && (err.message || err.description || err.name)) ||
+            (err?.data && (err.data.message || err.data.error)) ||
+            (typeof err === "string"
+              ? err
+              : "An unexpected PayPal error occurred");
+          toast.error(` ${message}`);
         },
       })
       .render(paypalButtonsRef.current);
