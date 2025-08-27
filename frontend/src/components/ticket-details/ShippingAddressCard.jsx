@@ -9,19 +9,19 @@ const ShippingAddressCard = ({ shippingAddress, addressType }) => {
   const columns = [
     [
       { label: "Name", value: shippingAddress.name },
-      { label: "City", value: shippingAddress.city },
-      { label: "State", value: shippingAddress.state },
+      { label: "City", value: shippingAddress.city || shippingAddress.admin_area_2 },
+      { label: "State", value: shippingAddress.state || shippingAddress.admin_area_1 },
     ],
     [
-      { label: "Country", value: shippingAddress.country },
+      { label: "Country", value: shippingAddress.country || shippingAddress.country_code },
       { label: "Postal Code", value: shippingAddress.postal_code },
       {
         label: "Address",
         value:
           shippingAddress.address_line1 ||
-          "" +
+          shippingAddress.address_line_1 +
             (shippingAddress.address_line2
-              ? `, ${shippingAddress.address_line2}`
+              ? `, ${shippingAddress.address_line2 || shippingAddress.address_line_2}`
               : ""),
       },
     ],

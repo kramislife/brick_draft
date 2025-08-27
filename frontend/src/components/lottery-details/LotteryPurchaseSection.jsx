@@ -3,7 +3,8 @@ import { Plus, Minus, Gift, Ticket } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLotteryPurchase } from "@/hooks/useLottery";
+import StripeLogo from "@/assets/images/stripe.svg";
+import { useLotteryPurchase, usePayPalCheckout } from "@/hooks/useLottery";
 
 const LotteryPurchaseSection = ({
   lotteryId,
@@ -31,6 +32,13 @@ const LotteryPurchaseSection = ({
     setQuantity,
     userEmail,
     lottery_status,
+  });
+  const { paypalButtonsRef } = usePayPalCheckout({
+    lotteryId,
+    quantity,
+    userEmail,
+    selectedDelivery,
+    lotteryName,
   });
 
   return (
@@ -128,14 +136,26 @@ const LotteryPurchaseSection = ({
               </div>
             </div>
 
-            {/* Buy Button */}
-            <Button
-              onClick={handleBuyTicket}
-              disabled={isLoading}
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
-            >
-              {isLoading ? "Processing..." : "Buy Ticket"}
-            </Button>
+            {/* Buy Buttons */}
+            <div className="relative">
+              <Button
+                onClick={handleBuyTicket}
+                disabled={isLoading}
+                className="w-full bg-yellow-400 hover:bg-yellow-500 py-7 text-lg text-black font-bold rounded-sm relative z-10"
+              >
+                {isLoading ? (
+                  "Processing..."
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <img src={StripeLogo} alt="Stripe" className="h-10" />
+                  </span>
+                )}
+              </Button>
+              <div
+                className="w-full mt-2 relative z-0"
+                ref={paypalButtonsRef}
+              />
+            </div>
           </div>
         </Card>
       )}

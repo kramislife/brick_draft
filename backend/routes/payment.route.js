@@ -4,6 +4,9 @@ import {
   getPaymentSuccessDetails,
   getUserPurchases,
   getAllTickets,
+  getPaypalClientId,
+  createPaypalCheckout,
+  capturePaypalCheckout,
 } from "../controllers/paymentController.js";
 import {
   isAuthenticatedUser,
@@ -15,6 +18,15 @@ const router = express.Router();
 router
   .route("/checkout-session")
   .post(isAuthenticatedUser, createCheckoutSession);
+
+// PayPal routes
+router.route("/paypal/client-id").get(getPaypalClientId);
+router
+  .route("/paypal/create-order")
+  .post(isAuthenticatedUser, createPaypalCheckout);
+router
+  .route("/paypal/capture-order")
+  .post(isAuthenticatedUser, capturePaypalCheckout);
 
 router
   .route("/ticket/:purchaseId")

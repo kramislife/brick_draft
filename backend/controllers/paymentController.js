@@ -1,11 +1,20 @@
-import Stripe from "stripe";
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import Lottery from "../models/lottery.model.js";
 import Ticket from "../models/ticket.model.js";
 import { generate_id } from "../utills/generate_id.js";
+import Stripe from "stripe";
+import {
+  createPaypalOrder,
+  capturePaypalOrder,
+} from "../utills/paypalService.js";
 
-// ===================== STRIPE CONFIGURATION ========================
+// ===================== STRIPE AND PAYPAL CONFIGURATION ========================
 const STRIPE = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export const getPaypalClientId = catchAsyncErrors(async (req, res) => {
+  const clientId = process.env.PAYPAL_CLIENT_ID;
+  res.json({ clientId });
+});
 
 // ===================== UTILITY FUNCTIONS ========================
 
@@ -264,6 +273,132 @@ export const createCheckoutSession = catchAsyncErrors(async (req, res) => {
 
   const session = await STRIPE.checkout.sessions.create(sessionParams);
   res.json({ url: session.url, purchase_id, urlFriendlySetName });
+});
+
+// ===================== PAYPAL FLOW ========================
+const ORDER_QUANTITY = new Map();
+
+// Create PayPal order
+export const createPaypalCheckout = catchAsyncErrors(async (req, res) => {
+  const {
+    lotteryId,
+    quantity = 1,
+    email,
+    delivery_method = "delivery",
+  } = req.body;
+
+  const lottery = await findLotteryById(lotteryId);
+  const purchase_id = generate_id("PURCHASE");
+  const urlFriendlySetName = createUrlFriendlySetName(lottery.title);
+
+  // Calculate shipping (same as Stripe)
+  const shippingAmountCents = 800 + (Math.max(1, quantity) - 1) * 200;
+  const unitAmount = Math.round(lottery.ticketPrice * 100);
+  const itemTotalCents = unitAmount * quantity;
+  const totalAmountCents = itemTotalCents + shippingAmountCents; // tax omitted for now
+
+  const orderResp = await createPaypalOrder({
+    currency: "USD",
+    totalAmount: totalAmountCents / 100,
+    itemTotal: itemTotalCents / 100,
+    shipping: shippingAmountCents / 100,
+    tax: 0,
+    purchaseId: purchase_id,
+    lottery,
+    quantity,
+    delivery_method,
+    email: email || req.user.email,
+  });
+
+  const approveLink = orderResp.result.links?.find((l) => l.rel === "approve");
+  const orderId = orderResp.result.id;
+  ORDER_QUANTITY.set(orderId, quantity);
+  console.log("[PayPal] order created", { orderId, purchase_id, quantity });
+  res.json({
+    url: approveLink?.href,
+    orderId,
+    purchase_id,
+    urlFriendlySetName,
+  });
+});
+
+// Capture PayPal order and create ticket
+export const capturePaypalCheckout = catchAsyncErrors(async (req, res) => {
+  const { orderId, purchaseId } = req.body;
+  if (!orderId || !purchaseId) {
+    return res.status(400).json({ message: "Missing orderId or purchaseId" });
+  }
+
+  console.log("[PayPal] capture", { orderId, purchaseId });
+  const captureResp = await capturePaypalOrder(orderId);
+  const result = captureResp.result;
+
+  if (result.status !== "COMPLETED") {
+    return res.status(400).json({ message: "Payment not completed" });
+  }
+
+  const pu = result.purchase_units?.[0] || {};
+  const referenceId = pu.reference_id; // lotteryId set during order creation
+
+  // Resolve quantity: prefer items[].quantity; fallback to stored quantity
+  let quantity = 1;
+  if (pu.items && pu.items.length > 0) {
+    quantity = Number(pu.items[0].quantity) || 1;
+  } else {
+    quantity = ORDER_QUANTITY.get(orderId) || 1;
+  }
+
+  const lottery = await findLotteryById(referenceId);
+
+  // Shipping address
+  const shipping = pu.shipping?.address;
+  const name = pu.shipping?.name?.full_name;
+  const address = shipping ? { ...shipping, name } : {};
+
+  // Fees
+  const shippingAmount = 8 + (Math.max(1, quantity) - 1) * 2; // dollars
+  const tax = 0;
+
+  // Payment reference
+  const capture = pu.payments?.captures?.[0];
+  const payment_reference = capture?.id || orderId;
+  const amountTotal = Number(capture?.amount?.value || 0);
+
+  const ticketData = {
+    user_id: req.user.user_id,
+    lottery: {
+      lottery_id: lottery._id,
+      set_name: lottery.title,
+    },
+    ticket_id: generateTicketIds(quantity),
+    ticket_price: lottery.ticketPrice,
+    quantity,
+    payment_method: "paypal",
+    payment_status: "paid",
+    createdBy: req.user.user_id,
+    payment_reference,
+    session_id: orderId,
+    shipping_fee: shippingAmount,
+    tax,
+    total_amount:
+      amountTotal || lottery.ticketPrice * quantity + shippingAmount + tax,
+    address,
+    address_type: shipping ? "shipping" : "billing",
+    purchase_id: purchaseId,
+  };
+
+  let ticketDoc = await Ticket.create(ticketData);
+  const userHasOtherTickets = await checkUserHasOtherTickets(
+    req.user.user_id,
+    lottery._id,
+    purchaseId
+  );
+  if (!userHasOtherTickets) await decrementLotterySlots(lottery._id);
+  ticketDoc = await Ticket.findById(ticketDoc._id).populate(
+    "lottery.lottery_id"
+  );
+
+  res.json({ success: true, purchase_id: purchaseId, orderId });
 });
 
 // Get payment success details and create ticket if needed

@@ -9,6 +9,11 @@ import {
 import { useCreateCheckoutSessionMutation } from "@/redux/api/paymentApi";
 import { selectCurrentUser } from "@/redux/features/authSlice";
 import { toast } from "sonner";
+import {
+  useCreatePaypalOrderMutation,
+  useCapturePaypalOrderMutation,
+  useGetPaypalClientIdQuery,
+} from "@/redux/api/paymentApi";
 
 // --------------------------------------- Utility Functions ----------------------------------------
 
@@ -427,4 +432,126 @@ export const useLotteryPartsSection = ({ lotteryId, partsTitle }) => {
     // Handlers
     onParamsChange: handleParamsChange,
   };
+};
+
+
+// ----------------------------------- PayPal Checkout (Buttons) ------------------------------------
+export const usePayPalCheckout = ({
+  lotteryId,
+  quantity,
+  userEmail,
+  selectedDelivery,
+  lotteryName,
+}) => {
+  const paypalButtonsRef = useRef(null);
+  const paypalPurchaseIdRef = useRef(null);
+  const { data: paypalConfig } = useGetPaypalClientIdQuery();
+  const [createPaypalOrder] = useCreatePaypalOrderMutation();
+  const [capturePaypalOrder] = useCapturePaypalOrderMutation();
+
+  // Helper to slugify set name (for redirect)
+  const toSlug = (name) =>
+    String(name || "")
+      .replace(/[^a-zA-Z0-9\s-&]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .toLowerCase()
+      .trim();
+
+  const renderButtons = useCallback(() => {
+    if (!window.paypal || !paypalButtonsRef.current) return;
+    paypalButtonsRef.current.innerHTML = "";
+    window.paypal
+      .Buttons({
+        style: {
+          layout: "vertical",
+          color: "blue",
+          label: "paypal",
+        },
+        createOrder: async () => {
+          try {
+            const { orderId, purchase_id } = await createPaypalOrder({
+              lotteryId,
+              quantity,
+              email: userEmail,
+              delivery_method:
+                selectedDelivery === "pickup" ? "pick-up" : "delivery",
+            }).unwrap();
+            paypalPurchaseIdRef.current = purchase_id;
+            return orderId || "";
+          } catch (err) {
+            toast.error(
+              err?.data?.message ||
+                err?.error ||
+                "Failed to create PayPal order"
+            );
+            throw err;
+          }
+        },
+        onApprove: async (data) => {
+          try {
+            const orderId = data?.orderID;
+            const purchaseId = paypalPurchaseIdRef.current;
+            if (!purchaseId) {
+              toast.error("Missing purchase reference. Please try again.");
+              return;
+            }
+            await capturePaypalOrder({ orderId, purchaseId }).unwrap();
+            window.location.href = `/ticket-success/${toSlug(
+              lotteryName
+            )}/${purchaseId}`;
+          } catch (err) {
+            toast.error(
+              err?.data?.message ||
+                err?.error ||
+                "Failed to capture PayPal order"
+            );
+          }
+        },
+        onError: (err) => {
+          console.error("PayPal button error", err);
+          toast.error("PayPal encountered an error");
+        },
+      })
+      .render(paypalButtonsRef.current);
+  }, [
+    createPaypalOrder,
+    capturePaypalOrder,
+    lotteryId,
+    quantity,
+    userEmail,
+    selectedDelivery,
+    lotteryName,
+  ]);
+
+  useEffect(() => {
+    const clientId = paypalConfig?.clientId;
+    if (!clientId) return;
+    if (!document.getElementById("paypal-sdk")) {
+      const script = document.createElement("script");
+      const params = new URLSearchParams({
+        "client-id": clientId,
+        currency: "USD",
+        components: "buttons",
+        intent: "capture",
+        "disable-funding": "card,credit,paylater,venmo",
+      });
+      script.src = `https://www.paypal.com/sdk/js?${params.toString()}`;
+      script.id = "paypal-sdk";
+      script.async = true;
+      script.onload = () => renderButtons();
+      document.body.appendChild(script);
+    } else {
+      renderButtons();
+    }
+  }, [
+    paypalConfig?.clientId,
+    quantity,
+    selectedDelivery,
+    lotteryId,
+    userEmail,
+    renderButtons,
+  ]);
+
+  return { paypalButtonsRef };
 };
