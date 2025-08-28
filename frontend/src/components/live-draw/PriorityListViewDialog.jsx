@@ -41,6 +41,20 @@ const PriorityListViewDialog = ({
 
   const hasUserPickedParts = userPickedPartsExcludingPriority.length > 0;
 
+  // Calculate total values
+  const priorityListTotalValue = priorityList.reduce((total, item) => {
+    return total + (item.item?.total_value || 0);
+  }, 0);
+
+  const userPickedPartsTotalValue = userPickedPartsExcludingPriority.reduce(
+    (total, pick) => {
+      return total + (pick.part?.total_value || 0);
+    },
+    0
+  );
+
+  const allPartsTotalValue = priorityListTotalValue + userPickedPartsTotalValue;
+
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {[...Array(6)].map((_, index) => (
@@ -108,6 +122,22 @@ const PriorityListViewDialog = ({
             Draft Overview
           </DialogTitle>
         </DialogHeader>
+
+        {/* Total Value Summary */}
+        <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-lg p-4 border border-gray-600/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span className="text-white font-semibold">Total Value:</span>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-yellow-400">
+                ${allPartsTotalValue.toFixed(2)}
+              </div>
+            
+            </div>
+          </div>
+        </div>
 
         <div className="space-y-5">
           {/* Priority List Section */}

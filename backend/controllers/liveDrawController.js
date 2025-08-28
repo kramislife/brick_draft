@@ -389,7 +389,7 @@ const startInitialCountdown = (emitter, roomState, drawId, io) => {
 const startDraftCountdown = (io, drawId, roomState, nextDrafter) => {
   roomState.clearDraftCountdown();
 
-  roomState.draftCountdown = 15;
+  roomState.draftCountdown = roomState.getCustomDraftCountdown(); // Use custom timer
   roomState.currentDrafter = nextDrafter;
 
   // Check auto-pick settings
@@ -406,10 +406,11 @@ const startDraftCountdown = (io, drawId, roomState, nextDrafter) => {
   });
 
   if (hasAutoPickEnabled) {
-    // Auto-pick after 5 seconds for user-triggered auto-pick
+    // Auto-pick after custom timer duration for user-triggered auto-pick
+    const autoPickDelay = roomState.getCustomDraftCountdown() * 1000; // Convert to milliseconds
     setTimeout(async () => {
       await handleAutoPick(io, drawId, roomState, "auto");
-    }, 5000);
+    }, autoPickDelay);
   }
 
   // Start countdown
@@ -477,6 +478,7 @@ export const handleLiveDrawSockets = (io) => {
             );
             roomState.tickets = tickets;
             roomState.setLotteryData(lottery);
+            roomState.initializeAvailableParts(); // Initialize available parts
 
             // Set priority lists for all users (only if there are tickets)
             if (tickets && tickets.length > 0) {
@@ -745,6 +747,32 @@ export const handleLiveDrawSockets = (io) => {
         }
       }
     );
+
+    // Handle timer setting (admin only)
+    socket.on("setDraftTimer", async ({ drawId, seconds }) => {
+      try {
+        // TODO: Add admin validation here
+        // For now, allow any authenticated user to set timer
+        // In production, you should check if the user is an admin
+
+        const roomState = getRoomState(drawId);
+
+        // Set the custom timer
+        roomState.setCustomDraftCountdown(seconds);
+
+        // Emit timer update to all clients
+        const emitter = new ThrottledEmitter(io, drawId);
+        emitter.emit("timerUpdated", {
+          drawId,
+          seconds: roomState.getCustomDraftCountdown(),
+        });
+
+        console.log(`⏰ Timer set to ${seconds} seconds for draw ${drawId}`);
+      } catch (error) {
+        console.error("❌ Error setting draft timer:", error);
+        socket.emit("error", { message: "Failed to set timer" });
+      }
+    });
 
     // Handle disconnect
     socket.on("disconnect", () => {

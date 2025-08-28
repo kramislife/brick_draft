@@ -16,6 +16,7 @@ const PlayroomHeader = ({
   userPriorityCount = 0, // ✅ Add user priority count
   pickedPriorityCount = 0, // ✅ Add picked priority count
   showPriorityButton = true, // ✅ New prop to control visibility
+  maxCountdown = 15, // ✅ Add maxCountdown prop for dynamic timer
 }) => {
   const navigate = useNavigate();
 
@@ -23,7 +24,6 @@ const PlayroomHeader = ({
   const isCurrentUserTurn = currentDrafter?.user_id === currentUser?._id;
 
   // Calculate countdown progress for visual indicator
-  const maxCountdown = 15;
   const countdownProgress = Math.max(0, countdown) / maxCountdown;
 
   const handleHomeClick = () => {
@@ -43,12 +43,12 @@ const PlayroomHeader = ({
               className="p-0 h-auto w-auto hover:bg-transparent group"
               title="Go back to Home"
             >
-            <motion.div
+              <motion.div
                 className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg cursor-pointer transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl"
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Zap className="w-6 h-6 text-black font-bold" />
-            </motion.div>
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Zap className="w-6 h-6 text-black font-bold" />
+              </motion.div>
             </Button>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
@@ -179,18 +179,18 @@ const PlayroomHeader = ({
         <div className="col-span-3 flex items-center justify-end">
           {/* Action Buttons */}
           <div className="flex gap-2">
-          {/* Round Information */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-yellow-400/50 transition-all duration-200"
-          >
-            <div className="text-center">
-              <p className="text-xs text-gray-400">
-                Round <span className="text-blue-400">{currentRound}</span>
-              </p>
-            </div>
-          </Button>
+            {/* Round Information */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-yellow-400/50 transition-all duration-200"
+            >
+              <div className="text-center">
+                <p className="text-xs text-gray-400">
+                  Round <span className="text-blue-400">{currentRound}</span>
+                </p>
+              </div>
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -202,29 +202,29 @@ const PlayroomHeader = ({
             </Button>
 
             {showPriorityButton && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onPriorityListClick}
-              className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-green-400/50 transition-all duration-200 relative"
-            >
-              <ListTodo className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Priority</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPriorityListClick}
+                className="bg-slate-800/50 border-white/20 text-white hover:bg-slate-700/50 hover:border-green-400/50 transition-all duration-200 relative"
+              >
+                <ListTodo className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Priority</span>
 
-              {/* Priority List Status Indicator */}
-              {userPriorityCount > 0 && (
-                <div className="ml-2 flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-xs text-green-400 font-medium">
-                    {userPriorityCount - pickedPriorityCount}
-                  </span>
-                  <span className="text-xs text-slate-400">/</span>
-                  <span className="text-xs text-slate-400">
-                    {userPriorityCount}
-                  </span>
-                </div>
-              )}
-            </Button>
+                {/* Priority List Status Indicator */}
+                {userPriorityCount > 0 && (
+                  <div className="ml-2 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                    <span className="text-xs text-green-400 font-medium">
+                      {userPriorityCount - pickedPriorityCount}
+                    </span>
+                    <span className="text-xs text-slate-400">/</span>
+                    <span className="text-xs text-slate-400">
+                      {userPriorityCount}
+                    </span>
+                  </div>
+                )}
+              </Button>
             )}
           </div>
         </div>

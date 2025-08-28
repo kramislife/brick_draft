@@ -4,6 +4,7 @@ import { Loader, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLiveDrawDetails } from "@/hooks/useLiveDrawDetails";
 import AnimatedBackground from "@/components/ui/animated-background";
+import { useParams } from "react-router-dom";
 
 // Import child components
 import WelcomeScreen from "@/components/live-draw/WelcomeScreen";
@@ -15,6 +16,8 @@ import AdminControls from "@/components/live-draw/AdminControls";
 
 // Main LiveDrawDetails Component
 const LiveDrawDetails = () => {
+  const { id } = useParams(); // Get the draw ID from URL params
+
   const {
     // State
     phase,
@@ -54,6 +57,10 @@ const LiveDrawDetails = () => {
     lotteryData,
     lotteryLoading,
     currentUser,
+
+    // Timer controls
+    customTimer,
+    setCustomTimer,
 
     // Computed values
     uniqueUsers,
@@ -162,6 +169,10 @@ const LiveDrawDetails = () => {
           allReady={allReady}
           onStartDraft={handleStartDraft}
           starting={isStartingDraft}
+          currentTimer={customTimer}
+          onTimerChange={setCustomTimer}
+          socket={socketRef?.current}
+          drawId={id}
         />
       )}
 
@@ -204,6 +215,7 @@ const LiveDrawDetails = () => {
             socketRef={socketRef}
             onAutoPickToggle={handleAutoPickToggle}
             autoPickStatus={autoPickStatus}
+            maxCountdown={customTimer}
             // Priority list props
             priorityViewOpen={priorityViewOpen}
             priorityEditOpen={priorityEditOpen}

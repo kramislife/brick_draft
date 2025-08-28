@@ -571,9 +571,7 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
 // ==================== SOCKET CONFIG ========================
 export const getSocketConfig = (req, res) => {
   res.json({
-    socketUrl:
-      process.env.FRONTEND_URL ||
-      `http://localhost:${process.env.PORT || 4000}`,
+    socketUrl: `http://localhost:${process.env.PORT || 4000}`,
     port: process.env.PORT || 4000,
   });
 };

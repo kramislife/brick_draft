@@ -14,6 +14,9 @@ class OptimizedRoomState {
     this.autoPickSettings = new Map(); // userId -> boolean (current round)
     this.nextRoundAutoPick = new Map(); // userId -> boolean (next round)
 
+    // Timer configuration
+    this.customDraftCountdown = 15; // Default 15 seconds, can be changed by admin
+
     // Draft state
     this.currentRound = 1;
     this.currentPick = 1;
@@ -36,7 +39,6 @@ class OptimizedRoomState {
   // Lottery data management
   setLotteryData(lottery) {
     this.lotteryData = lottery;
-    this.initializeAvailableParts();
   }
 
   initializeAvailableParts() {
@@ -252,6 +254,15 @@ class OptimizedRoomState {
       currentRound: this.autoPickSettings.has(userIdStr),
       nextRound: this.nextRoundAutoPick.has(userIdStr),
     };
+  }
+
+  // Timer configuration methods
+  setCustomDraftCountdown(seconds) {
+    this.customDraftCountdown = Math.max(5, Math.min(300, seconds)); // Limit between 5-300 seconds
+  }
+
+  getCustomDraftCountdown() {
+    return this.customDraftCountdown;
   }
 
   // Performance metrics
