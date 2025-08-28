@@ -60,6 +60,9 @@ export const useLiveDrawDetails = () => {
       nextRound: false,
     });
 
+  // Timer controls state
+  const [customTimer, setCustomTimer] = useState(15);
+
   // Priority list state
   const [priorityViewOpen, setPriorityViewOpen] = useState(false);
   const [priorityEditOpen, setPriorityEditOpen] = useState(false);
@@ -244,17 +247,17 @@ export const useLiveDrawDetails = () => {
 
         if (!isVisible) {
           // Calculate scroll position within the container
-            const scrollTop =
-              currentDrafterElement.offsetTop -
-              scrollContainer.offsetTop -
-              scrollContainer.clientHeight / 2 +
-              currentDrafterElement.clientHeight / 2;
+          const scrollTop =
+            currentDrafterElement.offsetTop -
+            scrollContainer.offsetTop -
+            scrollContainer.clientHeight / 2 +
+            currentDrafterElement.clientHeight / 2;
 
           // Scroll within the container only
-            scrollContainer.scrollTo({
-              top: Math.max(0, scrollTop),
-              behavior: "smooth",
-            });
+          scrollContainer.scrollTo({
+            top: Math.max(0, scrollTop),
+            behavior: "smooth",
+          });
         }
       }, 200); // 200ms delay to ensure DOM is fully updated
 
@@ -479,6 +482,14 @@ export const useLiveDrawDetails = () => {
     socket.on("draftCountdownTick", (data) => {
       const countdown = Math.max(0, data.seconds);
       setDraftCountdown(countdown);
+    });
+
+    socket.on("timerUpdated", (data) => {
+      // Only update if this is for our current draw
+      if (data.drawId === id) {
+        setCustomTimer(data.seconds);
+        toast.success(`Timer updated to ${data.seconds} seconds`);
+      }
     });
 
     socket.on("partPicked", (data) => {
@@ -864,6 +875,10 @@ export const useLiveDrawDetails = () => {
     lotteryData,
     lotteryLoading,
     currentUser,
+
+    // Timer controls
+    customTimer,
+    setCustomTimer,
 
     // Parts data
     allParts,

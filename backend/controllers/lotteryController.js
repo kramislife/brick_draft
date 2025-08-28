@@ -203,6 +203,27 @@ const populateLotteryWithParts = (lottery) => {
 
 // ==================== FORMATTING HELPERS ====================
 
+// Check if ticket sales are closed (30 minutes before draw)
+const isTicketSalesClosed = (drawDate, drawTime) => {
+  if (!drawDate || !drawTime) return false;
+
+  try {
+    // Create draw datetime by combining date and time
+    const [hours, minutes] = drawTime.split(":");
+    const drawDateTime = new Date(drawDate);
+    drawDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    // Calculate cutoff time (30 minutes before draw)
+    const cutoffTime = new Date(drawDateTime.getTime() - 30 * 60 * 1000);
+
+    // Check if current time is past the cutoff
+    return new Date() >= cutoffTime;
+  } catch (error) {
+    console.error("Error calculating ticket sales cutoff:", error);
+    return false;
+  }
+};
+
 // format draw date for display
 const formatDrawDate = (dateString) => {
   if (!dateString) return "TBD";
@@ -295,6 +316,10 @@ export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
     return {
       ...formatLotteryForFrontend(lottery),
       parts: flatParts,
+      isTicketSalesClosed: isTicketSalesClosed(
+        lottery.drawDate,
+        lottery.drawTime
+      ),
     };
   });
 
@@ -338,7 +363,13 @@ export const getLotteryById = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Lottery retrieved successfully",
-    lottery: formattedLottery,
+    lottery: {
+      ...formattedLottery,
+      isTicketSalesClosed: isTicketSalesClosed(
+        lottery.drawDate,
+        lottery.drawTime
+      ),
+    },
   });
 });
 
@@ -540,9 +571,7 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
 // ==================== SOCKET CONFIG ========================
 export const getSocketConfig = (req, res) => {
   res.json({
-    socketUrl:
-      process.env.FRONTEND_URL ||
-      `http://localhost:${process.env.PORT || 4000}`,
+    socketUrl: `http://localhost:${process.env.PORT || 4000}`,
     port: process.env.PORT || 4000,
   });
 };

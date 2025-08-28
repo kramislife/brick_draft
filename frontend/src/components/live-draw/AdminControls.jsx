@@ -1,12 +1,59 @@
-import React from "react";
-import { Play, AlertTriangle, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { Play, AlertTriangle, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import TimerControls from "./TimerControls";
 
-const AdminControls = ({ phase, allReady, onStartDraft, starting = false }) => {
+const AdminControls = ({
+  phase,
+  allReady,
+  onStartDraft,
+  starting = false,
+  currentTimer = 15,
+  onTimerChange,
+  socket,
+  drawId,
+}) => {
+  const [showTimerControls, setShowTimerControls] = useState(false);
+
   if (phase !== "lobby") return null;
 
+  const handleTimerChange = (seconds) => {
+    if (onTimerChange) {
+      onTimerChange(seconds);
+    }
+    // Emit to socket if available
+    if (socket && drawId) {
+      socket.emit("setDraftTimer", {
+        drawId,
+        seconds,
+      });
+    }
+  };
+
   return (
-    <div className="fixed bottom-6 right-6 space-y-2 z-50">
+    <div className="fixed bottom-6 right-6 space-x-2 z-50">
+      {/* Timer Controls Toggle */}
+      <Button
+        onClick={() => setShowTimerControls(!showTimerControls)}
+        className="bg-white hover:bg-white/80 text-black hover:scale-105 transition-all duration-200"
+      >
+        <Settings className="w-4 h-4 mr-2" />
+        Timer Settings
+      </Button>
+
+      {/* Timer Controls Panel */}
+      {showTimerControls && (
+        <div className="absolute bottom-full right-0 mb-2">
+          <TimerControls
+            currentTimer={currentTimer}
+            onTimerChange={handleTimerChange}
+            onClose={() => setShowTimerControls(false)}
+            disabled={starting}
+          />
+        </div>
+      )}
+
+      {/* Start Draft Button */}
       <Button
         onClick={onStartDraft}
         disabled={starting}

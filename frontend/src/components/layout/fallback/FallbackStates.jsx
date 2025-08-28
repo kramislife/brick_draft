@@ -9,10 +9,10 @@ const FallbackStates = ({
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-10 text-center space-y-3 ${className}`}
+      className={`flex flex-col items-center justify-center p-10 text-center gap-2 ${className}`}
     >
       <Icon className="w-16 h-16 text-muted-foreground" />
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
+      <h3 className="text-xl font-semibold text-muted-foreground pt-5">{title}</h3>
       <p className="text-muted-foreground">{description}</p>
     </div>
   );

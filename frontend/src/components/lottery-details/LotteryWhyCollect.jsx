@@ -2,7 +2,7 @@ import React from "react";
 import { Star, CheckCircle } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
-const LotteryWhyCollect = ({ set }) => {
+const LotteryWhyCollect = ({ whyCollect }) => {
   return (
     <Card className="dark:border-none gap-2">
       <CardHeader>
@@ -13,7 +13,7 @@ const LotteryWhyCollect = ({ set }) => {
       </CardHeader>
       <CardContent>
         <ul className="space-y-2">
-          {set.whyCollect.map((reason, index) => (
+          {whyCollect.map((reason, index) => (
             <li
               key={index}
               className="flex items-start gap-2 text-muted-foreground text-sm"

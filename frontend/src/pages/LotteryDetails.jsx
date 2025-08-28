@@ -1,120 +1,31 @@
-import React, { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import React from "react";
 import { Package } from "lucide-react";
 import LotteryImageSection from "@/components/lottery-details/LotteryImageSection";
 import LotteryWhyCollect from "@/components/lottery-details/LotteryWhyCollect";
 import LotteryStatsCards from "@/components/lottery-details/LotteryStatsCards";
 import LotteryPurchaseSection from "@/components/lottery-details/LotteryPurchaseSection";
-import { paymentMethod, deliveryMethod } from "@/constant/paymentMethod";
 import FallbackStates from "@/components/layout/fallback/FallbackStates";
+import LotteryDetailsSkeleton from "@/components/layout/fallback/LotteryDetailsSkeleton";
 import LotteryPartsSection from "@/components/lottery-details/LotteryPartsSection";
-import {
-  useGetLotteryByIdQuery,
-  useGetLotteryPartsByIdQuery,
-} from "@/redux/api/lotteryApi";
-
-import { selectCurrentUser } from "@/redux/features/authSlice";
+import { useLotteryDetails } from "@/hooks/useLottery";
 
 const LotteryDetails = () => {
-  const { id } = useParams();
-  const [quantity, setQuantity] = useState(1);
-  const [paginationParams, setPaginationParams] = useState({
-    sort: "name", // Set initial sort to trigger proper sorting from the start
-    page: 1,
-    limit: 20,
-  });
-
-  // Fetch lottery details
   const {
-    data: lotteryData,
-    isLoading: isLotteryLoading,
-    error: lotteryError,
-  } = useGetLotteryByIdQuery(id);
-
-  // Fetch parts data
-  const {
-    data: partsData,
-    isLoading: isPartsLoading,
-    error: partsError,
-  } = useGetLotteryPartsByIdQuery(
-    {
-      id,
-      params: paginationParams,
-    },
-    {
-      // Skip the query if we don't have the lottery ID yet
-      skip: !id,
-    }
-  );
-
-  // Extract parts data from backend response
-  const parts = partsData?.parts || [];
-  const totalParts = partsData?.totalParts || 0;
-  const totalPages = partsData?.totalPages || 1;
-  const currentPage = partsData?.page || 1;
-
-  // Context-aware filter options
-  const categoryOptions = partsData?.availableCategories || [];
-  const colorOptions = partsData?.availableColors || [];
-
-  // Transform lottery data
-  const set = useMemo(() => {
-    if (!lotteryData?.lottery) return null;
-    const lottery = lotteryData.lottery;
-    return {
-      id: lottery._id,
-      name: lottery.title,
-      description: lottery.description,
-      image: lottery.image?.url || "",
-      theme: lottery.collection?.name || "Unknown",
-      features: lottery.formattedTag || [],
-      price: lottery.ticketPrice,
-      marketPrice: lottery.marketPrice,
-      pieces: lottery.pieces,
-      drawDate: lottery.formattedDrawDate || "TBD",
-      drawTime: lottery.formattedDrawTime || "",
-      totalSlots: lottery.totalSlots,
-      slotsAvailable: lottery.slotsAvailable,
-      whyCollect: lottery.whyCollect || [],
-      parts: lottery.parts || [],
-    };
-  }, [lotteryData]);
-
-  const user = useSelector(selectCurrentUser);
+    isLotteryLoading,
+    hasNoData,
+    quantity,
+    set,
+    lotteryData,
+    user,
+    setQuantity,
+    lotteryId,
+  } = useLotteryDetails();
 
   if (isLotteryLoading) {
-    return (
-      <div className="p-5">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div className="animate-pulse">
-            <div className="bg-gray-200 h-[600px] rounded-xl"></div>
-          </div>
-          <div className="space-y-5">
-            <div className="animate-pulse">
-              <div className="bg-gray-200 h-8 rounded mb-2"></div>
-              <div className="bg-gray-200 h-4 rounded w-3/4"></div>
-            </div>
-            <div className="animate-pulse">
-              <div className="bg-gray-200 h-32 rounded"></div>
-            </div>
-            <div className="animate-pulse">
-              <div className="grid grid-cols-3 gap-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-gray-200 h-24 rounded"></div>
-                ))}
-              </div>
-            </div>
-            <div className="animate-pulse">
-              <div className="bg-gray-200 h-64 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LotteryDetailsSkeleton />;
   }
 
-  if (lotteryError || !set) {
+  if (hasNoData) {
     return (
       <div className="p-5">
         <FallbackStates
@@ -132,7 +43,12 @@ const LotteryDetails = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Image Section */}
         <div className="lg:sticky lg:top-23 lg:h-fit self-start">
-          <LotteryImageSection set={set} />
+          <LotteryImageSection
+            image={set.image}
+            name={set.name}
+            theme={set.theme}
+            features={set.features}
+          />
         </div>
 
         {/* Details Section */}
@@ -144,34 +60,33 @@ const LotteryDetails = () => {
             </p>
           </div>
 
-          <LotteryWhyCollect set={set} />
-          <LotteryStatsCards set={set} />
+          <LotteryWhyCollect whyCollect={set.whyCollect} />
+
+          <LotteryStatsCards
+            marketPrice={set.marketPrice}
+            drawDate={set.drawDate}
+            drawTime={set.drawTime}
+            pieces={set.pieces}
+          />
+
           <LotteryPurchaseSection
-            set={set}
+            lotteryId={set.id}
+            price={set.price}
             quantity={quantity}
             setQuantity={setQuantity}
-            paymentMethod={paymentMethod}
-            deliveryMethod={deliveryMethod}
             userEmail={user?.email}
             lottery_status={lotteryData?.lottery?.lottery_status}
+            isTicketSalesClosed={lotteryData?.lottery?.isTicketSalesClosed}
+            lotteryName={set.name}
           />
         </div>
       </div>
 
       {/* Parts Section */}
       <LotteryPartsSection
+        lotteryId={lotteryId}
         partsTitle={set.name + " Parts"}
-        paginatedParts={parts}
-        totalParts={totalParts}
-        startEntry={partsData?.startEntry || 1}
-        endEntry={partsData?.endEntry || totalParts}
-        totalPages={totalPages}
-        currentPage={currentPage}
-        categoryOptions={categoryOptions}
-        colorOptions={colorOptions}
-        isLoading={isPartsLoading}
         drawDate={set.drawDate}
-        onParamsChange={setPaginationParams}
       />
     </div>
   );

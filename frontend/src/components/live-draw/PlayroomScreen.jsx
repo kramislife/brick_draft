@@ -21,6 +21,7 @@ const PlayroomScreen = ({
   socketRef,
   onAutoPickToggle,
   autoPickStatus = { currentRound: false, nextRound: false },
+  maxCountdown = 15, // ✅ Add maxCountdown prop
   // Priority list props
   priorityViewOpen,
   priorityEditOpen,
@@ -85,6 +86,7 @@ const PlayroomScreen = ({
         userPriorityCount={priorityListStats.userPriorityCount}
         pickedPriorityCount={priorityListStats.pickedPriorityCount}
         showPriorityButton={Boolean(currentUser?._id)}
+        maxCountdown={maxCountdown}
       />
 
       {/* Main Content */}

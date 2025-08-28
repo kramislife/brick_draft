@@ -1,13 +1,15 @@
 import { cn } from "@/components/ui/lib/utils";
 
-function Skeleton({ className, ...props }) {
+function Skeleton({
+  className,
+  ...props
+}) {
   return (
-    <div
+    (<div
       data-slot="skeleton"
-      className={cn("bg-accent animate-pulse rounded-md", className)}
-      {...props}
-    />
+      className={cn("bg-muted animate-pulse rounded-md", className)}
+      {...props} />)
   );
 }
 
-export { Skeleton };
+export { Skeleton }

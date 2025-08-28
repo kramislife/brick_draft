@@ -83,7 +83,7 @@ const LiveDrawCard = ({ lottery }) => {
 
   return (
     <Card
-      className="relative overflow-hidden border-none p-0 gap-0 group w-full bg-gradient-to-br from-gray-900 to-gray-800 cursor-pointer"
+      className="relative overflow-hidden border-gray-700 p-0 gap-0 group w-full bg-gradient-to-br from-gray-900 to-gray-800 cursor-pointer"
       onClick={handleCardClick}
     >
       {/* Image Section */}

@@ -15,6 +15,24 @@ export const paymentApi = createApi({
         body: data,
       }),
     }),
+    // PayPal
+    getPaypalClientId: builder.query({
+      query: () => "/paypal/client-id",
+    }),
+    createPaypalOrder: builder.mutation({
+      query: (data) => ({
+        url: "/paypal/create-order",
+        method: "POST",
+        body: data,
+      }),
+    }),
+    capturePaypalOrder: builder.mutation({
+      query: (data) => ({
+        url: "/paypal/capture-order",
+        method: "POST",
+        body: data,
+      }),
+    }),
     getPaymentSuccessDetails: builder.query({
       query: (purchaseId) => `/ticket/${purchaseId}`,
       providesTags: ["Payment"],
@@ -63,6 +81,9 @@ export const paymentApi = createApi({
 
 export const {
   useCreateCheckoutSessionMutation,
+  useGetPaypalClientIdQuery,
+  useCreatePaypalOrderMutation,
+  useCapturePaypalOrderMutation,
   useGetPaymentSuccessDetailsQuery,
   useGetUserPurchasesQuery,
   useGetAllTicketsQuery,
