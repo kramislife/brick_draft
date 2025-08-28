@@ -216,8 +216,14 @@ const isTicketSalesClosed = (drawDate, drawTime) => {
     // Calculate cutoff time (30 minutes before draw)
     const cutoffTime = new Date(drawDateTime.getTime() - 30 * 60 * 1000);
 
-    // Check if current time is past the cutoff
-    return new Date() >= cutoffTime;
+    // Get current time in EST for consistent comparison
+    const now = new Date();
+    const estTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "America/New_York" })
+    );
+
+    // Check if current EST time is past the cutoff
+    return estTime >= cutoffTime;
   } catch (error) {
     console.error("Error calculating ticket sales cutoff:", error);
     return false;
@@ -571,7 +577,9 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
 // ==================== SOCKET CONFIG ========================
 export const getSocketConfig = (req, res) => {
   res.json({
-    socketUrl: `http://localhost:${process.env.PORT || 4000}`,
+    socketUrl:
+    process.env.FRONTEND_URL ||
+    `http://localhost:${process.env.PORT || 4000}`,
     port: process.env.PORT || 4000,
   });
 };
