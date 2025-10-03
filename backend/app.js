@@ -58,7 +58,7 @@ const allowedOrigins = [
   // 'https://your-lego-mosaic-domain.onrender.com', // Replace with your actual Render domain
 
   // Production URL
-  "https://www.mocsupply.com/",
+  "https://www.mocsupply.com",
 ];
 
 // CORS options
