@@ -31,15 +31,15 @@ export const heroData = {
 
 // Story section data
 export const storyData = {
-  badge: "OUR STORY",
+  badge: "OUR VISION",
   title: "Making LEGO Dreams Accessible to Everyone",
   imageUrl:
     "https://res.cloudinary.com/mark-legostore/image/upload/v1743056478/world_of_minifigs/icons/Father-son.png",
   imageAlt: "Brick Draft Community",
   paragraphs: [
-    '<span class="font-bold">Brick Draft</span> was born from a simple yet powerful idea: making LEGO collecting accessible to everyone. We understand that many LEGO enthusiasts dream of owning premium sets but are held back by their high costs.',
-    "Our innovative lottery system creates an exciting opportunity for builders of all backgrounds to win authentic LEGO sets at a fraction of their retail price. Every draw is conducted with complete transparency using certified random number generation technology.",
-    'Beyond just being a lottery platform, we\'ve built a thriving community of LEGO enthusiasts who share our passion for building and collecting. Our <span class="font-bold">97% satisfaction rate</span> reflects our commitment to fairness, authenticity, and exceptional service.',
+    'Our <span class="font-bold">vision</span> is to become the go-to destination for LEGO® lovers seeking specific pieces, excitingly and cost-effectively. We plan to continuously expand our selection of LEGO® sets, introduce new game formats, and foster a strong community where builders can connect, share their creations, and celebrate the joy of LEGO®.',
+    "We are committed to transparency, fairness, and creating a vibrant community for LEGO® enthusiasts. We believe that acquiring the perfect brick shouldn't break the bank, and the journey should be just as enjoyable as the build itself.",
+    "Every builder deserves access to the pieces they need to bring their imagination to life. We believe in empowering creativity, encouraging collaboration, and making the world of LEGO® more accessible and inspiring for everyone.",
   ],
 };
 
@@ -48,7 +48,7 @@ export const worksData = {
   badge: "HOW IT WORKS",
   title: "Get the LEGO® Pieces You Want, Simply!",
   description:
-    "Join our engaging Brick Drafts for a chance to acquire the exact LEGO® elements you've been searching for.",
+    "Brick Draft is a fun way to win specific LEGO® pieces. Here's how it works in a nutshell",
   steps: [
     {
       icon: Telescope,

@@ -109,13 +109,13 @@ const LiveDrawCard = ({ lottery }) => {
         <div
           className={`flex items-center gap-4 mb-3 p-3 rounded-lg bg-gray-800/50 border ${border}`}
         >
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <Calendar className={`w-4 h-4 ${accent}`} />
             <span className="text-gray-300">
               {formattedDrawDate || drawDate}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <Clock className={`w-4 h-4 ${accent}`} />
             <span className="text-gray-300">
               {formattedDrawTime || drawTime}

@@ -8,7 +8,6 @@ const draftResultsSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Lottery",
         required: true,
-        index: true,
       },
       set_name: {
         type: String,

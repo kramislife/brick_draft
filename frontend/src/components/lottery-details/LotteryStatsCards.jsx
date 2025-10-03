@@ -51,7 +51,7 @@ const LotteryStatsCards = ({ marketPrice, drawDate, drawTime, pieces }) => {
               <div className="text-muted-foreground font-medium">
                 {card.title}
               </div>
-              <div className={`text-3xl font-bold mt-2 ${card.textColor}`}>
+              <div className={`text-xl font-bold mt-2 ${card.textColor}`}>
                 {card.value}
               </div>
               <div className={`text-xs ${card.textColor} mt-2`}>

@@ -42,6 +42,7 @@ const Lottery = () => {
     setFormData({
       ...data,
       id: data._id,
+      whyCollect: Array.isArray(data.whyCollect) ? data.whyCollect : [],
       drawDate: data.drawDate || "",
       drawTime: data.drawTime || "",
       collection:

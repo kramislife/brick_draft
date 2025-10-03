@@ -1,9 +1,13 @@
 import PriorityList from "../models/priority_list.model.js";
 import Ticket from "../models/ticket.model.js";
 import Lottery from "../models/lottery.model.js";
+import Part from "../models/part.model.js";
 import catchAsyncErrors from "../middleware/catchAsyncErrors.js";
 import customErrorHandler from "../utills/custom_error_handler.js";
-import { processDataWithFilters } from "../utills/searchSortPagination.js";
+import {
+  buildLotteryPartsPipeline,
+  processLotteryPartsResults,
+} from "../utills/searchSortPagination.js";
 
 // ==================== HELPER FUNCTIONS ====================
 // Using utility functions from searchSortPagination.js
@@ -90,19 +94,6 @@ const checkPriorityListExists = async (
 
 // ==================== DATA PROCESSING HELPERS ====================
 
-// Process lottery parts with additional data
-const processLotteryParts = (lottery) => {
-  return (lottery.parts || []).map((p) => {
-    const part = p.part.toObject ? p.part.toObject() : p.part;
-    return {
-      ...part,
-      quantity: p.quantity,
-      total_value: p.total_value,
-      price: p.price,
-    };
-  });
-};
-
 // Populate priority list with additional data
 const populatePriorityList = async (priorityList, lottery) => {
   if (!priorityList || !priorityList.priorityItems) return priorityList;
@@ -149,31 +140,65 @@ export const getPriorityList = catchAsyncErrors(async (req, res, next) => {
   const ticket = await validatePurchaseOwnership(userId, purchaseId);
   const lotteryId = ticket.lottery.lottery_id;
 
-  // Validate lottery exists and populate parts
-  const lottery = await Lottery.findById(lotteryId).populate({
-    path: "parts.part",
-    populate: { path: "color", select: "color_name hex_code" },
-  });
+  // Validate lottery exists
+  const lottery = await Lottery.findById(lotteryId);
   if (!lottery) {
     return next(new customErrorHandler("Lottery not found", 404));
   }
 
-  // Process lottery parts
-  const parts = processLotteryParts(lottery);
+  // Get total parts count for pagination info
+  const totalParts = lottery.parts.length;
 
-  // Use the optimized utility function for all processing
-  const {
-    processedData: paginatedParts,
-    totalItems: totalParts,
-    totalPages,
-    currentPage: pageNum,
-    hasNextPage,
-    hasPrevPage,
-    startEntry,
-    endEntry,
-    availableCategories,
-    availableColors,
-  } = processDataWithFilters(parts, {
+  // Handle "select all" mode
+  if (limit === "all") {
+    // For "select all", get all parts without pagination
+    const allParts = await Part.find({
+      _id: { $in: lottery.parts.map((p) => p.part) },
+    })
+      .populate("color", "color_name hex_code")
+      .lean();
+
+    // Add lottery-specific data to parts
+    const enrichedParts = allParts.map((part) => {
+      const lotteryPart = lottery.parts.find(
+        (p) => p.part.toString() === part._id.toString()
+      );
+      return {
+        ...part,
+        quantity: lotteryPart?.quantity || 0,
+        price: lotteryPart?.price || 0,
+        total_value: lotteryPart?.total_value || 0,
+      };
+    });
+
+    // Get available filter options
+    const availableCategories = Array.from(
+      new Set(allParts.map((p) => p.category_name).filter(Boolean))
+    ).sort();
+    const availableColors = Array.from(
+      new Set(allParts.map((p) => p.color?.color_name).filter(Boolean))
+    ).sort();
+
+    return res.status(200).json({
+      success: true,
+      priorityList: null, // Will be populated below
+      parts: enrichedParts,
+      totalParts: enrichedParts.length,
+      totalAllParts: totalParts,
+      totalPages: 1,
+      page: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+      startEntry: 1,
+      endEntry: enrichedParts.length,
+      availableCategories,
+      availableColors,
+      isSelectAllMode: true,
+    });
+  }
+
+  // Build aggregation pipeline for paginated results using existing utility
+  const aggregationPipeline = buildLotteryPartsPipeline(lottery, {
     search,
     sort,
     color,
@@ -181,6 +206,32 @@ export const getPriorityList = catchAsyncErrors(async (req, res, next) => {
     page,
     limit,
   });
+
+  if (!aggregationPipeline) {
+    // No parts to process
+    return res.status(200).json({
+      success: true,
+      priorityList: null,
+      parts: [],
+      totalParts: 0,
+      totalAllParts: totalParts,
+      totalPages: 0,
+      page: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+      startEntry: 0,
+      endEntry: 0,
+      availableCategories: [],
+      availableColors: [],
+      isSelectAllMode: false,
+    });
+  }
+
+  // Execute aggregation
+  const [result] = await Part.aggregate(aggregationPipeline);
+
+  // Process results using existing utility
+  const processedResults = processLotteryPartsResults(result, page, limit);
 
   // Get and populate priority list
   let priorityList = await PriorityList.findOne({
@@ -192,18 +243,18 @@ export const getPriorityList = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     priorityList,
-    parts: paginatedParts,
-    totalParts,
-    totalAllParts: parts.length,
-    totalPages,
-    page: pageNum,
-    hasNextPage,
-    hasPrevPage,
-    startEntry,
-    endEntry,
-    availableCategories,
-    availableColors,
-    isSelectAllMode: limit === "all",
+    parts: processedResults.parts,
+    totalParts: processedResults.totalParts,
+    totalAllParts: totalParts,
+    totalPages: processedResults.totalPages,
+    page: processedResults.page,
+    hasNextPage: processedResults.hasNextPage,
+    hasPrevPage: processedResults.hasPrevPage,
+    startEntry: processedResults.startEntry,
+    endEntry: processedResults.endEntry,
+    availableCategories: processedResults.availableCategories,
+    availableColors: processedResults.availableColors,
+    isSelectAllMode: false,
   });
 });
 

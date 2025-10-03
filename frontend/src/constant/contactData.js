@@ -1,7 +1,7 @@
 // Hero section data
 export const contactHeroData = {
-  title: "Get in",
-  titleAccent: "Touch",
+  title: "Get in Touch with ",
+  titleAccent: "Moc Supply",
   description:
     "Have questions or suggestions? Contact Brick Draft through our form.",
 };
@@ -24,14 +24,14 @@ export const faqData = {
       answer: "We only source from official and authorized LEGO® stores.",
     },
     {
-      question: "Are your LEGO® new and authentic?",
+      question: "Are your LEGO® products new and authentic?",
       answer:
         "Our products are guaranteed to be 100% LEGO®. You can check the reviews in our online shops for legitimacy.",
     },
     {
-      question: "Is Brick Draft officially affiliated with LEGO?",
+      question: "Is MOC Supply officially affiliated with LEGO?",
       answer:
-        "No, Brick Draft is an independent platform. We are not endorsed or sponsored by The LEGO Group.",
+        "No, MOC Supply is an independent platform. We are not endorsed or sponsored by The LEGO Group.",
     },
     {
       question: "How long does shipping take for the items I selected?",
@@ -83,5 +83,5 @@ export const formFieldsData = {
 // Social section data
 export const socialsData = {
   title: "Let's be connected!",
-  subtitle: "Connect with us online",
+  subtitle: "Alternatively, you can reach us through",
 };

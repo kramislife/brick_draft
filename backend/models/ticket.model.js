@@ -6,14 +6,12 @@ const ticketSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     lottery: {
       lottery_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Lottery",
         required: true,
-        index: true,
       },
       set_name: {
         type: String,

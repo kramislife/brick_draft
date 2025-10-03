@@ -109,4 +109,10 @@ const lotterySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Add compound indexes for better query performance
+lotterySchema.index({ lottery_status: 1, createdAt: -1 });
+lotterySchema.index({ lottery_status: 1, drawDate: 1 });
+lotterySchema.index({ lottery_status: 1, ticketPrice: 1 });
+lotterySchema.index({ lottery_status: 1, pieces: 1 });
+
 export default mongoose.model("Lottery", lotterySchema);
