@@ -296,6 +296,7 @@ export const useLotteryDialogParts = ({ lotteryId, setName, drawDate }) => {
   const {
     data: partsData,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useLotteryPartsQuery(lotteryId, {
@@ -363,13 +364,19 @@ export const useLotteryDialogParts = ({ lotteryId, setName, drawDate }) => {
   useEffect(() => {
     if (lotteryId) {
       setCurrentPage(1);
-      setAllParts([]);
       setHasMore(true);
       setIsLoadingMore(false);
       // Force refetch to get fresh data
       setTimeout(() => refetch(), 100);
     }
   }, [lotteryId, refetch]);
+
+  const noData =
+    !lotteryId ||
+    (!isLoading &&
+      !isFetching &&
+      allParts.length === 0 &&
+      (extractedData.totalParts ?? 0) === 0);
 
   return {
     isLoading,
@@ -380,7 +387,7 @@ export const useLotteryDialogParts = ({ lotteryId, setName, drawDate }) => {
     setName,
     drawDate,
     lastElementRef,
-    hasNoData: !lotteryId || (!isLoading && allParts.length === 0),
+    hasNoData: noData,
   };
 };
 
@@ -434,7 +441,6 @@ export const useLotteryPartsSection = ({ lotteryId, partsTitle }) => {
     onParamsChange: handleParamsChange,
   };
 };
-
 
 // ----------------------------------- PayPal Checkout (Buttons) ------------------------------------
 export const usePayPalCheckout = ({

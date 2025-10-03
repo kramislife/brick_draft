@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   ShoppingBag,
 } from "lucide-react";
+import { FaTiktok } from "react-icons/fa";
 
 export const publicNavLinks = [
   {
@@ -130,14 +131,20 @@ export const socialLinks = [
   {
     name: "Facebook",
     icon: Facebook,
-    href: "https://www.facebook.com/theworldofminifigs/",
+    href: "https://www.facebook.com/share/1Afs2F8MX3/?mibextid=LQQJ4d",
     ariaLabel: "Visit our Facebook page",
   },
   {
     name: "Instagram",
     icon: Instagram,
-    href: "https://www.instagram.com/theworldofminifigs/",
+    href: "https://www.instagram.com/mocsupplyofficial",
     ariaLabel: "Follow us on Instagram",
+  },
+  {
+    name: "TikTok",
+    icon: FaTiktok,
+    href: "https://www.tiktok.com/@mocsupplyofficial",
+    ariaLabel: "Follow us on TikTok",
   },
   {
     name: "Email",

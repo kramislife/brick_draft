@@ -5,8 +5,9 @@ import Lottery from "../models/lottery.model.js";
 import Part from "../models/part.model.js";
 import Color from "../models/color.model.js";
 import {
-  processDataWithFilters,
-  processLotteriesWithFilters,
+  buildLotterySortObject,
+  buildLotteryPartsPipeline,
+  processLotteryPartsResults,
 } from "../utills/searchSortPagination.js";
 
 // ==================== VALIDATION HELPERS ====================
@@ -188,19 +189,6 @@ const processPartsFromCSV = async (parts, userId) => {
   return { partRefs, createdCount, skippedCount };
 };
 
-// ==================== POPULATION HELPERS ====================
-
-// populate lottery with parts
-const populateLotteryWithParts = (lottery) => {
-  return lottery.populate([
-    { path: "collection", select: "name" },
-    {
-      path: "parts.part",
-      populate: { path: "color", select: "color_name hex_code" },
-    },
-  ]);
-};
-
 // ==================== FORMATTING HELPERS ====================
 
 // Check if ticket sales are closed (30 minutes before draw)
@@ -208,24 +196,20 @@ const isTicketSalesClosed = (drawDate, drawTime) => {
   if (!drawDate || !drawTime) return false;
 
   try {
-    // Create draw datetime by combining date and time
-    const [hours, minutes] = drawTime.split(":");
+    // Combine drawDate and drawTime into a Date object
+    const [hours, minutes] = drawTime.split(":").map((n) => parseInt(n, 10));
     const drawDateTime = new Date(drawDate);
-    drawDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    drawDateTime.setHours(hours, minutes, 0, 0);
 
-    // Calculate cutoff time (30 minutes before draw)
+    // Cutoff time = 30 minutes before draw
     const cutoffTime = new Date(drawDateTime.getTime() - 30 * 60 * 1000);
 
-    // Get current time in EST for consistent comparison
+    // Current server time
     const now = new Date();
-    const estTime = new Date(
-      now.toLocaleString("en-US", { timeZone: "America/New_York" })
-    );
 
-    // Check if current EST time is past the cutoff
-    return estTime >= cutoffTime;
-  } catch (error) {
-    console.error("Error calculating ticket sales cutoff:", error);
+    return now >= cutoffTime; // true if sales are closed
+  } catch (err) {
+    console.error("Error in isTicketSalesClosed:", err.message);
     return false;
   }
 };
@@ -301,66 +285,76 @@ const handleControllerError = (error, next) => {
 
 // ==================== GET ALL LOTTERIES ========================
 export const getAllLotteries = catchAsyncErrors(async (req, res, next) => {
-  const { sortBy, page, limit } = req.query;
+  const { sortBy = "created_at", page = 1, limit = 20, status } = req.query;
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+  const skip = (pageNum - 1) * limitNum;
 
-  let lotteries = await Lottery.find()
+  const sortObj = buildLotterySortObject(sortBy);
+
+  // Build query - if status is specified, filter by it, otherwise return all statuses
+  const query = status ? { lottery_status: status } : {};
+
+  // Get total count for pagination
+  const totalItems = await Lottery.countDocuments(query);
+
+  // Fetch lotteries with minimal projection and server-side pagination
+  const lotteries = await Lottery.find(query)
+    .select(
+      "title description whyCollect image collection ticketPrice marketPrice pieces drawDate drawTime totalSlots slotsAvailable tag lottery_status createdAt"
+    )
     .populate("collection", "name")
-    .populate({
-      path: "parts.part",
-      populate: { path: "color", select: "color_name hex_code" },
-    })
+    .sort(sortObj)
+    .skip(skip)
+    .limit(limitNum)
     .lean();
 
-  // Format lottery data first
-  const formattedLotteries = lotteries.map((lottery) => {
-    const flatParts = (lottery.parts || []).map((p) => ({
-      ...p.part,
-      quantity: p.quantity,
-      total_value: p.total_value,
-      price: p.price,
-    }));
-    return {
-      ...formatLotteryForFrontend(lottery),
-      parts: flatParts,
-      isTicketSalesClosed: isTicketSalesClosed(
-        lottery.drawDate,
-        lottery.drawTime
-      ),
-    };
-  });
+  // Format lottery data for frontend
+  const formattedLotteries = lotteries.map((lottery) => ({
+    ...formatLotteryForFrontend(lottery),
+    isTicketSalesClosed: isTicketSalesClosed(
+      lottery.drawDate,
+      lottery.drawTime
+    ),
+  }));
 
-  // Apply sorting and pagination using utility functions
-  const {
-    processedLotteries,
-    totalItems,
-    totalPages,
-    currentPage,
-    hasNextPage,
-    hasPrevPage,
-  } = processLotteriesWithFilters(formattedLotteries, { sortBy, page, limit });
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalItems / limitNum);
+  const hasNextPage = pageNum < totalPages;
+  const hasPrevPage = pageNum > 1;
 
   res.status(200).json({
     success: true,
     message: `${totalItems} lotteries retrieved`,
-    lotteries: processedLotteries,
+    lotteries: formattedLotteries,
     pagination: {
       totalItems,
       totalPages,
-      currentPage,
+      currentPage: pageNum,
       hasNextPage,
       hasPrevPage,
+      startEntry: skip + 1,
+      endEntry: Math.min(skip + limitNum, totalItems),
     },
   });
 });
 
-// ==================== GET LOTTERY BY ID WITH PARTS ========================
+// ==================== GET LOTTERY BY ID ========================
 export const getLotteryById = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
 
-  const lottery = await populateLotteryWithParts(Lottery.findById(id)).lean();
+  // Get basic lottery data (without parts)
+  const lottery = await Lottery.findById(id)
+    .select(
+      "title description whyCollect image collection ticketPrice marketPrice pieces drawDate drawTime totalSlots slotsAvailable tag lottery_status createdAt"
+    )
+    .populate("collection", "name")
+    .lean();
 
   if (!lottery) {
-    return next(new customErrorHandler("Lottery not found", 404));
+    return next(
+      new customErrorHandler("Lottery controller: Lottery not found", 404)
+    );
   }
 
   // Format lottery data
@@ -519,57 +513,60 @@ export const deleteLottery = catchAsyncErrors(async (req, res, next) => {
 export const getLotteryPartsWithQuery = catchAsyncErrors(
   async (req, res, next) => {
     const { id } = req.params;
-    const { search, sort, color, category, page = 1, limit } = req.query;
+    const {
+      search,
+      sort = "name",
+      page = 1,
+      limit = 20,
+      color,
+      category,
+    } = req.query;
 
-    // Find the lottery and populate parts
-    const lottery = await populateLotteryWithParts(Lottery.findById(id));
+    // First, get the lottery to extract part IDs
+    const lottery = await Lottery.findById(id).select("parts").lean();
 
     if (!lottery) {
       return next(new customErrorHandler("Lottery not found", 404));
     }
 
-    // Extract part objects from the parts array
-    const parts = (lottery.parts || []).map((p) => ({
-      ...(p.part.toObject ? p.part.toObject() : p.part),
-      quantity: p.quantity,
-      total_value: p.total_value,
-      price: p.price,
-    }));
-
-    // Utility functions for sorting and pagination
-    const {
-      processedData: paginatedParts,
-      totalItems: totalParts,
-      totalPages,
-      currentPage: pageNum,
-      hasNextPage,
-      hasPrevPage,
-      startEntry,
-      endEntry,
-      availableCategories,
-      availableColors,
-    } = processDataWithFilters(parts, {
+    // Build aggregation pipeline using utility function
+    const aggregationPipeline = buildLotteryPartsPipeline(lottery, {
       search,
       sort,
-      color,
-      category,
       page,
       limit,
+      color,
+      category,
     });
+
+    if (!aggregationPipeline) {
+      // No parts to process
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        totalParts: 0,
+        totalPages: 0,
+        page: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+        startEntry: 0,
+        endEntry: 0,
+        parts: [],
+        availableCategories: [],
+        availableColors: [],
+      });
+    }
+
+    // Execute aggregation
+    const [result] = await Part.aggregate(aggregationPipeline);
+
+    // Process results using utility function
+    const processedResults = processLotteryPartsResults(result, page, limit);
 
     res.status(200).json({
       success: true,
-      count: paginatedParts.length,
-      totalParts,
-      totalPages,
-      page: pageNum,
-      hasNextPage,
-      hasPrevPage,
-      startEntry,
-      endEntry,
-      parts: paginatedParts,
-      availableCategories,
-      availableColors,
+      count: processedResults.parts.length,
+      ...processedResults,
     });
   }
 );
@@ -577,9 +574,7 @@ export const getLotteryPartsWithQuery = catchAsyncErrors(
 // ==================== SOCKET CONFIG ========================
 export const getSocketConfig = (req, res) => {
   res.json({
-    socketUrl:
-    process.env.FRONTEND_URL ||
-    `http://localhost:${process.env.PORT || 4000}`,
+    socketUrl: `http://localhost:${process.env.PORT || 4000}`,
     port: process.env.PORT || 4000,
   });
 };

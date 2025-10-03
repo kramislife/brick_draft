@@ -10,7 +10,7 @@ const WhyChoose = ({ data, animations }) => {
       {/* Header */}
       <motion.div {...headerAnimation} className="text-center mb-10">
         <h2 className="text-5xl font-black mb-3">
-          Why Choose <span className="text-accent">Brick Draft?</span>
+          Brick <span className="text-accent">Draft Perks</span>
         </h2>
         <p className="max-w-2xl mx-auto text-muted-foreground">
           {data.description}

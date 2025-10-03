@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { connectDatabase } from "./config/dbConnect.js";
+import cors from "cors";
 
 // IMPORT ROUTES
 import partRoutes from "./routes/part.route.js";
@@ -47,6 +48,40 @@ process.on("uncaughtException", (err) => {
 
 // CONNECT TO DATABASE
 connectDatabase();
+
+// ✅ CORS CONFIGURATION FOR LEGO MOSAIC PROJECT
+
+// Define allowed origins for CORS
+const allowedOrigins = [
+  "http://localhost:5173", // Vite dev server
+  "http://localhost:5174", // Vite dev server
+  // 'https://your-lego-mosaic-domain.onrender.com', // Replace with your actual Render domain
+
+  // Production URL
+  "https://www.mocsupply.com/",
+];
+
+// CORS options
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`❌ CORS blocked origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
 
 // PARSE JSON & COOKIES
 app.use(
@@ -129,6 +164,7 @@ server.listen(process.env.PORT, () => {
   console.log(
     `✅ Server running on PORT: ${process.env.PORT} in ${process.env.NODE_ENV} mode`
   );
+  console.log(`🌐 CORS enabled for origins: ${allowedOrigins.join(", ")}`);
   // Start the live draw checker after server is up
   startLiveDrawChecker(io);
 });

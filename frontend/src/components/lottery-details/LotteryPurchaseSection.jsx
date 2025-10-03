@@ -117,7 +117,7 @@ const LotteryPurchaseSection = ({
             </div>
 
             {/* Delivery Method */}
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
                 Delivery method
               </span>
@@ -137,7 +137,7 @@ const LotteryPurchaseSection = ({
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-            </div>
+            </div> */}
 
             {/* Total */}
             <div className="border-t pt-4">
@@ -179,7 +179,8 @@ const LotteryPurchaseSection = ({
           <span className="font-medium text-foreground dark:text-accent">
             How it works:
           </span>{" "}
-          Each ticket gives you a chance to win a random piece from the{" "}
+          Each ticket gives you a chance to pick a 100% new and genuine LEGO
+          piece from the{" "}
           <span className="font-medium text-accent">{lotteryName}</span> set.
           Some pieces are rarer than others! Collect all pieces to complete your
           dream collection. Start your collection today!

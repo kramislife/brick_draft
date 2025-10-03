@@ -16,7 +16,12 @@ const CollectionGrid = ({
   const { data: collectionsData, isLoading, error } = useGetCollectionsQuery();
   const { data: lotteriesData } = useGetLotteriesQuery();
   const collections = collectionsData?.collections || [];
-  const lotteries = lotteriesData?.lotteries || [];
+  const allLotteries = lotteriesData?.lotteries || [];
+
+  // Filter for upcoming lotteries only
+  const lotteries = allLotteries.filter(
+    (lottery) => lottery.lottery_status === "upcoming"
+  );
 
   // Map collectionId to set count
   const setCounts = {};

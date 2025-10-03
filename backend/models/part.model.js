@@ -60,5 +60,13 @@ const partSchema = new mongoose.Schema(
 // Ensure virtuals are included in JSON output
 partSchema.set("toJSON", { virtuals: true });
 
+// Add indexes for better query performance
+partSchema.index({ name: 1 });
+partSchema.index({ item_id: 1 });
+partSchema.index({ part_id: 1 });
+partSchema.index({ category_name: 1 });
+partSchema.index({ color: 1 });
+partSchema.index({ name: "text", item_id: "text", part_id: "text" }); // Text search index
+
 const Part = mongoose.model("Part", partSchema);
 export default Part;

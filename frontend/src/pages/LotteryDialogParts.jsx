@@ -78,7 +78,12 @@ const LotteryDialogParts = ({ setName, drawDate, lotteryId }) => {
   }
 
   return (
-    <DialogContent className="sm:max-w-xl">
+    <DialogContent
+      className="sm:max-w-xl"
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+    >
       <DialogHeader>
         <DialogTitle className="text-start text-xl font-bold">
           {setName} Parts

@@ -491,7 +491,7 @@ const LotteryForm = ({ formData, onChange }) => {
                 <img
                   src={imagePreview}
                   alt="Lottery preview"
-                  className="w-full h-48 object-cover rounded-md border"
+                  className="w-full h-48 object-contain rounded-md border p-1"
                 />
                 <Button
                   type="button"
@@ -541,7 +541,7 @@ const LotteryForm = ({ formData, onChange }) => {
               <img
                 src={imagePreview}
                 alt={formData.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-1"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted">
