@@ -200,7 +200,7 @@ export const buildLotteryPartsPipeline = (lottery, options = {}) => {
     },
     { $unwind: { path: "$color", preserveNullAndEmptyArrays: true } },
     // Add color filter after lookup
-    ...(color ? [{ $match: { "color._id": color } }] : []),
+    ...(color ? [{ $match: { "color.color_name": color } }] : []),
     {
       $addFields: {
         // Add lottery-specific fields from the parts array
