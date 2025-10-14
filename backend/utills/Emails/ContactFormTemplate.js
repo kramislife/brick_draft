@@ -112,9 +112,9 @@ export const ContactFormTemplate = (formData) => {
                     </div>
                 </div>
                 <div class="footer">
-                    This message was sent from the contact form on World of Minifigs website.
+                    This message was sent from the contact form on Moc Supply website.
                     <p style="margin-top: 10px">
-                    &copy; ${new Date().getFullYear()} World of Minifigs. All rights reserved.
+                    &copy; ${new Date().getFullYear()} Moc Supply. All rights reserved.
                     </p>
                 </div>
             </div>
