@@ -11,9 +11,7 @@ import {
   Users,
   Trophy,
   Telescope,
-  LightbulbIcon,
   Dices,
-  Hourglass,
   Puzzle,
   PiggyBank,
   Sparkle,
@@ -54,25 +52,17 @@ export const worksData = {
       icon: Telescope,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-500",
-      title: "Explore LEGO® Sets",
+      title: "Browse Available Sets for Draw",
       description:
-        "We feature different LEGO® sets for each draw. See what pieces are included and other details.",
+        "We feature different LEGO® sets for each draw. See what pieces are included and other details you must know.",
     },
     {
       icon: Dices,
       iconBg: "bg-purple-100",
       iconColor: "text-purple-500",
-      title: "Join the Draw",
+      title: "Secure the Queue",
       description:
-        "Buy tickets for the sets you're interested in. More tickets mean better odds in the picking order.",
-    },
-    {
-      icon: Hourglass,
-      iconBg: "bg-pink-100",
-      iconColor: "text-pink-500",
-      title: "Ticket Queueing",
-      description:
-        "After ticket sales close, we randomly queue tickets for everyone who bought them.",
+        "Buy tickets for the draws you like—more tickets = more chances in the picking order. Set your calendars for the draw date.",
     },
     {
       icon: Trophy,
@@ -80,23 +70,15 @@ export const worksData = {
       iconColor: "text-amber-500",
       title: "Pick Your Bricks",
       description:
-        "When your turn comes, choose your favorite LEGO® pieces from what's available.",
-    },
-    {
-      icon: LightbulbIcon,
-      iconBg: "bg-emerald-100",
-      iconColor: "text-emerald-500",
-      title: "Understand the Draft",
-      description:
-        "Round 1: Normal order. \nRound 2: Reverse order (last goes first). This pattern continues until all bricks are picked!",
+        "After ticket sales close, we randomly queue tickets for everyone who bought them. When it's your turn, you choose the exact LEGO® pieces you want from the available items. \n\nFirst Draft: Normal order. \nNext Draft: The last person gets to pick first, and then the order goes backward! This cycle keeps happening until nothing is left to pick.",
     },
     {
       icon: Truck,
       iconBg: "bg-cyan-100",
       iconColor: "text-cyan-500",
-      title: "Receive Your LEGO®",
+      title: "Get Your Pieces",
       description:
-        "After the draw wraps up, we'll ship your selected bricks straight to your doorstep.",
+        "Once the draw ends. We send all your chosen bricks right to your door or at your local LUG address.",
     },
   ],
   tipsBadge: "BRICK DRAFT TIPS",

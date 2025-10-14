@@ -124,6 +124,31 @@ const Header = () => {
 
         <nav className="hidden md:flex items-center gap-10 md:text-lg lg:gap-15 lg:text-xl">
           {publicNavLinks.map((link) => {
+            // Handle special case for "How It Works" link
+            if (link.name === "How It Works") {
+              return (
+                <button
+                  key={link.path}
+                  onClick={() => {
+                    navigate("/");
+                    // Wait for navigation to complete, then scroll to section
+                    setTimeout(() => {
+                      const element = document.getElementById("how-it-works");
+                      if (element) {
+                        element.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }
+                    }, 100);
+                  }}
+                  className="relative transition-colors flex items-center gap-2 hover:text-accent dark:text-foreground dark:hover:text-accent after:absolute after:bottom-0 after:left-1/2 after:w-0 after:h-0.5 after:bg-accent after:transition-all hover:after:w-full hover:after:left-0 cursor-pointer"
+                >
+                  {link.name}
+                </button>
+              );
+            }
+
             return (
               <NavLink
                 key={link.path}
