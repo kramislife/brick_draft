@@ -60,7 +60,7 @@ export const banners = [
       "Get access to specific LEGO® bricks without breaking the bank through our exciting draw-based system.",
     primaryLink: {
       text: "How It Works",
-      href: "/about",
+      href: "/how-it-works",
     },
     showVideoButton: false,
     videoUrl:

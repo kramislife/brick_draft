@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -63,6 +63,7 @@ const Timer = ({ endDate }) => {
 };
 
 const Banner = () => {
+  const navigate = useNavigate();
   const { api, setApi, current, plugin, carouselOptions } = useCarousel({
     delay: 5000, // 5 seconds
     stopOnInteraction: false,
@@ -119,11 +120,34 @@ const Banner = () => {
 
                   {/* Buttons */}
                   <div className="flex flex-wrap gap-5">
-                    <Button size="lg" variant="accent">
-                      <Link to={banner.primaryLink.href}>
+                    {banner.primaryLink.href === "/how-it-works" ? (
+                      <Button
+                        size="lg"
+                        variant="accent"
+                        onClick={() => {
+                          navigate("/");
+                          // Wait for navigation to complete, then scroll to section
+                          setTimeout(() => {
+                            const element =
+                              document.getElementById("how-it-works");
+                            if (element) {
+                              element.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              });
+                            }
+                          }, 100);
+                        }}
+                      >
                         {banner.primaryLink.text}
-                      </Link>
-                    </Button>
+                      </Button>
+                    ) : (
+                      <Button size="lg" variant="accent">
+                        <Link to={banner.primaryLink.href}>
+                          {banner.primaryLink.text}
+                        </Link>
+                      </Button>
+                    )}
 
                     {banner.showVideoButton && (
                       <Dialog>
@@ -173,8 +197,6 @@ const Banner = () => {
 
 export default Banner;
 
-
-
 // Animated banner commented out for now
 
 // import React, { useState, useEffect } from "react";
@@ -191,12 +213,12 @@ export default Banner;
 // import { Badge } from "@/components/ui/badge";
 // import { banners } from "@/constant/data";
 // import { useCarousel } from "@/hooks/useCarousel";
-// import { 
-//   fadeIn, 
-//   slideDown, 
-//   slideUp, 
-//   slideLeft, 
-//   slideRight 
+// import {
+//   fadeIn,
+//   slideDown,
+//   slideUp,
+//   slideLeft,
+//   slideRight
 // } from "@/hooks/animationConfig";
 
 // const Timer = ({ endDate, animate }) => {
@@ -228,7 +250,7 @@ export default Banner;
 //   if (!timeLeft) return null;
 
 //   return (
-//     <motion.div 
+//     <motion.div
 //       {...animate}
 //       className="flex items-center gap-1 font-mono font-bold text-white"
 //     >
@@ -342,8 +364,8 @@ export default Banner;
 //                       >
 //                         {banner.timer.label}
 //                       </motion.p>
-//                       <Timer 
-//                         endDate={banner.timer.endDate} 
+//                       <Timer
+//                         endDate={banner.timer.endDate}
 //                         animate={{
 //                           ...timerAnimation,
 //                           initial: current === index ? timerAnimation.initial : false,
@@ -354,7 +376,7 @@ export default Banner;
 //                   )}
 
 //                   {/* Buttons */}
-//                   <motion.div 
+//                   <motion.div
 //                     key={`buttons-${animationKey}-${index}`}
 //                     {...buttonAnimation}
 //                     initial={current === index ? buttonAnimation.initial : false}
