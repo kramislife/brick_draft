@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
 import {
   SheetClose,
@@ -31,6 +31,8 @@ const MobileMenu = ({
   onCloseAuthDialog,
   onBeforeOpenAuthDialog,
 }) => {
+  const navigate = useNavigate();
+
   // Get user menu items from centralized configuration
   const userMenuItems = getUserMenuItems(
     isAdmin,
@@ -78,6 +80,37 @@ const MobileMenu = ({
       <nav className="flex flex-col gap-3 flex-1">
         {navLinks.map((link) => {
           const Icon = link.icon;
+
+          // Handle special case for "How It Works" link
+          if (link.name === "How It Works") {
+            return (
+              <button
+                key={link.path}
+                onClick={() => {
+                  navigate("/");
+                  // Wait for navigation to complete, then scroll to section
+                  setTimeout(() => {
+                    const element = document.getElementById("how-it-works");
+                    if (element) {
+                      element.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }
+                  }, 100);
+                }}
+                className="text-xl transition-colors px-5 py-2 rounded-md flex items-center text-background hover:bg-accent hover:text-accent-foreground dark:text-foreground dark:hover:text-accent-foreground"
+              >
+                <SheetClose asChild>
+                  <span className="flex items-center gap-3 w-full">
+                    <Icon size={20} />
+                    {link.name}
+                  </span>
+                </SheetClose>
+              </button>
+            );
+          }
+
           return (
             <NavLink
               key={link.path}

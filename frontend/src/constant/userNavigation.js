@@ -16,6 +16,7 @@ import {
   Settings,
   LayoutDashboard,
   ShoppingBag,
+  FileQuestion,
 } from "lucide-react";
 import { FaTiktok } from "react-icons/fa";
 
@@ -44,6 +45,11 @@ export const publicNavLinks = [
     name: "Contact Us",
     path: "/contact-us",
     icon: Phone,
+  },
+  {
+    name: "How It Works",
+    path: "/how-it-works",
+    icon: FileQuestion,
   },
 ];
 
