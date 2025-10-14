@@ -784,11 +784,11 @@ export const contactUs = catchAsyncErrors(async (req, res, next) => {
     // Send confirmation email to user
     await sendEmail({
       email: email,
-      subject: "Thank you for Contacting World of Minifigs",
+      subject: "Thank you for Contacting Moc Supply",
       message: `
           <p>Hello ${name},</p>
           <p>We've received your message and will get back to you as soon as possible.</p>
-          <p>Best regards,<br>World of Minifigs Team</p>      
+          <p>Best regards,<br>${process.env.SMTP_FROM_NAME}</p>      
       `,
     });
 
