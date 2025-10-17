@@ -13,6 +13,7 @@ import sendEmail from "../utills/sendEmail.js";
 import { getResetPasswordTemplate } from "../utills/Emails/ResetPasswordTemplate.js";
 import { getVerificationEmailTemplate } from "../utills/Emails/VerificationEmailTemplate.js";
 import { ContactFormTemplate } from "../utills/Emails/ContactFormTemplate.js";
+import { validateContactFormRecaptcha } from "../utills/recaptcha.js";
 
 // ==================== VALIDATION HELPERS ====================
 const validateUserProfile = (data) => {
@@ -760,7 +761,7 @@ export const updateProfilePicture = catchAsyncErrors(async (req, res, next) => {
 
 // ========================= CONTACT US ========================= //
 export const contactUs = catchAsyncErrors(async (req, res, next) => {
-  const { name, email, message, subject } = req.body;
+  const { name, email, message, subject, recaptchaToken } = req.body;
 
   if (!name || !email || !message) {
     return next(new customErrorHandler("Please fill in all fields", 400));
@@ -770,6 +771,27 @@ export const contactUs = catchAsyncErrors(async (req, res, next) => {
   if (!/\S+@\S+\.\S+/.test(email)) {
     return next(
       new customErrorHandler("Please enter a valid email address", 400)
+    );
+  }
+
+  // Verify reCAPTCHA token
+  if (!recaptchaToken) {
+    return next(
+      new customErrorHandler("reCAPTCHA verification is required", 400)
+    );
+  }
+
+  const recaptchaResult = await validateContactFormRecaptcha(
+    recaptchaToken,
+    req.ip
+  );
+
+  if (!recaptchaResult.success) {
+    return next(
+      new customErrorHandler(
+        `reCAPTCHA verification failed: ${recaptchaResult.error}`,
+        400
+      )
     );
   }
 
@@ -804,4 +826,18 @@ export const contactUs = catchAsyncErrors(async (req, res, next) => {
       )
     );
   }
+});
+
+// Get reCAPTCHA site key for frontend
+export const getRecaptchaSiteKey = catchAsyncErrors(async (req, res, next) => {
+  const siteKey = process.env.RECAPTCHA_SITE_KEY;
+
+  if (!siteKey) {
+    return next(new customErrorHandler("reCAPTCHA is not configured", 500));
+  }
+
+  res.status(200).json({
+    success: true,
+    siteKey: siteKey,
+  });
 });
