@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "motion/react";
 import { Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -6,11 +6,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { useContactUsMutation } from "@/redux/api/authApi";
+import {
+  useContactUsMutation,
+  useGetRecaptchaSiteKeyQuery,
+} from "@/redux/api/authApi";
 import { toast } from "sonner";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const ContactFormSection = ({ data, animations }) => {
   const [contactUs, { isLoading }] = useContactUsMutation();
+  const { data: recaptchaData } = useGetRecaptchaSiteKeyQuery();
+  const recaptchaRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -18,12 +25,28 @@ const ContactFormSection = ({ data, animations }) => {
     message: "",
   });
 
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [id]: value,
     }));
+  };
+
+  const handleRecaptchaChange = (token) => {
+    setRecaptchaToken(token);
+  };
+
+  const handleRecaptchaExpired = () => {
+    setRecaptchaToken(null);
+    toast.error("reCAPTCHA expired. Please verify again.");
+  };
+
+  const handleRecaptchaError = () => {
+    setRecaptchaToken(null);
+    toast.error("reCAPTCHA error. Please try again.");
   };
 
   const handleSubmit = async (e) => {
@@ -42,17 +65,30 @@ const ContactFormSection = ({ data, animations }) => {
       return;
     }
 
+    // Validate reCAPTCHA
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification");
+      return;
+    }
+
     try {
-      await contactUs(formData).unwrap();
+      await contactUs({
+        ...formData,
+        recaptchaToken,
+      }).unwrap();
       toast.success("Message sent successfully! We'll get back to you soon.");
 
-      // Reset form
+      // Reset form and reCAPTCHA
       setFormData({
         name: "",
         email: "",
         subject: "",
         message: "",
       });
+      setRecaptchaToken(null);
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
     } catch (error) {
       toast.error(
         error?.data?.message || "Failed to send message. Please try again."
@@ -103,12 +139,23 @@ const ContactFormSection = ({ data, animations }) => {
               />
             </div>
 
+            {/* reCAPTCHA */}
+            {recaptchaData?.siteKey && (
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={recaptchaData.siteKey}
+                onChange={handleRecaptchaChange}
+                onExpired={handleRecaptchaExpired}
+                onError={handleRecaptchaError}
+              />
+            )}
+
             {/* Submit Button */}
             <Button
               type="submit"
               variant="accent"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || !recaptchaToken}
             >
               <Send />
               {isLoading ? "Sending..." : "Send Message"}

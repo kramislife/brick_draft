@@ -114,6 +114,11 @@ export const authApi = createApi({
       }),
     }),
 
+    // Get reCAPTCHA site key
+    getRecaptchaSiteKey: builder.query({
+      query: () => "/recaptcha/site-key",
+    }),
+
     // Get addresses
     getAddresses: builder.query({
       query: () => "/profile/addresses",
@@ -161,6 +166,7 @@ export const {
   useResetPasswordMutation,
   useVerifyUserMutation,
   useContactUsMutation,
+  useGetRecaptchaSiteKeyQuery,
   useGetAddressesQuery,
   useAddAddressMutation,
   useUpdateAddressMutation,

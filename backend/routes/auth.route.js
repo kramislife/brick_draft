@@ -16,6 +16,7 @@ import {
   getAllAddresses,
   getSingleAddress,
   deleteAddress,
+  getRecaptchaSiteKey,
 } from "../controllers/authController.js";
 
 import { isAuthenticatedUser } from "../middleware/auth.middleware.js";
@@ -39,6 +40,7 @@ router
   .route("/me/profile/updateAvatar")
   .put(isAuthenticatedUser, updateProfilePicture);
 router.route("/contact").post(contactUs);
+router.route("/recaptcha/site-key").get(getRecaptchaSiteKey);
 router
   .route("/profile/addresses")
   .get(isAuthenticatedUser, getAllAddresses)
